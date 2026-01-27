@@ -1,0 +1,29 @@
+# Framework Web
+fastapi>=0.110.0
+uvicorn>=0.29.0
+httpx>=0.27.0
+
+# Base de Données
+sqlalchemy>=2.0.0
+asyncpg>=0.29.0
+alembic>=1.13.0
+
+# Validation & Settings
+pydantic>=2.7.0
+pydantic-settings>=2.2.0
+python-dotenv>=1.0.0
+email-validator>=2.1.0
+
+# Workers & Redis
+redis>=5.0.0
+celery>=5.3.0 # Gestionnaire de tâches asynchrones standard
+
+# Traitement & NLP
+spacy>=3.7.0
+beautifulsoup4>=4.12.0
+playwright>=1.42.0
+
+# Tests & Qualité (Dev Dependencies - mais utile en docker pour ci)
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+ruff>=0.3.0 # Linter ultra-rapide

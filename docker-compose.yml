@@ -1,0 +1,61 @@
+version: '3.9'
+
+services:
+  # --- Service Backend (API) ---
+  api:
+    build: ./backend
+    container_name: osint_api
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_USER=osint_user
+      - POSTGRES_PASSWORD=osint_password
+      - POSTGRES_DB=osint_db
+      - DATABASE_URL=postgresql+asyncpg://osint_user:osint_password@db:5432/osint_db
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+
+  # --- Service Base de Données (PostgreSQL) ---
+  db:
+    image: postgres:15-alpine
+    container_name: osint_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=osint_user
+      - POSTGRES_PASSWORD=osint_password
+      - POSTGRES_DB=osint_db
+    ports:
+      - "5432:5432"
+
+  # --- Service Cache / Queue (Redis) ---
+  redis:
+    image: redis:7-alpine
+    container_name: osint_redis
+    ports:
+      - "6379:6379"
+
+  # --- Service Frontend (React + Vite) ---
+  # Note: En développement, on lance le serveur Vite directement
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: osint_frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
