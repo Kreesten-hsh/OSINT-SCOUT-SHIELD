@@ -1,4 +1,4 @@
-# Utilisation de l'image officielle Playwright (contient déjà les navigateurs Chromium/Firefox/WebKit)
+# Utilisation de l'image officielle Playwright
 FROM mcr.microsoft.com/playwright/python:v1.57.0-jammy
 
 WORKDIR /app
@@ -6,14 +6,14 @@ WORKDIR /app
 # Copie des dépendances
 COPY requirements.txt .
 
-# Installation des dépendances Python supplémentaires
+# Installation des dépendances Python (inclut spacy)
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Téléchargement du modèle de langue Spacy (Français - léger)
+RUN python -m spacy download fr_core_news_sm
 
 # Copie du code source
 COPY . .
 
-# Installation des navigateurs (au cas où, mais normalement inclus dans l'image de base)
-# RUN playwright install chromium
-
-# Commande par défaut : maintient le conteneur en vie pour exécuter des tâches
+# Commande par défaut
 CMD ["tail", "-f", "/dev/null"]
