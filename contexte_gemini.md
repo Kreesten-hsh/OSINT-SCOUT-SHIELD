@@ -1,63 +1,56 @@
 # CONTEXTE GLOBAL DU PROJET : OSINT-SCOUT & SHIELD
 
 > **Dernière mise à jour :** 27 Janvier 2026
-> **Statut :** Phase d'Initialisation (Configuration de l'infrastructure)
+> **Statut :** Phase de Développement (Module de Collecte)
+> **Philosophie :** "Mode Absolu" - Rigueur Ingénieur & Innovation Contextuelle.
 
-## 1. IDENTIFICATION ET VISION
+## 1. VISION & OBJECTIF RÉEL (VERSION RENFORCÉE)
 
-*   **Projet :** OSINT-SCOUT & SHIELD
-*   **Objectif Académique :** Soutenance de Licence 3 (Système Informatique et Logiciels).
-*   **Mention Visée :** Excellente.
-*   **Vision :** Passer d'une cybersécurité réactive à une défense proactive contre les fraudes numériques (Mobile Money, Usurpation) au Bénin.
-*   **Innovation Clé :**
-    *   **NLP Localisé :** Détection du lexique argotique béninois (Gongon, Kpayo, etc.).
-    *   **Preuve Forensique :** Scellement cryptographique (SHA-256) des preuves collectées.
-    *   **Souveraineté :** Architecture indépendante alignée sur les besoins du CNIN.
+Le projet ne vise pas l'arrestation directe, mais la création d'un **renseignement cyber structuré et exploitable**.
+Il transforme une lutte fragmentée en un système capable de **détecter, qualifier, documenter et prouver**.
 
-## 2. ARCHITECTURE TECHNIQUE TARGÉTÉE
+*   **Problème Fondamental :** Absence de qualification, de traçabilité et de preuve standardisée des arnaques au Bénin.
+*   **Objectif :** Passer de témoignages isolés à un signalement formel et mutualisé.
 
-Le système est une application web distribuée (Micro-services simulés).
+## 2. ARCHITECTURE FONCTIONNELLE (LA CHAÎNE DE LUTTE)
 
-### A. Frontend (Interface Utilisateur)
-*   **Technologie :** React + TypeScript (Vite).
-*   **Design :** Tailwind CSS + Shadcn/UI.
-*   **Rôle :** Tableau de bord de supervision, visualisation des alertes, export de rapports PDF.
+Le système implémente une chaîne de valeur complète :
 
-### B. Backend (API & Logique)
-*   **Technologie :** Python 3.12+ avec FastAPI.
-*   **Architecture :** DDD simplifiée (Api, Services, Models, Schemas).
-*   **Base de données :** PostgreSQL (Géré avec Alembic pour les migrations).
-*   **File d'attente :** Redis (Message Broker).
-*   **Workers :** Celery/Arq pour le traitement asynchrone des tâches lourdes (Scraping).
-*   **ORM :** SQLAlchemy (Async).
+1.  **Collecte OSINT :** Scraping web/réseaux sociaux (Playwright/Scrapy).
+2.  **Analyse Automatisée :** Règles heuristiques + NLP localisé (Lexique béninois) + Scoring ML.
+3.  **Qualification :** Typologie des arnaques et validation par Patterns.
+4.  **Preuve Forensique :** Horodatage + Hashage SHA-256 (Traçabilité complète).
+5.  **Signalement Structuré :** Génération de rapports PDF/JSON exploitables juridiquement.
+6.  **Mutualisation :** Registre centralisé des menaces et tendances nationales.
 
-### C. Qualité & DevOps
-*   **Tests :** Pytest (Backend), Vitest (Frontend).
-*   **Linting :** Ruff (Python), ESLint (TS).
-*   **CI/CD :** (À définir).
+## 3. STACK TECHNIQUE & INFRASTRUCTURE
 
+*   **Backend :** Python 3.12+ (FastAPI) + Pydantic (Validation).
+*   **Frontend :** React + TypeScript (Vite) + Tailwind/Shadcn.
+*   **Data :** PostgreSQL (Persistance) + Redis (Broker/Queue).
+*   **Asynchronisme :** Celery Workers (Scraping/NLP en arrière-plan).
+*   **DevOps :** Docker Compose (Environnement iso-prod).
 
-### C. Collecte & Analyse (Workers)
-*   **Scrapers :** Scrapy (Web statique), Playwright (Web dynamique/Social).
-*   **NLP :** Spacy/NLTK (Analyse sémantique et détection d'entités nommées).
+## 4. CIBLE ET MODÈLE (B2B/B2G)
 
-### D. Infrastructure (DevOps)
-*   **Conteneurisation :** Docker & Docker Compose.
-*   **CI/CD :** (À définir ultérieurement).
+Pas de B2C. Le système s'adresse aux professionnels :
+*   Analystes Cybersécurité / SOC.
+*   Cellules IT des PME & Opérateurs Mobile Money.
+*   ONG Cyber & Institutions (CNIN).
 
-## 3. ÉTAT D'AVANCEMENT
+## 5. ÉTAT D'AVANCEMENT
 
-### Tâches Réalisées
-- [x] Définition de la roadmap et du périmètre (`task.md`).
-- [x] Plan d'implémentation technique (`implementation_plan.md`).
+### ✅ Phase 1 : Infrastructure
+- [x] Architecture Micro-services simulés validée.
+- [x] Environnement Docker (API, DB, Redis, Front) opérationnel.
 
-### Tâches En Cours
-- [ ] Création de la structure des dossiers.
-- [ ] Initialisation de la configuration Docker (`docker-compose.yml`).
-- [ ] Initialisation du Backend (FastAPI).
-- [ ] Initialisation du Frontend (React).
+### ✅ Phase 2 : Modélisation
+- [x] Diagrammes UML (Cas d'utilisation, Séquence, Classes) validés.
 
-## 4. DIRECTIVES DE TRAVAIL
--   **Excellence du Code :** Typage strict (TypeScript/Python Type Hints), Documentation (Docstrings), Tests unitaires.
--   **Approche :** TDD (Test Driven Development) si possible.
--   **Mise à jour :** Ce fichier doit être relu et mis à jour avant chaque nouvelle tâche majeure.
+### 🔄 Phase 3 : Développement Collecte (EN COURS)
+- [ ] Création du Scraper Base.
+- [ ] Implémentation de la collecte Facebook/Web.
+
+## 6. DIRECTIVES DE TRAVAIL
+-   **Rigueur :** Code typé, testé et documenté.
+-   **Innovation :** Focus sur le NLP local (Béninois) et la preuve forensique.

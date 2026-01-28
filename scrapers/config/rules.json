@@ -1,0 +1,33 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-01-27",
+  "risk_threshold": 75,
+  "categories": [
+    {
+      "id": "MM_FRAUD",
+      "name": "Arnaque Mobile Money",
+      "keywords": [
+        {"term": "transfert erroné", "weight": 20},
+        {"term": "code de validation", "weight": 30},
+        {"term": "mtn money", "weight": 10},
+        {"term": "moov money", "weight": 10},
+        {"term": "frais de retrait", "weight": 15}
+      ],
+      "patterns": [
+        "(\\+229|00229)?\\s?[4569][0-9]{7}", 
+        "envoie.*le.*code"
+      ]
+    },
+    {
+      "id": "CRYPTO_PONZI",
+      "name": "Investissement Fictif",
+      "keywords": [
+        {"term": "gains rapides", "weight": 25},
+        {"term": "investir", "weight": 10},
+        {"term": "usdt", "weight": 15},
+        {"term": "kpayo", "weight": 5},
+        {"term": "liberté financière", "weight": 20}
+      ]
+    }
+  ]
+}

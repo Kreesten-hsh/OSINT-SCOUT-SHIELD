@@ -40,8 +40,21 @@ services:
     ports:
       - "6379:6379"
 
-  # --- Service Frontend (React + Vite) ---
-  # Note: En développement, on lance le serveur Vite directement
+  # --- Service Scraper (Playwright Workers) ---
+  scraper:
+    build: ./scrapers
+    container_name: osint_scraper
+    volumes:
+      - ./scrapers:/app
+      - ./preuves_temp:/app/preuves_temp # Pour récupérer les preuves sur l'hôte
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+    #  - api # Décommenter si le scraper doit appeler l'API directement
+
+    # --- Service Frontend (React + Vite) ---
+    # Note: En développement, on lance le serveur Vite directement
   frontend:
     build:
       context: ./frontend

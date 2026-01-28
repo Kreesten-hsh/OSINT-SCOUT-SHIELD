@@ -1,109 +1,81 @@
 # 🛡️ PROJET OSINT-SCOUT & SHIELD
 
-## 1. 🆔 IDENTIFICATION DU PROJET
-
-- **Intitulé Officiel :** Conception et implémentation d’une architecture micro-services de veille OSINT proactive pour la détection forensique des fraudes numériques.
-- **Contexte Académique :** Soutenance de Fin de Cycle - Licence 3 (Systèmes Informatiques et Logiciels).
-- **Objectif de Mention :** **Excellente** (Cible : Innovation Contextuelle & Complexité Architecturale).
+> **Mention Visée :** Excellente
+> **Cible :** Soutenance L3 - Mai 2026
 
 ---
 
-## 2. 🌍 ANALYSE CONTEXTUELLE & VISION
+## 1. 🎯 RÉSUMÉ EXÉCUTIF (VISION RENFORCÉE)
 
-Le projet opère un changement de paradigme : passer d'une cybersécurité **réactive** (post-incident) à une défense **proactive** (neutralisation préventive).
+**OSINT-SCOUT & SHIELD** est un système de veille automatisé conçu pour structurer la lutte contre la cyber-arnaque au Bénin.
+Le projet opère un changement de paradigme : passer de **témoignages isolés** à du **renseignement cyber exploitable**.
 
-### 🇧🇯 Problématique Locale (Bénin)
-- **Sophistication des Menaces :** Usurpation massive d'identité d'institutions (Douanes, Banques) et arnaques Mobile Money structurées.
-- **Angle Mort Technologique :** Les solutions standards (Recorded Future, ZeroFox) échouent à détecter les menaces utilisant l'argot local ("Gongon", "Kpayo") ou les canaux spécifiques (Groupes WhatsApp/Facebook locaux).
-- **Vide Forensique :** L'absence de preuves numériques scellées cryptographiquement rend les poursuites judiciaires difficiles (conforme au Code du Numérique 2018).
+### Le Problème Réel
+Ce n’est pas l’absence de victimes, mais l'absence de :
+*   **Qualification** technique des menaces.
+*   **Traçabilité** des preuves numériques.
+*   **Vision globale** des campagnes de fraude (Mobile Money, Usurpation).
 
----
-
-## 3. 🚀 FACTEURS D'INNOVATION
-
-1.  **Intelligence Artificielle Localisée (NLP) 🧠**
-    - Entraînement de modèles sur des datasets de dialectes et argot béninois pour minimiser les faux négatifs.
-2.  **Intégrité de la Preuve (Forensique) ⚖️**
-    - Système de "Scellement Numérique" : Capture du DOM + Timestamp + Hachage SHA-256 immédiat pour garantir la non-répudiation.
-3.  **Architecture Distribuée & Souveraine 🏗️**
-    - Conception modulaire réduisant la dette technique et la dépendance aux API étrangères.
+### Notre Solution
+Une application web distribuée capable de **détecter**, **documenter**, **prouver** et **mutualiser** les menaces numériques.
 
 ---
 
-## 4. 💻 ARCHITECTURE TECHNIQUE (État de l'Art)
+## 2. ⚙️ ARCHITECTURE FONCTIONNELLE (La Chaîne de Lutte)
 
-Le système repose sur une architecture **Micro-services Simulés**, garantissant scalabilité et maintenabilité.
+Le système implémente 6 étapes clés :
 
-### ⚙️ Backend (Cœur du Système)
-- **Framework :** **FastAPI** (Python 3.12+) - *Performance asynchrone native.*
-- **Architecture :** Domain-Driven Design (DDD) simplifié.
-- **Validation :** **Pydantic** (Schemas stricts).
-- **Migrations :** **Alembic** (Gestion versionnée de la BDD pour éviter la perte de données).
-
-### 🖥️ Frontend (Interface de Commandement)
-- **Framework :** **React** + **Vite** (SPA optimisée).
-- **Langage :** **TypeScript** (Sécurité du typage statique, indispensable pour des projets d'envergure).
-- **Design System :** **Tailwind CSS** + **Shadcn/UI** (Interface moderne, accessible et professionnelle).
-- **Visualisation :** **Recharts** (Tableaux de bord analytiques dynamiques).
-
-### 💾 Data & Asynchronisme
-- **Persistance :** **PostgreSQL** (Données relationnelles critiques).
-- **Message Broker :** **Redis** (File d'attente haute performance).
-- **Workers :** **Celery** (Orchestration des tâches de scraping lourdes en arrière-plan sans bloquer l'API).
-
-### 🕷️ Collecte (Ingestion)
-- **Web Statique :** **Scrapy** (Extraction massive à haute vitesse).
-- **Web Dynamique/Social :** **Playwright** (Simulation comportementale humaine pour contourner les protections).
-
-### 🛠️ Qualité & DevOps
-- **Tests Automatisés :** Pytest (Backend) & Vitest (Frontend) pour garantir la fiabilité.
-- **Qualité Code :** Ruff (Linter Python) & ESLint (Standardisation).
-- **Conteneurisation :** **Docker Compose** (Environnement iso-prod reproductible).
+1.  **Collecte OSINT 🕵️‍♂️** : Ingestion automatique de contenus suspects (Web, Réseaux Sociaux) via Scrapers.
+2.  **Analyse Automatisée 🧠** : Filtrage par Règles Heuristiques + NLP localisé (Lexique "Gongon", "Kpayo").
+3.  **Qualification 🏷️** : Attribution d'un score de risque et typologie de l'arnaque.
+4.  **Preuve Forensique ⚖️** : Scellement cryptographique immédiat (SHA-256 + Timestamp) pour garantir l'intégrité.
+5.  **Signalement Structuré 📄** : Génération de dossiers de preuve (PDF/JSON) conformes aux exigences juridiques.
+6.  **Mutualisation 🌐** : Création d'un registre national des menaces pour identifier les récidives.
 
 ---
 
-## 5. 🔄 FLUX DE DONNÉES ET FONCTIONNEMENT
+## 3. 💻 STACK TECHNIQUE (Niveau Ingénieur)
 
-| Phase | Technologie | Description Technique |
+Architecture **Micro-services Simulés** pour garantir performance et scalabilité.
+
+| Composant | Technologie | Justification |
 | :--- | :--- | :--- |
-| **1. Ciblage** | *Dictionary-based* | Injection de mots-clés "risqués" (lexique béninois) dans la file d'attente **Redis**. |
-| **2. Ingestion** | **Celery Workers** | Des agents autonomes (**Playwright**) dépilent les tâches et extraient le contenu suspect. |
-| **3. Analyse** | **Spacy NLP** | Nettoyage, Tokenisation et Scoring de risque (0-100) du contenu textuel. |
-| **4. Scellement** | **SHA-256** | Génération d'une empreinte cryptographique unique du contenu brut + métadonnées. |
-| **5. Restitution**| **React Dashboard** | Affichage temps réel des alertes pour les analystes du SOC (Security Operations Center). |
+| **Backend** | **FastAPI (Python)** | Performance asynchrone, standard actuel des API modernes. |
+| **Frontend** | **React + TypeScript** | Robustesse du typage, interface professionnelle (Shadcn/UI). |
+| **Orchestration** | **Redis + Celery** | Gestion de files d'attente pour le scraping intensif (Message Broker). |
+| **Données** | **PostgreSQL** | Fiabilité relationnelle pour le stockage des preuves. |
+| **Infrastructure**| **Docker** | Portabilité totale et environnement iso-prod. |
 
 ---
 
-## 6. 📈 POTENTIEL DE VALORISATION (Post-Soutenance)
+## 4. 👥 CIBLE & MODÈLE (B2B / B2G)
 
-Le projet est conçu comme un **MVP (Minimum Viable Product)** commercialisable (SaaS).
+Le projet est conçu comme un outil professionnel (SaaS) :
 
-1.  **B2G (Souveraineté) :** Protection de l'espace numérique de l'État (.bj) - Partenariat potentiel CNIN/ASIN.
-2.  **B2B (Corporate) :** Brand Protection pour les banques et opérateurs mobiles.
-3.  **Modèle Économique :** Abonnement SaaS avec intégration API.
+*   **Analystes Cybersécurité (SOC)**
+*   **Institutions (CNIN, ASIN)**
+*   **Opérateurs Mobile Money & Banques**
 
----
-
-## 7. 🎓 JUSTIFICATION DU NIVEAU "EXCELLENT"
-
-Ce projet dépasse le cadre du développement web classique par :
-
-1.  **La maturité architecturale :** Séparation stricte Frontend/Backend/Workers (Pattern Micro-services).
-2.  **L'ingénierie logicielle :** Usage de TypeScript, Tests automatisés, Migrations BDD (Alembic).
-3.  **La complexité systémique :** Gestion de la concurrence et de l'asynchronisme (Redis/Celery).
-4.  **L'impact réel :** Réponse technique concrète et innovante à un problème de sécurité nationale.
+*Note : Les particuliers ne sont pas la cible directe.*
 
 ---
 
-## 8. 📅 ROADMAP TECHNIQUE
+## 5. 💎 VALEUR AJOUTÉE & FACTEURS D'EXCELLENCE
 
-- **Phase 1 : Infrastructure (Terminé) ✅**
-    - Dockerisation complète, Architecture Clean (Backend/Frontend), CI/CD setup.
-- **Phase 2 : Modélisation (En cours) 🔄**
-    - UML 2.5 (Diagrammes de Cas d'utilisation, Séquence, Classes).
-- **Phase 3 : Core Development**
-    - Implémentation des pipelines de Scraping et du Moteur d'Analyse.
-- **Phase 4 : Frontend & UX**
-    - Développement du Dashboard Analyste avec visualisation temps réel.
-- **Phase 5 : Validation & Soutenance**
-    - Tests de charge, Validation forensique et Rédaction du mémoire.
+1.  **Innovation Contextuelle :** Utilisation d'un modèle NLP entraîné sur l'argot béninois.
+2.  **Rigueur Forensique :** La sécurité de la preuve est "Built-in" (intégrée dès la conception).
+3.  **Maturité Technique :** Architecture asynchrone complexe maîtrisée (Workers, Queues, WebSocket).
+
+---
+
+## 6. 📅 ROADMAP (Stage 3 Mois)
+
+- **Mois 1 : Infrastructure & Modélisation (Terminé ✅)**
+    - Mise en place Docker, FastAPI, React.
+    - Diagrammes UML (Cas d'utilisation, Séquence).
+- **Mois 2 : Cœur du Réacteur (À Venir 🚧)**
+    - Développement des Scrapers (Playwright).
+    - Moteur NLP & Hachage des preuves.
+- **Mois 3 : Restitution & Finalisation**
+    - Tableau de bord React.
+    - Rédaction du Mémoire & Tests.
