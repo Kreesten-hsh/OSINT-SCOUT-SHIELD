@@ -31,7 +31,7 @@ services:
       - POSTGRES_PASSWORD=osint_password
       - POSTGRES_DB=osint_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
 
   # --- Service Cache / Queue (Redis) ---
   redis:
@@ -49,6 +49,7 @@ services:
       - ./preuves_temp:/app/preuves_temp # Pour récupérer les preuves sur l'hôte
     environment:
       - REDIS_URL=redis://redis:6379/0
+    command: python workers/worker.py # Lancement automatique du worker
     depends_on:
       - redis
     #  - api # Décommenter si le scraper doit appeler l'API directement

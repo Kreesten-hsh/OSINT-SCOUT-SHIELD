@@ -1,15 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.core.config import settings
+from app.api.v1.api import api_router
 
 app = FastAPI(
-    title="OSINT-SCOUT & SHIELD API",
-    description="API de veille OSINT proactive contre la fraude numérique au Bénin.",
-    version="0.1.0"
+    title=settings.PROJECT_NAME,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-# Configuration CORS pour autoriser le frontend React
+# Configuration CORS (Pour le Frontend React)
 origins = [
-    "http://localhost:5173", # Frontend Vite
+    "http://localhost:5173",
     "http://localhost:3000",
 ]
 
@@ -21,10 +22,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
-def read_root():
-    return {"message": "Bienvenue sur l'API OSINT-SCOUT & SHIELD", "status": "active"}
+# Montage des routes
+app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "service": "api"}
+    return {"status": "ok", "service": "OSINT-SCOUT Shield API"}

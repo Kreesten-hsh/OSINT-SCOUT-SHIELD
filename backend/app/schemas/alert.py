@@ -1,0 +1,55 @@
+from typing import List, Optional, Any
+from pydantic import BaseModel, UUID4
+from datetime import datetime
+
+# --- EVIDENCE SCHEMAS ---
+class EvidenceBase(BaseModel):
+    file_path: str
+    file_hash: str
+    content_text_preview: Optional[str] = None
+    captured_at: Optional[datetime] = None
+    metadata_json: Optional[dict] = None
+
+class EvidenceResponse(EvidenceBase):
+    id: int
+    alert_id: int
+    
+    class Config:
+        from_attributes = True
+
+# --- ANALYSIS SCHEMAS ---
+class AnalysisResultBase(BaseModel):
+    categories: List[dict]
+    entities: List[list]
+
+class AnalysisResultResponse(AnalysisResultBase):
+    id: int
+    alert_id: int
+    
+    class Config:
+        from_attributes = True
+
+# --- ALERT SCHEMAS ---
+class AlertBase(BaseModel):
+    url: str
+    source_type: str
+    risk_score: int
+    status: str
+    is_confirmed: bool
+
+class AlertUpdate(BaseModel):
+    status: Optional[str] = None
+    is_confirmed: Optional[bool] = None
+    # analyst_notes: Optional[str] = None # A ajouter au modèle DB si nécessaire
+
+class AlertResponse(AlertBase):
+    id: int
+    uuid: UUID4
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    
+    evidence: Optional[EvidenceResponse] = None
+    analysis_results: Optional[AnalysisResultResponse] = None
+
+    class Config:
+        from_attributes = True
