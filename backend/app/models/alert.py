@@ -1,4 +1,4 @@
--- Active: 1769633299421@@127.0.0.1@5433@osint_db
+
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
