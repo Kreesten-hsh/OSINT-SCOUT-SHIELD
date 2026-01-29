@@ -10,44 +10,48 @@ export interface Token {
 export interface User {
     email: string;
     role: 'admin' | 'analyst';
+    // Add other user fields as returned by the backend if any, otherwise keep minimal
 }
 
 // --- EVIDENCE TYPES ---
 export interface Evidence {
     id: number;
     alert_id: number;
-    file_path: string;
+    filename: string; // Changed from file_path based on backend convention usually
     file_hash: string;
-    content_text_preview?: string | null;
-    captured_at?: ISOString | null;
-    metadata_json?: Record<string, any> | null;
+    metadata: Record<string, any>; // Flexible metadata
+    created_at: ISOString;
 }
 
 // --- ANALYSIS TYPES ---
 export interface AnalysisResult {
     id: number;
     alert_id: number;
-    categories: Array<{ name: string; score: number }>;
-    entities: Array<any>; // Can be refined based on actual entity structure
+    categories: Record<string, number>; // e.g. {"phishing": 0.95}
+    entities: string[];
+    sentiment_score?: number;
 }
 
 // --- ALERT TYPES ---
-export type AlertStatus = 'NEW' | 'INVESTIGATING' | 'FALSE_POSITIVE' | 'CLOSED';
-export type AlertSeverity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+export type AlertStatus = 'NEW' | 'INVESTIGATING' | 'Confirmed' | 'False Positive' | 'CLOSED';
+// Note: Backend might send mixed case, frontend should normalize or handle. 
+// Assuming Standard: NEW, INVESTIGATING, CLOSED, FALSE_POSITIVE
 
 export interface Alert {
     id: number;
     uuid: UUID;
+    title?: string;
     url: string;
     source_type: string;
     risk_score: number;
-    status: AlertStatus | string; // Relaxed string for compatibility if backend sends raw strings
-    is_confirmed: boolean;
+    status: string; // Relaxed for now, will strictly type if enum known
+    severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
     created_at: ISOString;
-    updated_at?: ISOString | null;
+    updated_at?: ISOString;
 
-    evidence?: Evidence | null;
-    analysis_results?: AnalysisResult | null;
+    // Relations
+    evidence?: Evidence[]; // Array likely based on backend
+    analysis?: AnalysisResult;
 }
 
 export interface PaginatedResponse<T> {

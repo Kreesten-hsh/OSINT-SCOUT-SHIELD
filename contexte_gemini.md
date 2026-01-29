@@ -1,7 +1,7 @@
 # CONTEXTE GLOBAL DU PROJET : OSINT-SCOUT & SHIELD
 
-> **Dernière mise à jour :** 28 Janvier 2026
-> **Statut :** Fin Phase 3 (Moteurs Validés) → Début Phase 4 (Persistance & API)
+> **Dernière mise à jour :** 29 Janvier 2026
+> **Statut :** Backend (API/DB) Validé → Frontend (Batch 1) Terminé.
 > **Philosophie :** "Mode Absolu" - Rigueur Ingénieur & Innovation Contextuelle.
 
 ## 1. VISION & OBJECTIF RÉEL (VERSION RENFORCÉE)
@@ -19,39 +19,42 @@ Le système implémente une chaîne de valeur complète, dont le cœur est déso
 1.  **Collecte OSINT (✅) :** Ingestion automatique via Playwright (Scraper isolé dans Docker).
 2.  **Analyse Automatisée (✅) :** NLP localisé (Spacy FR) + Règles Heuristiques (Gongon, Kpayo).
 3.  **Preuve Forensique (✅) :** Scellement cryptographique (SHA-256) des captures d'écran.
-4.  **Signalement Structuré :** (Prochaine étape : Persistance & PDF).
-5.  **Mutualisation :** (Prochaine étape : Dashboard).
+4.  **Signalement Structuré (✅) :** API & Base de données (PostgreSQL) opérationnelles.
+5.  **Restitution (🔄) :** Nouveau Dashboard React en cours de construction.
 
 ## 3. STACK TECHNIQUE & INFRASTRUCTURE
 
-*   **Backend :** Python 3.12+ (FastAPI) + Pydantic (Validation).
-*   **Frontend :** React + TypeScript (Vite) + Tailwind/Shadcn.
-*   **Moteur OSINT (Worker) :**
-    *   **Scraper :** Playwright (Navigation furtive).
-    *   **Orchestration :** Redis (Queue `osint_to_scan` → `osint_results`).
-    *   **Analyse :** Spacy (NLP) + Regex.
-*   **DevOps :** Docker Compose (Services orchestrés).
+*   **Backend :** Python 3.12+ (FastAPI) + Pydantic + SQLAlchemy (Async).
+*   **Database :** PostgreSQL 15 (Données) + Redis 7 (Cache/Queue).
+*   **Frontend :** React 19 + TypeScript + Vite.
+    *   **UI :** Tailwind CSS v3 (Deep Void Theme) + Shadcn/ui.
+    *   **State :** Zustand + TanStack Query.
+*   **Orchestration :** Docker Compose (Workflow Obligatoire).
 
 ## 4. ÉTAT D'AVANCEMENT
 
-### ✅ Phase 1 : Infrastructure
-- [x] Architecture Micro-services simulés validée.
-- [x] Environnement Docker (API, DB, Redis, Front, Scraper) opérationnel.
+### ✅ Phase 1, 2, 3 : Socle, Modélisation & Moteur
+- Infrastructure, UML, Scraper, NLP, Workers : **VALIDÉS**.
 
-### ✅ Phase 2 : Modélisation
-- [x] Diagrammes UML (Cas d'utilisation, Séquence, Classes) validés.
+### ✅ Phase 4 : Interface & Persistance (Backend)
+- [x] Modèles de données (PostgreSQL/SQLAlchemy).
+- [x] API Endpoints (Auth, Alerts, Stats).
+- [x] Service de Preuves (Filesystem sécurisé).
 
-### ✅ Phase 3 : Moteur de Collecte & Analyse (CŒUR DU SYSTÈME)
-- [x] Scraper Playwright (Navigation + Capture Preuve).
-- [x] Moteur NLP (Détection Mots-clés + Scoring Risque).
-- [x] Worker d'Orchestration (Lien Redis <-> Scraper <-> NLP).
-- [x] Test de bout en bout validé (`trigger_test.py`).
-
-### 🔄 Phase 4 : Interface & Persistance (À VENIR)
-- [ ] Création du modèle de données (PostgreSQL/SQLAlchemy).
-- [ ] API pour consommer les résultats Redis.
-- [ ] Dashboard Frontend (Affichage des alertes).
+### 🔄 Phase 5 : Reconstruction Frontend (En Cours)
+- [x] **Hard Reset :** Base saine et propre.
+- [x] **Batch 1 (Fondations) :**
+    - [x] Auth (Login Page, Guard, Store).
+    - [x] Dashboard (Layout, KPI, Charts, Sidebar, Topbar).
+    - [x] Alerts List (Table, Filtres, Pagination).
+    - [x] Design System (Theme Dark "Deep Void").
+- [ ] **Batch 2 (Investigation) :** Vue détaillée, Preuves, Rapports PDF.
+- [ ] **Batch 3 (Settings) :** Gestion utilisateurs, Configuration Scrapers.
 
 ## 5. DIRECTIVES DE TRAVAIL
--   **Prochain Focus :** Connecter le Cerveau (Worker) à la Mémoire (Base de données).
--   **Rigueur :** Maintenir la qualité du code (Typage strict, Gestion d'erreurs).
+-   **Prochain Focus :** Entamer le **Batch 2** (Page Détail Alerte & Preuves).
+-   **Workflow Docker :**
+    -   Le développement se fait sur l'hôte (Windows/VSCode) pour le confort.
+    -   Les changements sont répercutés via Volumes Docker.
+    -   ⚠️ **IMPORTANT :** Après tout changement de dépendances (`npm install` sur l'hôte), il faut **rebuilder le conteneur** : `docker-compose up -d --build frontend`.
+-   **Rigueur :** Typage strict (TypeScript), Pas de `any`, Gestion d'erreurs UI.

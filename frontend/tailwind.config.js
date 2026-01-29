@@ -1,3 +1,5 @@
+import tailwindcssAnimate from "tailwindcss-animate";
+
 /** @type {import('tailwindcss').Config} */
 export default {
     darkMode: ["class"],
@@ -6,48 +8,55 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-  	extend: {
-  		colors: {
-  			border: 'hsl(var(--border))',
-  			input: 'hsl(var(--input))',
-  			ring: 'hsl(var(--ring))',
-  			background: 'hsl(var(--background))',
-  			foreground: 'hsl(var(--foreground))',
-  			primary: {
-  				DEFAULT: 'hsl(var(--primary))',
-  				foreground: 'hsl(var(--primary-foreground))'
-  			},
-  			secondary: {
-  				DEFAULT: 'hsl(var(--secondary))',
-  				foreground: 'hsl(var(--secondary-foreground))'
-  			},
-  			destructive: {
-  				DEFAULT: 'hsl(var(--destructive))',
-  				foreground: 'hsl(var(--destructive-foreground))'
-  			},
-  			muted: {
-  				DEFAULT: 'hsl(var(--muted))',
-  				foreground: 'hsl(var(--muted-foreground))'
-  			},
-  			accent: {
-  				DEFAULT: 'hsl(var(--accent))',
-  				foreground: 'hsl(var(--accent-foreground))'
-  			},
-  			popover: {
-  				DEFAULT: 'hsl(var(--popover))',
-  				foreground: 'hsl(var(--popover-foreground))'
-  			},
-  			card: {
-  				DEFAULT: 'hsl(var(--card))',
-  				foreground: 'hsl(var(--card-foreground))'
-  			}
-  		},
-  		borderRadius: {
-  			lg: 'var(--radius)',
-  			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
-  		}
-  	}
+    container: {
+      center: true,
+      padding: "2rem",
+      screens: {
+        "2xl": "1400px",
+      },
+    },
+    extend: {
+      colors: {
+        background: "#0B0F14", // Deep Void
+        foreground: "#F8FAFC", // Slate 50
+        card: "#11161D",
+        "card-foreground": "#F8FAFC",
+        popover: "#11161D",
+        "popover-foreground": "#F8FAFC",
+        primary: {
+          DEFAULT: "#0D93F2", // Electric Blue
+          foreground: "#FFFFFF",
+        },
+        secondary: {
+          DEFAULT: "#1E293B", // Slate
+          foreground: "#F8FAFC",
+        },
+        muted: {
+          DEFAULT: "#1E293B",
+          foreground: "#94A3B8",
+        },
+        accent: {
+          DEFAULT: "#1E293B",
+          foreground: "#F8FAFC",
+        },
+        destructive: {
+          DEFAULT: "#EF4444",
+          foreground: "#FFFFFF",
+        },
+        border: "#1E293B",
+        input: "#1E293B",
+        ring: "#0D93F2",
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'monospace'],
+      },
+    },
   },
-  plugins: [],
+  plugins: [tailwindcssAnimate],
 }

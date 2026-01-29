@@ -1,10 +1,30 @@
 from datetime import timedelta
 from typing import Any
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import BaseModel
 from app.schemas.token import Token
 
 router = APIRouter()
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+@router.post("/login", response_model=Token)
+def login(login_data: LoginRequest = Body(...)) -> Any:
+    """
+    JSON Login for Frontend.
+    """
+    print(f"DEBUG JSON LOGIN: User='{login_data.username}' Pass='{login_data.password}'")
+    
+    if login_data.username == "admin@osint.com" and login_data.password == "admin":
+        return {
+            "access_token": "fake-jwt-token-for-demo-purposes",
+            "token_type": "bearer",
+        }
+    
+    raise HTTPException(status_code=400, detail="Identifiants incorrects.")
 
 @router.post("/login/access-token", response_model=Token)
 def login_access_token(
