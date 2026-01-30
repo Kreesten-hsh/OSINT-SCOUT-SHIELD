@@ -1,14 +1,16 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, AlertTriangle, FileText, Settings, Search, Shield, LogOut } from 'lucide-react';
-import { cn } from '@/utils/cn'; // Need to create this utility or inline it
+import { LayoutDashboard, AlertTriangle, FileText, Settings, Search, Shield, LogOut, PlusCircle, BrainCircuit } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
 
 const navItems = [
-    { to: '/dashboard', label: 'Command Center', icon: LayoutDashboard },
-    { to: '/alerts', label: 'Alerts Management', icon: AlertTriangle },
-    { to: '/investigation', label: 'Investigation', icon: Search },
-    { to: '/reports', label: 'Reports', icon: FileText },
-    { to: '/settings', label: 'Settings', icon: Settings },
+    { to: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
+    { to: '/ingestion', label: 'Nouveau Ciblage', icon: PlusCircle },
+    { to: '/analyse', label: "Centre d'Analyse", icon: BrainCircuit },
+    { to: '/alerts', label: 'Gestion des Alertes', icon: AlertTriangle },
+    { to: '/evidence', label: 'Preuves & Archives', icon: Shield },
+    { to: '/reports', label: 'Rapports', icon: FileText },
+    { to: '/settings', label: 'Paramètres', icon: Settings },
 ];
 
 export function Sidebar() {

@@ -17,41 +17,41 @@ export interface User {
 export interface Evidence {
     id: number;
     alert_id: number;
-    filename: string; // Changed from file_path based on backend convention usually
+    file_path: string;
     file_hash: string;
-    metadata: Record<string, any>; // Flexible metadata
-    created_at: ISOString;
+    content_text_preview?: string;
+    metadata_json?: Record<string, any>;
+    captured_at?: ISOString;
 }
 
 // --- ANALYSIS TYPES ---
 export interface AnalysisResult {
     id: number;
     alert_id: number;
-    categories: Record<string, number>; // e.g. {"phishing": 0.95}
-    entities: string[];
-    sentiment_score?: number;
+    categories: any[];
+    entities: any[];
 }
 
 // --- ALERT TYPES ---
-export type AlertStatus = 'NEW' | 'INVESTIGATING' | 'Confirmed' | 'False Positive' | 'CLOSED';
-// Note: Backend might send mixed case, frontend should normalize or handle. 
-// Assuming Standard: NEW, INVESTIGATING, CLOSED, FALSE_POSITIVE
+export type AlertStatus = 'NEW' | 'INVESTIGATING' | 'CLOSED' | 'FALSE_POSITIVE';
 
 export interface Alert {
     id: number;
     uuid: UUID;
-    title?: string;
     url: string;
     source_type: string;
     risk_score: number;
-    status: string; // Relaxed for now, will strictly type if enum known
-    severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+    status: string;
+    is_confirmed: boolean;
     created_at: ISOString;
     updated_at?: ISOString;
 
+    // Derived Frontend fields (optional)
+    severity?: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+
     // Relations
-    evidence?: Evidence[]; // Array likely based on backend
-    analysis?: AnalysisResult;
+    evidence?: Evidence; // Single evidence relation based on backend model (uselist=False)
+    analysis_results?: AnalysisResult;
 }
 
 export interface PaginatedResponse<T> {

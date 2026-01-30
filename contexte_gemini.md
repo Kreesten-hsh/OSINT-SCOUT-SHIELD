@@ -48,7 +48,11 @@ Le système implémente une chaîne de valeur complète, dont le cœur est déso
     - [x] Dashboard (Layout, KPI, Charts, Sidebar, Topbar).
     - [x] Alerts List (Table, Filtres, Pagination).
     - [x] Design System (Theme Dark "Deep Void").
-- [ ] **Batch 2 (Investigation) :** Vue détaillée, Preuves, Rapports PDF.
+- [x] **Batch 2 (Investigation) :** 
+    - [x] Vue détaillée (InvestigationPage) avec Timeline & Notes.
+    - [x] Evidence Explorer (Table + JSON Viewer).
+    - [x] Backend : Endpoint `/evidence` ajouté et types sync.
+    - [x] DONNÉES DE TEST INJECTÉES (Scripts Seed).
 - [ ] **Batch 3 (Settings) :** Gestion utilisateurs, Configuration Scrapers.
 
 ## 5. DIRECTIVES DE TRAVAIL

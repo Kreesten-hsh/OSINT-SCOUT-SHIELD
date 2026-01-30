@@ -12,19 +12,19 @@ class EvidenceBase(BaseModel):
 
 class EvidenceResponse(EvidenceBase):
     id: int
-    alert_id: int
+    alert_id: Optional[int] = None
     
     class Config:
         from_attributes = True
 
 # --- ANALYSIS SCHEMAS ---
 class AnalysisResultBase(BaseModel):
-    categories: List[dict]
-    entities: List[list]
+    categories: Optional[List[Any]] = None
+    entities: Optional[List[Any]] = None
 
 class AnalysisResultResponse(AnalysisResultBase):
     id: int
-    alert_id: int
+    alert_id: Optional[int] = None
     
     class Config:
         from_attributes = True

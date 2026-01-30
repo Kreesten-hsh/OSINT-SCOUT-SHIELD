@@ -4,12 +4,19 @@ import { apiClient } from '@/api/client';
 import { Alert } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Search, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
-export default function AlertsPage() {
+interface AlertsPageProps {
+    title?: string;
+}
+
+export default function AlertsPage({ title = 'Gestion des Alertes' }: AlertsPageProps) {
+    const [searchParams, setSearchParams] = useSearchParams();
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
-    const [statusFilter, setStatusFilter] = useState<string>('');
+
+    // Get filter from URL or default to empty (SHOW ALL)
+    const statusFilter = searchParams.get('status') || '';
     const pageSize = 10;
 
     const { data, isLoading, isError } = useQuery({
@@ -19,31 +26,35 @@ export default function AlertsPage() {
                 skip: ((page - 1) * pageSize).toString(),
                 limit: pageSize.toString(),
             });
-            if (search) params.append('q', search); // Assuming backend supports search
+            if (search) params.append('q', search);
             if (statusFilter) params.append('status', statusFilter);
 
             const response = await apiClient.get<Alert[]>('/alerts?' + params.toString());
-            // Mocking pagination structure wrapper if backend returns raw array
-            // Ideally backend returns { items: [], total: 100 }
-            // Adapting for array return for now as per previous knowledge
+            // Backend returns array directly based on current implementation
             return response.data;
         }
     });
 
     const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setStatusFilter(e.target.value);
+        const newStatus = e.target.value;
+        setSearchParams(prev => {
+            if (newStatus) {
+                prev.set('status', newStatus);
+            } else {
+                prev.delete('status');
+            }
+            return prev;
+        });
         setPage(1); // Reset to first page on filter change
     };
 
-    // Mock total count (since API might return just array)
-    // In real implementation, response should include 'total'.
-    // We'll assume infinite scroll style or simple next/prev if total unknown.
+    // Simple hasNextPage logic
     const hasNextPage = data?.length === pageSize;
 
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <h1 className="text-2xl font-bold tracking-tight">Gestion des Alertes</h1>
+                <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
 
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                     <div className="relative flex-1 sm:w-64">

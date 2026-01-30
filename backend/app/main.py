@@ -25,6 +25,12 @@ app.add_middleware(
 # Montage des routes
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
+@app.on_event("startup")
+async def startup_event():
+    import asyncio
+    from app.workers.result_consumer import start_result_consumer
+    asyncio.create_task(start_result_consumer())
+
 @app.get("/health")
 def health_check():
     return {"status": "ok", "service": "OSINT-SCOUT Shield API"}

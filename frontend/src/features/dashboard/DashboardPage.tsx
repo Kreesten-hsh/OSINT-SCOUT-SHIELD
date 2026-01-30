@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { Alert } from '@/types';
@@ -90,10 +91,14 @@ export default function DashboardPage() {
                     <h3 className="text-lg font-semibold mb-4">Activité Récente</h3>
                     <div className="flex-1 overflow-y-auto space-y-4 pr-2">
                         {alerts?.slice(0, 5).map((alert) => (
-                            <div key={alert.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-secondary/50 transition-colors border border-transparent hover:border-border">
+                            <Link
+                                to={`/alerts/${alert.uuid}`}
+                                key={alert.id}
+                                className="flex items-start gap-3 p-3 rounded-lg hover:bg-secondary/50 transition-colors border border-transparent hover:border-border cursor-pointer group"
+                            >
                                 <div className={`w-2 h-2 mt-2 rounded-full ${alert.severity === 'CRITICAL' ? 'bg-destructive' : 'bg-primary'}`} />
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-foreground truncate">{alert.url}</p>
+                                    <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">{alert.url}</p>
                                     <div className="flex items-center gap-2 mt-1">
                                         <span className="text-xs text-muted-foreground capitalize">{alert.source_type}</span>
                                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground border border-border">
@@ -104,7 +109,7 @@ export default function DashboardPage() {
                                 <span className="text-xs text-muted-foreground whitespace-nowrap">
                                     {new Date(alert.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </span>
-                            </div>
+                            </Link>
                         ))}
                     </div>
                 </div>
