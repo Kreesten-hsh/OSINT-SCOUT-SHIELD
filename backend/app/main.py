@@ -29,7 +29,10 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 async def startup_event():
     import asyncio
     from app.workers.result_consumer import start_result_consumer
+    from app.workers.scheduler import start_scheduler
+    
     asyncio.create_task(start_result_consumer())
+    asyncio.create_task(start_scheduler())
 
 @app.get("/health")
 def health_check():

@@ -1,14 +1,27 @@
+import sys
+# Force flush
+sys.stdout.reconfigure(line_buffering=True)
+
 import asyncio
 import json
 import os
-import sys
 
 # Ajout du dossier parent au path pour les imports si nécessaire
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import redis.asyncio as redis
-from runners.engine import OsintScout
-from analysis.processor import FraudAnalyzer
+print("[Worker] STARTING...", flush=True)
+
+try:
+    print("[Worker] Importing Redis...", flush=True)
+    import redis.asyncio as redis
+    print("[Worker] Importing Scraper Engine...", flush=True)
+    from runners.engine import OsintScout
+    print("[Worker] Importing Fraud Analyzer...", flush=True)
+    from analysis.processor import FraudAnalyzer
+    print("[Worker] Imports OK.", flush=True)
+except Exception as e:
+    print(f"[Worker] ❌ Import Error: {e}", flush=True)
+    sys.exit(1)
 
 # Configuration
 REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
@@ -17,35 +30,35 @@ QUEUE_RESULTS = "osint_results"
 
 async def process_task(scout, analyzer, task_data):
     target_url = task_data.get("url")
-    print(f"\n[Worker] 🛠️  Nouvelle tâche reçue : {target_url}")
+    print(f"\n[Worker] 🛠️  Nouvelle tâche reçue : {target_url}", flush=True)
     
     # 1. ÉTAPE COLLECTE (Scraper)
-    print(f"[Worker] 🕷️  Lancement collecte Playwright...")
+    print(f"[Worker] 🕷️  Lancement collecte Playwright...", flush=True)
     try:
         evidence = await scout.scrape_target(target_url)
     except Exception as e:
-        print(f"[Worker] ❌ Erreur critique scraper : {e}")
+        print(f"[Worker] ❌ Erreur critique scraper : {e}", flush=True)
         return None
 
     if evidence.get("status") == "ERROR":
-        print(f"[Worker] ⚠️  Échec collecte : {evidence.get('error')}")
+        print(f"[Worker] ⚠️  Échec collecte : {evidence.get('error')}", flush=True)
         return {
             "task_id": task_data.get("id"),
             "status": "FAILED",
             "error": evidence.get("error")
         }
 
-    # 2. ÉTAPE ANALYSE (NLP)
-    print(f"[Worker] 🧠  Analyse Sémantique (NLP) en cours...")
+    # 2. ÉTAPE ANALYSE (AUTOMATISÉE)
+    print(f"[Worker] 🧠  Analyse Automatisée (Règles) en cours...", flush=True)
     content_text = evidence.get("content_text", "")
     analysis_result = analyzer.analyze_text(content_text)
     
     score = analysis_result["risk_score"]
     is_alert = analysis_result["is_alert"]
     
-    print(f"[Worker] 📊  Résultat Analyse : Score {score}/100 | Alerte: {is_alert}")
+    print(f"[Worker] 📊  Résultat Analyse : Score {score}/100 | Alerte: {is_alert}", flush=True)
     if is_alert:
-        print(f"[Worker] 🚨  MENACE DÉTECTÉE ! Catégories : {[cat['name'] for cat in analysis_result['categories']]}")
+        print(f"[Worker] 🚨  MENACE DÉTECTÉE ! Catégories : {[cat['name'] for cat in analysis_result['categories']]}", flush=True)
 
     # 3. AGGRÉGATION & RAPPORT
     final_report = {
@@ -64,24 +77,28 @@ async def process_task(scout, analyzer, task_data):
     return final_report
 
 async def run_worker():
-    print("[Worker] 🚀 Démarrage du Worker d'Orchestration OSINT...")
+    print("[Worker] 🚀 Démarrage du Worker d'Orchestration OSINT...", flush=True)
     
     # Init Connexions
     try:
         r = redis.from_url(REDIS_URL, decode_responses=True)
         await r.ping()
-        print(f"[Worker] ✅ Connecté à Redis ({REDIS_URL})")
+        print(f"[Worker] ✅ Connecté à Redis ({REDIS_URL})", flush=True)
     except Exception as e:
-        print(f"[Worker] ❌ Impossible de se connecter à Redis : {e}")
+        print(f"[Worker] ❌ Impossible de se connecter à Redis : {e}", flush=True)
         return
 
     # Init Moteurs
-    print("[Worker] 🔧 Initialisation Scraper & NLP...")
+    print("[Worker] 🔧 Initialisation Scraper & NLP...", flush=True)
     scout = OsintScout(headless=True)
     # Le chemin est relatif à la racine /app dans Docker
-    analyzer = FraudAnalyzer(rules_path="config/rules.json")
+    try:
+        analyzer = FraudAnalyzer(rules_path="config/rules.json")
+    except Exception as e:
+        print(f"[Worker] ❌ Erreur Init Analyzer : {e}", flush=True)
+        return
     
-    print(f"[Worker] 👂 En attente de tâches sur la file '{QUEUE_TASKS}'...")
+    print(f"[Worker] 👂 En attente de tâches sur la file '{QUEUE_TASKS}'...", flush=True)
     
     try:
         while True:
@@ -102,20 +119,20 @@ async def run_worker():
                     # Envoi du résultat dans la file correspondante
                     # Dans un système réel, l'API consommerait cette file
                     await r.rpush(QUEUE_RESULTS, json.dumps(report))
-                    print(f"[Worker] 📤 Rapport envoyé vers '{QUEUE_RESULTS}'")
+                    print(f"[Worker] 📤 Rapport envoyé vers '{QUEUE_RESULTS}'", flush=True)
                     
             except json.JSONDecodeError:
-                print(f"[Worker] ❌ Erreur décodage JSON : {data_raw}")
+                print(f"[Worker] ❌ Erreur décodage JSON : {data_raw}", flush=True)
             except Exception as e:
-                print(f"[Worker] ❌ Erreur Inattendue : {e}")
+                print(f"[Worker] ❌ Erreur Inattendue : {e}", flush=True)
 
     except asyncio.CancelledError:
-        print("[Worker] Arrêt demandé...")
+        print("[Worker] Arrêt demandé...", flush=True)
     finally:
-        print("[Worker] Nettoyage ressources...")
+        print("[Worker] Nettoyage ressources...", flush=True)
         await scout.stop()
         await r.aclose()
-        print("[Worker] 👋 Arrêt complet.")
+        print("[Worker] 👋 Arrêt complet.", flush=True)
 
 if __name__ == "__main__":
     try:

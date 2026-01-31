@@ -1,2 +1,2 @@
-from app.database import Base
-from app.models.alert import Alert, Evidence, AnalysisResult
+from .alert import Alert, Evidence, AnalysisResult
+from .source import MonitoringSource, ScrapingRun

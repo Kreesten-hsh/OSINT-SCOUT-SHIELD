@@ -6,15 +6,15 @@ import os
 
 class FraudAnalyzer:
     """
-    Moteur d'analyse NLP et Heuristique.
+    Moteur d'Analyse Heuristique (Règles).
     Détecte les patterns de fraude Mobile Money et Crypto basés sur rules.json.
     """
 
     def __init__(self, rules_path: str = "config/rules.json"):
         self.rules_path = rules_path
         self.rules = self._load_rules()
-        # Chargement du modèle NLP Français
-        print("[*] Chargement du modèle NLP...")
+        # Chargement du modèle Linguistique (Lemmatisation)
+        print("[*] Chargement du moteur linguistique Spacy...")
         try:
             self.nlp = spacy.load("fr_core_news_sm")
         except OSError:
@@ -90,16 +90,7 @@ if __name__ == "__main__":
     # Si exécuté depuis la racine /app (Docker defaut)
     analyzer = FraudAnalyzer(rules_path="config/rules.json") 
     
-    # Texte fictif d'arnaque
-    fake_scam = """
-    URGENT: MTN Mobile Money vous informe que vous avez reçu un transfert erroné de 50.000 FCFA.
-    Veuillez renvoyer le code de validation au 66000000 pour annuler la transaction.
-    Sinon votre compte sera bloqué. Kpayo interdit.
-    """
-    
-    print("\n[+] Analyse du texte suspect :")
-    print(fake_scam)
-    result = analyzer.analyze_text(fake_scam)
-    
-    print("\n[=] RÉSULTAT :")
+    test_text = "URGENT: Transfert erroné de 50.000 FCFA. Renvoyer code au 66000000."
+    print("\n[+] Analyse du texte de test :")
+    result = analyzer.analyze_text(test_text)
     print(json.dumps(result, indent=2, ensure_ascii=False))
