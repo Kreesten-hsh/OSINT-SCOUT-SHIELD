@@ -3,13 +3,16 @@ import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { Evidence } from '@/types';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, FileText, Calendar, Hash, Eye, Terminal } from 'lucide-react';
+import { Loader2, Search, FileText, Calendar, Hash, Eye, Terminal, Lock, Unlock } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function EvidencePage() {
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
     const pageSize = 20;
+
+    const handleNextPage = () => setPage(p => p + 1);
+    const handlePrevPage = () => setPage(p => Math.max(1, p - 1));
 
     // Fetch Global Evidence List
     const { data: evidences, isLoading, isError } = useQuery({
@@ -62,6 +65,7 @@ export default function EvidencePage() {
                                     <th className="px-4 py-3">ID</th>
                                     <th className="px-4 py-3">Fichier / Hash</th>
                                     <th className="px-4 py-3">Capturé le</th>
+                                    <th className="px-4 py-3">Statut</th>
                                     <th className="px-4 py-3 text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -109,6 +113,17 @@ export default function EvidencePage() {
                                                     {ev.captured_at ? format(new Date(ev.captured_at), 'dd/MM HH:mm') : '-'}
                                                 </div>
                                             </td>
+                                            <td className="px-4 py-3">
+                                                {ev.status === 'SEALED' ? (
+                                                    <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-200 flex items-center gap-1 w-fit">
+                                                        <Lock className="w-3 h-3" /> Scellé
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge variant="outline" className="text-muted-foreground flex items-center gap-1 w-fit">
+                                                        <Unlock className="w-3 h-3" /> Actif
+                                                    </Badge>
+                                                )}
+                                            </td>
                                             <td className="px-4 py-3 text-right">
                                                 <button className="p-2 hover:bg-secondary rounded-full">
                                                     <Eye className="w-4 h-4 text-primary" />
@@ -120,6 +135,14 @@ export default function EvidencePage() {
                             </tbody>
                         </table>
                     </div>
+                    {/* Pagination */}
+                    <div className="p-4 border-t border-border bg-secondary/10 flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">Page {page}</span>
+                        <div className="flex gap-2">
+                            <button onClick={handlePrevPage} disabled={page === 1} className="px-3 py-1 text-xs border rounded hover:bg-background disabled:opacity-50">Précédent</button>
+                            <button onClick={handleNextPage} disabled={evidences && evidences.length < pageSize} className="px-3 py-1 text-xs border rounded hover:bg-background disabled:opacity-50">Suivant</button>
+                        </div>
+                    </div>
                 </div>
 
                 {/* DETAIL PANEL - Takes 1/3 width */}
@@ -128,7 +151,14 @@ export default function EvidencePage() {
                         <div className="bg-card border border-border rounded-xl shadow-lg h-full max-h-[70vh] flex flex-col animate-in fade-in slide-in-from-right-4 duration-300">
                             <div className="px-4 py-3 border-b border-border bg-secondary/30 flex justify-between items-center">
                                 <h3 className="font-semibold text-sm">Preuve #{selectedEvidence.id}</h3>
-                                <Badge variant="outline" className="font-mono text-[10px]">SHA-256</Badge>
+                                <div className="flex gap-2">
+                                    {selectedEvidence.status === 'SEALED' && (
+                                        <Badge variant="default" className="bg-amber-600 hover:bg-amber-700 font-mono text-[10px] flex gap-1">
+                                            <Lock className="w-3 h-3" /> SEALED
+                                        </Badge>
+                                    )}
+                                    <Badge variant="outline" className="font-mono text-[10px]">SHA-256</Badge>
+                                </div>
                             </div>
 
                             <div className="p-4 space-y-4 overflow-y-auto flex-1">

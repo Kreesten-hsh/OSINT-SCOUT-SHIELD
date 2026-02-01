@@ -19,6 +19,7 @@ class MonitoringSource(Base):
     is_active = Column(Boolean, default=True)
     
     last_run_at = Column(DateTime(timezone=True), nullable=True)
+    last_status = Column(String, default="NEVER_RUN") # NEVER_RUN, CLEAN, ALERT, ERROR
     next_run_at = Column(DateTime(timezone=True), nullable=True)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())

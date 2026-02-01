@@ -50,19 +50,29 @@ async def process_result(result_data: dict):
                             risk_score=result_data.get("risk_score", 0),
                             is_confirmed=False
                         )
-                        db.add(alert)
-                        await db.commit()
-                        await db.refresh(alert)
-                        
-                        # Update Run Stats
+                    else:
+                        logger.info(f"Auto-Scraping: No threat for Run {task_id}. Creating info Alert for traceability.")
+                        alert = Alert(
+                            url=result_data.get("url"),
+                            source_type="AUTOMATIC_SCRAPING",
+                            status="CLEAN",
+                            risk_score=result_data.get("risk_score", 0),
+                            is_confirmed=True # Clean is verified by robot
+                        )
+
+                    db.add(alert)
+                    await db.commit()
+                    await db.refresh(alert)
+                    
+                    # Update Run Stats
+                    if result_data.get("is_alert", False):
                         scraping_run.alerts_generated_count += 1
                         scraping_run.log_message = f"Menace détectée sur {result_data.get('url')}"
                     else:
-                        logger.info(f"Auto-Scraping: No threat for Run {task_id}. Skipping Alert.")
                         scraping_run.status = "COMPLETED"
-                        scraping_run.log_message = "RAS - Analyse terminée"
-                        await db.commit()
-                        return # Stop here if no alert created
+                        scraping_run.log_message = "RAS - Analyse terminée (Clean)"  
+                        
+                    # Continue to evidence creation...
 
             if not alert:
                 logger.error(f"Task {task_id} corresponds to neither Alert nor ScrapingRun. Ignored.")

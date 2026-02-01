@@ -45,7 +45,7 @@ async def manual_ingestion(
     
     # Avoid MissingGreenlet error by setting relationships explicitly
     # Pydantic tries to access them, triggering a lazy load in async context which fails
-    new_alert.evidence = None
+    new_alert.evidences = []
     new_alert.analysis_results = None
 
     # Push task to Redis worker

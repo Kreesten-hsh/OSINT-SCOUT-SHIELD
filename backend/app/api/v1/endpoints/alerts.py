@@ -21,7 +21,7 @@ async def read_alerts(
     Récupère la liste des alertes détectées.
     """
     query = select(Alert).options(
-        selectinload(Alert.evidence),
+        selectinload(Alert.evidences),
         selectinload(Alert.analysis_results)
     ).order_by(Alert.created_at.desc())
 
@@ -44,7 +44,7 @@ async def read_alert(
     Récupère le détail complet d'une alerte par son UUID.
     """
     query = select(Alert).where(Alert.uuid == alert_uuid).options(
-        selectinload(Alert.evidence),
+        selectinload(Alert.evidences),
         selectinload(Alert.analysis_results)
     )
     result = await db.execute(query)

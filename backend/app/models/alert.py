@@ -23,24 +23,10 @@ class Alert(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Relations
-    evidence = relationship("Evidence", back_populates="alert", uselist=False, cascade="all, delete-orphan")
+    evidences = relationship("Evidence", back_populates="alert", cascade="all, delete-orphan")
     analysis_results = relationship("AnalysisResult", back_populates="alert", uselist=False, cascade="all, delete-orphan")
 
 
-class Evidence(Base):
-    __tablename__ = "evidences"
-
-    id = Column(Integer, primary_key=True, index=True)
-    alert_id = Column(Integer, ForeignKey("alerts.id"))
-    
-    file_path = Column(String) # Chemin vers le screenshot (S3 ou local)
-    file_hash = Column(String, unique=True) # SHA-256
-    content_text_preview = Column(Text) # Extrait du texte
-    
-    captured_at = Column(DateTime(timezone=True))
-    metadata_json = Column(JSON) # Titre, headers, user-agent...
-
-    alert = relationship("Alert", back_populates="evidence")
 
 
 class AnalysisResult(Base):

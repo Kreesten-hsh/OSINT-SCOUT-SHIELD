@@ -14,14 +14,19 @@ export interface User {
 }
 
 // --- EVIDENCE TYPES ---
+export type EvidenceStatus = 'ACTIVE' | 'SEALED';
+
 export interface Evidence {
     id: number;
     alert_id: number;
+    type: string; // SCREENSHOT, HTML, etc.
+    status: EvidenceStatus;
     file_path: string;
     file_hash: string;
     content_text_preview?: string;
     metadata_json?: Record<string, any>;
     captured_at?: ISOString;
+    sealed_at?: ISOString;
 }
 
 // --- ANALYSIS TYPES ---
@@ -50,7 +55,7 @@ export interface Alert {
     severity?: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 
     // Relations
-    evidence?: Evidence; // Single evidence relation based on backend model (uselist=False)
+    evidences?: Evidence[];
     analysis_results?: AnalysisResult;
 }
 

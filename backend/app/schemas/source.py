@@ -14,12 +14,17 @@ class SourceCreate(SourceBase):
     pass
 
 class SourceUpdate(SourceBase):
-    pass
+    name: Optional[str] = None
+    url: Optional[str] = None
+    source_type: Optional[str] = None
+    frequency_minutes: Optional[int] = None
+    is_active: Optional[bool] = None
 
 class SourceResponse(SourceBase):
     id: int
     uuid: uuid.UUID
     last_run_at: Optional[datetime]
+    last_status: Optional[str]
     next_run_at: Optional[datetime]
     created_at: datetime
     

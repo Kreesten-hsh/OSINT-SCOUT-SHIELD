@@ -8,7 +8,7 @@ services:
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
       - ./backend:/app
-      - ./preuves_temp:/app/preuves_temp
+      - ./evidences_store:/app/evidences_store
     ports:
       - "8000:8000"
     environment:
@@ -47,7 +47,7 @@ services:
     container_name: osint_scraper
     volumes:
       - ./scrapers:/app
-      - ./preuves_temp:/app/preuves_temp # Pour récupérer les preuves sur l'hôte
+      - ./evidences_store:/app/evidences_store # Pour récupérer les preuves sur l'hôte
     environment:
       - REDIS_URL=redis://redis:6379/0
     command: python workers/worker.py # Lancement automatique du worker

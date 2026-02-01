@@ -14,7 +14,7 @@ router = APIRouter()
 
 # TODO: Configurer le chemin réel via une variable d'env ou un volume partagé
 # Pour l'instant, on suppose que les preuves sont montées dans /app/preuves_temp
-EVIDENCE_DIR = "/app/preuves_temp"
+EVIDENCE_DIR = "/app/evidences_store"
 
 @router.get("/", response_model=List[EvidenceResponse])
 async def read_evidences(

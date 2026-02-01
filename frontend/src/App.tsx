@@ -10,7 +10,11 @@ import AnalysisPage from '@/features/analysis/AnalysisPage';
 import ReportsListPage from '@/features/reports/ReportsListPage';
 import ReportDetailPage from '@/features/reports/ReportDetailPage';
 import EvidencePage from '@/features/evidence/EvidencePage';
+import MonitoringPage from '@/features/monitoring/MonitoringPage';
+import SourceDetailPage from '@/features/monitoring/SourceDetailPage';
 import { useAuthStore } from '@/store/auth-store';
+
+import { Toaster } from '@/components/ui/toaster';
 
 const queryClient = new QueryClient();
 
@@ -28,6 +32,8 @@ function App() {
 
           <Route element={<RequireAuth />}>
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/monitoring" element={<MonitoringPage />} />
+            <Route path="/monitoring/:id" element={<SourceDetailPage />} />
             <Route path="/ingestion" element={<IngestionPage />} />
             <Route path="/analyse" element={<AnalysisPage />} />
             <Route path="/reports" element={<ReportsListPage />} />
@@ -39,6 +45,7 @@ function App() {
           </Route>
         </Routes>
       </BrowserRouter>
+      <Toaster />
     </QueryClientProvider>
   )
 }

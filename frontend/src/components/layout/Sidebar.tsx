@@ -1,10 +1,11 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, AlertTriangle, FileText, Settings, Search, Shield, LogOut, PlusCircle, BrainCircuit } from 'lucide-react';
+import { LayoutDashboard, AlertTriangle, FileText, Settings, Search, Shield, LogOut, PlusCircle, BrainCircuit, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
 
 const navItems = [
     { to: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
+    { to: '/monitoring', label: 'Surveillance Auto', icon: Globe },
     { to: '/ingestion', label: 'Nouveau Ciblage', icon: PlusCircle },
     { to: '/analyse', label: "Centre d'Analyse", icon: BrainCircuit },
     { to: '/alerts', label: 'Gestion des Alertes', icon: AlertTriangle },

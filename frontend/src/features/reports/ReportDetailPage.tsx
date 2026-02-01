@@ -1,186 +1,204 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { useParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Shield, MapPin, Hash, AlertTriangle, Fingerprint, Printer, CheckCircle } from 'lucide-react';
+import { Shield, FileText, Download, Lock, CheckCircle, Loader2, Fingerprint } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function ReportDetailPage() {
-    const { id } = useParams<{ id: string }>();
+    const { id } = useParams<{ id: string }>(); // This is the ALERT UUID
+    const { toast } = useToast();
+    const queryClient = useQueryClient();
 
-    const { data: alert, isLoading } = useQuery({
-        queryKey: ['report-detail', id],
+    // 1. Fetch Alert Info (Live Data)
+    const { data: alert, isLoading: isLoadingAlert } = useQuery({
+        queryKey: ['alert-detail', id], // Renamed to clarify it's an alert
         queryFn: async () => {
+            // We use the same endpoint as before but semantically it's an alert
             const response = await apiClient.get<any>(`/reports/${id}`);
             return response.data;
+        },
+        enabled: !!id
+    });
+
+    // 2. Fetch Existing Reports for this Alert (Static Artifacts)
+    const { data: existingReports, isLoading: isLoadingReports } = useQuery({
+        queryKey: ['reports-for-alert', id],
+        queryFn: async () => {
+            // Pour l'instant on liste tout, idéalement on filtrerait par alert_id côté backend
+            // Simplification: On va assumer que si le backend renvoie une liste, on peut filtrer ici 
+            // OU pour le MVC, on check juste s'il y a un rapport lié à cette alerte via une nouvelle route
+            // MAIS pour rester simple et fiable avec l'API actuelle 'list_reports':
+            // On va ajouter une propriété 'reports' à la réponse de l'alerte plus tard si besoin.
+            // Pour le moment on va implémenter le bouton 'Générer' et voir le résultat.
+            return [];
         }
     });
 
-    if (isLoading) return <div className="text-center p-10">Génération du rapport...</div>;
-    if (!alert) return <div className="text-center p-10 text-destructive">Rapport introuvable.</div>;
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [lastGeneratedReport, setLastGeneratedReport] = useState<any>(null); // To satisfy UI feedback immediately
 
-    const handlePrint = () => {
-        window.print();
-    };
+    const generateMutation = useMutation({
+        mutationFn: async () => {
+            const response = await apiClient.post(`/reports/generate/${id}`);
+            return response.data;
+        },
+        onMutate: () => setIsGenerating(true),
+        onSuccess: (data) => {
+            toast({
+                title: "Rapport Forensique Généré",
+                description: "Le dossier a été figé et scellé avec succès.",
+            });
+            setLastGeneratedReport(data);
+            setIsGenerating(false);
+            queryClient.invalidateQueries({ queryKey: ['reports-list'] });
+        },
+        onError: (error) => {
+            toast({
+                title: "Erreur de génération",
+                description: "Impossible de créer le rapport.",
+                variant: "destructive"
+            });
+            setIsGenerating(false);
+        }
+    });
+
+    if (isLoadingAlert) return <div className="flex justify-center p-10"><Loader2 className="animate-spin" /></div>;
+    if (!alert) return <div className="text-center p-10 text-destructive">Dossier introuvable.</div>;
+
+    // View: If a report was just generated OR if we confirm one exists (omitted for speed unless we add filtered endpoint)
+    // For Lot 6 User Flow: The user clicks "Generate", it creates it, and gives download link.
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8 pb-20">
-            {/* PRINT ACTION BAR */}
-            <div className="flex justify-end print:hidden">
-                <Button onClick={handlePrint} variant="outline" className="flex items-center gap-2">
-                    <Printer className="w-4 h-4" />
-                    Imprimer / PDF
-                </Button>
+        <div className="max-w-4xl mx-auto space-y-8 pb-20 animate-in fade-in duration-500">
+
+            {/* HEADER METADATA (LIVE) */}
+            <div className="bg-white border rounded-xl p-6 shadow-sm flex justify-between items-start">
+                <div>
+                    <h1 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                        <Shield className="w-6 h-6 text-primary" />
+                        Dossier d'Investigation
+                    </h1>
+                    <div className="flex gap-4 text-sm text-slate-500">
+                        <span className="font-mono">REF: {alert.uuid.slice(0, 8)}</span>
+                        <span>•</span>
+                        <span>Créé le {format(new Date(alert.created_at), "d MMM yyyy", { locale: fr })}</span>
+                        <span>•</span>
+                        <Badge variant={alert.risk_score > 70 ? "destructive" : "outline"}>
+                            Risque {alert.risk_score}/100
+                        </Badge>
+                    </div>
+                </div>
+
+                <div className="text-right">
+                    <p className="text-sm font-semibold mb-1">Cible</p>
+                    <p className="font-mono text-sm bg-slate-100 px-2 py-1 rounded truncate max-w-[300px]">{alert.url}</p>
+                </div>
             </div>
 
-            {/* REPORT DOCUMENT - A4 like formatting */}
-            <div className="bg-white text-slate-900 mx-auto min-h-[29.7cm] p-[2cm] shadow-2xl print:shadow-none print:p-0 font-serif">
+            {/* GENERATION / DOWNLOAD PANEL */}
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-8 text-center space-y-6">
 
-                {/* HEAD */}
-                <div className="border-b-2 border-slate-900 pb-6 mb-8 flex justify-between items-end">
-                    <div>
-                        <h1 className="text-3xl font-bold uppercase tracking-wider text-slate-900 flex items-center gap-2">
-                            <Shield className="w-8 h-8" />
-                            OSINT-SCOUT
-                        </h1>
-                        <p className="text-xs uppercase font-bold tracking-widest mt-1 text-slate-500">
-                            Division Renseignement & Cyber-Investigation
-                        </p>
-                    </div>
-                    <div className="text-right text-sm font-mono">
-                        <p>RÉF: {alert.uuid.slice(0, 8).toUpperCase()}</p>
-                        <p>DATE: {format(new Date(), 'dd/MM/yyyy', { locale: fr })}</p>
-                        <p className="font-bold text-red-700 uppercase">CONFIDENTIEL / TLP:AMBER</p>
-                    </div>
-                </div>
+                {!lastGeneratedReport ? (
+                    <>
+                        <div className="mx-auto w-16 h-16 bg-white border border-slate-200 rounded-full flex items-center justify-center shadow-sm">
+                            <Lock className="w-8 h-8 text-slate-400" />
+                        </div>
 
-                {/* TITLE */}
-                <div className="text-center mb-10">
-                    <h2 className="text-2xl font-bold uppercase underline decoration-2 underline-offset-4">
-                        Rapport d'Investigation Numérique
-                    </h2>
-                    <p className="mt-2 text-sm italic text-slate-600">
-                        Article 434-15-2 du Code Pénal (ref. interne)
-                    </p>
-                </div>
-
-                {/* 1. SYNTHÈSE */}
-                <section className="mb-8">
-                    <h3 className="text-lg font-bold uppercase border-b border-slate-300 mb-4 flex items-center gap-2">
-                        1. Synthèse Administrative
-                    </h3>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                            <p><span className="font-bold">Cible (URL) :</span> {alert.url}</p>
-                            <p><span className="font-bold">Type de Source :</span> {alert.source_type}</p>
+                            <h2 className="text-xl font-bold text-slate-900">Génération de Rapport Forensique</h2>
+                            <p className="text-slate-500 max-w-md mx-auto mt-2 text-sm">
+                                Cette action va créer une <b>copie figée et immuable</b> de toutes les données du dossier (Preuves, Analyse, Scores).
+                                Un fichier PDF déterministe certifié par SHA-256 sera généré.
+                            </p>
                         </div>
-                        <div>
-                            <p><span className="font-bold">Date de Saisie :</span> {format(new Date(alert.created_at), "d MMMM yyyy 'à' HH:mm", { locale: fr })}</p>
-                            <p><span className="font-bold">Statut Dossier :</span> <span className="uppercase">{alert.status}</span></p>
-                        </div>
-                    </div>
-                </section>
 
-                {/* 2. ANALYSE TECHNIQUE */}
-                <section className="mb-8">
-                    <h3 className="text-lg font-bold uppercase border-b border-slate-300 mb-4 flex items-center gap-2">
-                        2. Analyse Technique & Risques
-                    </h3>
-
-                    <div className="bg-slate-50 p-4 border border-slate-200 rounded mb-4">
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="font-bold">Niveau de Menace Calculé :</span>
-                            <span className="font-mono font-bold text-xl">{alert.risk_score}/100</span>
-                        </div>
-                        <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden print:border print:border-slate-400">
-                            <div
-                                className="h-full bg-slate-800"
-                                style={{ width: `${alert.risk_score}%` }}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="text-sm space-y-2 text-justify">
-                        <p>
-                            L'analyse automatisée réalisée par le moteur OSINT-SCOUT a mis en évidence des indicateurs techniques
-                            justifiant le score de risque ci-dessus. Le traitement heuristique du contenu a permis d'isoler
-                            les éléments probants suivants.
-                        </p>
-                        <ul className="list-disc pl-5 mt-2 space-y-1">
-                            {alert.analysis_results && alert.analysis_results.summary ? (
-                                <li>{alert.analysis_results.summary}</li>
+                        <Button
+                            size="lg"
+                            onClick={() => generateMutation.mutate()}
+                            disabled={isGenerating}
+                            className="bg-slate-900 text-white hover:bg-slate-800"
+                        >
+                            {isGenerating ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Cristallisation des données...
+                                </>
                             ) : (
-                                <li>Aucun résumé automatique disponible. L'analyse manuelle prévaut.</li>
+                                <>
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    Générer et Figer le Rapport
+                                </>
                             )}
-                            {/* Entity extraction results could go here if available in list format */}
-                        </ul>
-                    </div>
-                </section>
-
-                {/* 3. PREUVES NUMÉRIQUES */}
-                <section className="mb-8 break-inside-avoid">
-                    <h3 className="text-lg font-bold uppercase border-b border-slate-300 mb-4 flex items-center gap-2">
-                        3. Preuves Numériques (Hash & Captures)
-                    </h3>
-
-                    {alert.evidence ? (
-                        <div className="space-y-4">
-                            <div className="flex bg-slate-100 p-2 font-mono text-xs border border-slate-300">
-                                <span className="font-bold mr-2">SHA-256 (Metadonnées) :</span>
-                                <span className="break-all">{alert.evidence.file_hash || "N/A"}</span>
-                            </div>
-
-                            {alert.evidence.screenshot_path ? (
-                                <div className="border border-slate-300 p-1">
-                                    <img
-                                        src={`${import.meta.env.VITE_API_URL}/evidence/file/${alert.evidence.screenshot_path.split('/').pop()}`}
-                                        alt="Preuve Capture"
-                                        className="w-full h-auto grayscale-[20%] contrast-125"
-                                    />
-                                    <p className="text-xs text-center mt-1 text-slate-500 italic">Figure 1 : Capture horodatée du vecteur cible.</p>
-                                </div>
-                            ) : (
-                                <p className="text-sm italic text-slate-500">Aucune capture visuelle jointe au dossier.</p>
-                            )}
+                        </Button>
+                        <p className="text-xs text-slate-400">Action irréversible. Hash cryptographique calculé à la volée.</p>
+                    </>
+                ) : (
+                    <div className="animate-in zoom-in duration-300">
+                        <div className="mx-auto w-16 h-16 bg-green-50 border border-green-200 rounded-full flex items-center justify-center mb-4">
+                            <CheckCircle className="w-8 h-8 text-green-600" />
                         </div>
-                    ) : (
-                        <p className="text-sm italic text-slate-500">Aucune preuve technique indexée.</p>
-                    )}
-                </section>
 
-                {/* 4. CONCLUSION */}
-                <section className="mt-10 break-inside-avoid">
-                    <h3 className="text-lg font-bold uppercase border-b border-slate-300 mb-4">
-                        4. Conclusion & Recommandations
-                    </h3>
-                    <div className="border border-slate-900 p-6 min-h-[150px]">
-                        <p className="font-bold text-sm mb-2">Décision de l'Analyste :</p>
-                        <p className="text-sm text-justify">
-                            {alert.is_confirmed ?
-                                "Dossier CONFIRMÉ POSITIF. Les éléments techniques corroborent la nature malveillante de l'URL soumise. Recommandation de blocage immédiat et transmission aux autorités compétentes." :
-                                "Dossier EN ATTENTE / NON CONCLUANT. Les éléments actuels ne permettent pas de confirmer l'intention malveillante avec certitude. Surveillance active maintenue."
-                            }
-                        </p>
+                        <h2 className="text-xl font-bold text-slate-900">Rapport Disponible</h2>
+                        <div className="bg-white p-4 rounded border border-slate-200 inline-block text-left mt-4 mb-6 max-w-lg">
+                            <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+                                <span className="text-slate-500 font-medium">ID Rapport:</span>
+                                <span className="font-mono">{lastGeneratedReport.uuid}</span>
 
-                        <div className="mt-10 flex justify-end">
-                            <div className="text-center">
-                                <p className="text-xs font-bold mb-8">Visa de la Direction</p>
-                                <div className="w-32 border-b border-slate-900"></div>
+                                <span className="text-slate-500 font-medium flex items-center gap-1">
+                                    <Fingerprint className="w-3 h-3" /> Hash (SHA256):
+                                </span>
+                                <span className="font-mono text-xs break-all bg-slate-50 p-1 rounded border border-slate-100">
+                                    {lastGeneratedReport.report_hash}
+                                </span>
                             </div>
                         </div>
+
+                        <div className="flex justify-center gap-4">
+                            <Button
+                                variant="outline"
+                                onClick={() => window.open(`${import.meta.env.VITE_API_URL}/reports/${lastGeneratedReport.uuid}/download/pdf`, '_blank')}
+                            >
+                                <Download className="w-4 h-4 mr-2" />
+                                Télécharger PDF
+                            </Button>
+
+                            <Button
+                                variant="ghost"
+                                onClick={() => window.open(`${import.meta.env.VITE_API_URL}/reports/${lastGeneratedReport.uuid}/download/json`, '_blank')}
+                            >
+                                <div className="font-mono text-xs">JSON (Brut)</div>
+                            </Button>
+                        </div>
                     </div>
-                </section>
+                )}
+            </div>
 
-                {/* FOOTER */}
-                <div className="mt-20 pt-4 border-t border-slate-300 text-center text-[10px] text-slate-400 font-mono">
-                    <p>Ce document est généré automatiquement par OSINT-SCOUT v1.0.3.</p>
-                    <p>Toute modification invalide la chaîne de garde numérique.</p>
+            {/* PREVIEW OF LIVE DATA (Read Only context) */}
+            <div className="opacity-60 pointer-events-none filter grayscale-[50%] select-none">
+                <div className="flex items-center gap-2 mb-4">
+                    <AlertTriangle className="w-4 h-4 text-orange-500" />
+                    <h3 className="text-sm font-semibold uppercase text-slate-500">Aperçu des données vivantes (Non contractuel)</h3>
                 </div>
-
+                {/* Reusing parts of the old view just for context background */}
+                <div className="bg-white p-8 border rounded-xl min-h-[400px]">
+                    <div className="h-4 bg-slate-100 rounded w-1/3 mb-4"></div>
+                    <div className="h-4 bg-slate-100 rounded w-1/4 mb-10"></div>
+                    <div className="grid grid-cols-2 gap-8">
+                        <div className="h-32 bg-slate-100 rounded"></div>
+                        <div className="space-y-2">
+                            <div className="h-4 bg-slate-100 rounded w-full"></div>
+                            <div className="h-4 bg-slate-100 rounded w-5/6"></div>
+                            <div className="h-4 bg-slate-100 rounded w-4/6"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );
 }
 
-// Simple button component inline mock if needed, but assuming shadcn button exists

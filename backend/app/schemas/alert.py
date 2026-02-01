@@ -6,6 +6,8 @@ from datetime import datetime
 class EvidenceBase(BaseModel):
     file_path: str
     file_hash: str
+    type: str = "SCREENSHOT"
+    status: str = "ACTIVE"
     content_text_preview: Optional[str] = None
     captured_at: Optional[datetime] = None
     metadata_json: Optional[dict] = None
@@ -48,7 +50,7 @@ class AlertResponse(AlertBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     
-    evidence: Optional[EvidenceResponse] = None
+    evidences: List[EvidenceResponse] = []
     analysis_results: Optional[AnalysisResultResponse] = None
 
     class Config:
