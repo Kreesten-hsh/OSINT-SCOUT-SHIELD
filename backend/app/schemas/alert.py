@@ -42,13 +42,14 @@ class AlertBase(BaseModel):
 class AlertUpdate(BaseModel):
     status: Optional[str] = None
     is_confirmed: Optional[bool] = None
-    # analyst_notes: Optional[str] = None # A ajouter au modèle DB si nécessaire
+    analysis_note: Optional[str] = None
 
 class AlertResponse(AlertBase):
     id: int
     uuid: UUID4
     created_at: datetime
     updated_at: Optional[datetime] = None
+    analysis_note: Optional[str] = None
     
     evidences: List[EvidenceResponse] = []
     analysis_results: Optional[AnalysisResultResponse] = None

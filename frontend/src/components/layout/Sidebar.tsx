@@ -5,12 +5,12 @@ import { useAuthStore } from '@/store/auth-store';
 
 const navItems = [
     { to: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
-    { to: '/monitoring', label: 'Surveillance Auto', icon: Globe },
-    { to: '/ingestion', label: 'Nouveau Ciblage', icon: PlusCircle },
-    { to: '/analyse', label: "Centre d'Analyse", icon: BrainCircuit },
     { to: '/alerts', label: 'Gestion des Alertes', icon: AlertTriangle },
+    { to: '/analyse', label: "Centre d'Analyse", icon: BrainCircuit },
     { to: '/evidence', label: 'Preuves & Archives', icon: Shield },
     { to: '/reports', label: 'Rapports', icon: FileText },
+    { to: '/monitoring', label: 'Surveillance Auto', icon: Globe },
+    { to: '/ingestion', label: 'Nouveau Ciblage', icon: PlusCircle },
     { to: '/settings', label: 'Paramètres', icon: Settings },
 ];
 

@@ -20,7 +20,9 @@ class Alert(Base):
     status = Column(String, default="NEW", index=True) # Index pour filtre workflow
     
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True) # Index pour chronologie
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True) # Index pour chronologie
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    analysis_note = Column(Text, nullable=True) # Note d'analyse persistante
 
     # Relations
     evidences = relationship("Evidence", back_populates="alert", cascade="all, delete-orphan")

@@ -1,9 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
-import { ShieldAlert, Activity, Users, AlertTriangle, Zap, Server, BrainCircuit } from 'lucide-react';
+import { ShieldAlert, Activity, Users, AlertTriangle, Zap, Server, BrainCircuit, CheckCircle, ArrowRight } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend } from 'recharts';
+import { Alert } from '@/types';
+import { useNavigate } from 'react-router-dom';
 
-// Interface pour les stats (match le backend analysis.py)
+// Interface pour les stats
 interface AnalysisStats {
     global_risk_score: number;
     analyzed_count: number;
@@ -12,31 +14,45 @@ interface AnalysisStats {
 }
 
 export default function AnalysisPage() {
+    const navigate = useNavigate();
+
     // 1. Fetch Stats Agrégées
-    const { data: stats, isLoading, isError } = useQuery({
+    const { data: stats, isLoading: statsLoading } = useQuery({
         queryKey: ['analysis-stats'],
         queryFn: async () => {
-            const response = await apiClient.get<AnalysisStats>('/analysis/stats');
-            return response.data;
+            try {
+                const response = await apiClient.get<AnalysisStats>('/analysis/stats');
+                return response.data;
+            } catch (e) {
+                return null;
+            }
         }
     });
 
-    if (isLoading) {
+    // 2. Fetch Alerts to Validate (Status = ANALYZED or INVESTIGATING, High Risk)
+    const { data: pendingAlerts, isLoading: alertsLoading } = useQuery({
+        queryKey: ['alerts', 'pending-validation'],
+        queryFn: async () => {
+            // Fetching all (limit 100) and filtering client side for MVP real-time
+            // Ideally backend filter: GET /alerts?status=ANALYZED&min_score=50
+            const response = await apiClient.get<Alert[]>('/alerts?status=ANALYZED&limit=50');
+            // Also include INVESTIGATING?
+            // Prompt says: "Alertes nécessitant validation humaine" (status=ANALYZED)
+            return (response.data as any).items || response.data || [];
+        }
+    });
+
+    // Filter localy for risk score 50-85 logic (from Prompt)
+    const validationQueue = pendingAlerts?.filter(a => a.risk_score >= 50) || [];
+    const highRiskQueue = validationQueue.filter(a => a.risk_score >= 80); // Priority
+
+    if (statsLoading || alertsLoading) {
         return (
             <div className="flex items-center justify-center h-[50vh] animate-pulse">
                 <div className="flex flex-col items-center gap-2">
                     <Activity className="w-10 h-10 text-primary animate-spin" />
-                    <span className="text-muted-foreground">Calibration du moteur d'analyse...</span>
+                    <span className="text-muted-foreground">Chargement des données analytiques...</span>
                 </div>
-            </div>
-        );
-    }
-
-    if (isError) {
-        return (
-            <div className="flex items-center justify-center h-[50vh] text-destructive">
-                <AlertTriangle className="w-6 h-6 mr-2" />
-                Erreur de récupération des données analytiques.
             </div>
         );
     }
@@ -50,25 +66,32 @@ export default function AnalysisPage() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
                         <BrainCircuit className="w-8 h-8 text-primary" />
-                        Centre d'Analyse Automatisée
+                        Centre d'Analyse
                     </h1>
                     <p className="text-muted-foreground mt-1">
-                        Traitement heuristique et visualisation des menaces en temps réel.
+                        Supervision des détections automatiques et validation humaine.
                     </p>
                 </div>
+                {/* 
+                Removed Fake "Zap" badge. 
+                Replacing with Real "Queue Status"
+                */}
                 <div className="flex items-center gap-2 px-4 py-2 bg-secondary/20 rounded-lg border border-border">
-                    <Zap className="w-4 h-4 text-yellow-500" />
-                    <span className="text-sm font-medium">Moteur Inférence: Actif (v2.1)</span>
+                    <Activity className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-medium">Flux: {validationQueue.length} en attente</span>
                 </div>
             </div>
 
             {/* KPI GRID */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="p-6 rounded-xl border border-border bg-card shadow-sm hover:border-primary/50 transition-all">
+
+                {/* CARD 1: SCORE GLOBAL (Keep if real, otherwise maybe Average Risk?) */}
+                <div className="p-6 rounded-xl border border-border bg-card shadow-sm">
                     <div className="flex items-center justify-between mb-4">
-                        <span className="text-muted-foreground font-medium text-sm text-transform uppercase tracking-wider">Score Global de Risque</span>
+                        <span className="text-muted-foreground font-medium text-sm uppercase tracking-wider">Score Moyen Risque</span>
                         <ShieldAlert className="w-5 h-5 text-primary" />
                     </div>
+                    {/* Assuming stats.global_risk_score is real avg from backend */}
                     <div className="flex items-end gap-3">
                         <span className="text-4xl font-bold tracking-tight">{stats?.global_risk_score || 0}/100</span>
                     </div>
@@ -80,48 +103,56 @@ export default function AnalysisPage() {
                     </div>
                 </div>
 
-                <div className="p-6 rounded-xl border border-border bg-card shadow-sm hover:border-primary/50 transition-all">
+                {/* CARD 2: Volume Traité */}
+                <div className="p-6 rounded-xl border border-border bg-card shadow-sm">
                     <div className="flex items-center justify-between mb-4">
-                        <span className="text-muted-foreground font-medium text-sm text-transform uppercase tracking-wider">Dossiers Traités</span>
+                        <span className="text-muted-foreground font-medium text-sm uppercase tracking-wider">Analyses Terminées</span>
                         <Server className="w-5 h-5 text-blue-500" />
                     </div>
                     <span className="text-4xl font-bold tracking-tight">{stats?.analyzed_count || 0}</span>
-                    <p className="text-xs text-muted-foreground mt-2">Depuis le dernier reboot système</p>
+                    <p className="text-xs text-muted-foreground mt-2">Dossiers traités par le moteur</p>
                 </div>
 
-                <div className="p-6 rounded-xl border border-border bg-card shadow-sm hover:border-primary/50 transition-all">
+                {/* CARD 3: VALIDATION QUEUE (REPLACES FAKE ENTITIES) */}
+                <div className="p-6 rounded-xl border border-border bg-card shadow-sm hover:border-orange-500/50 transition-colors cursor-pointer group" onClick={() => navigate('/alerts?status=ANALYZED')}>
                     <div className="flex items-center justify-between mb-4">
-                        <span className="text-muted-foreground font-medium text-sm text-transform uppercase tracking-wider">Entités Critiques</span>
-                        <Users className="w-5 h-5 text-orange-500" />
+                        <span className="text-muted-foreground font-medium text-sm uppercase tracking-wider text-orange-500">À Valider</span>
+                        <CheckCircle className="w-5 h-5 text-orange-500" />
                     </div>
-                    <div className="space-y-2 mt-2">
-                        {stats?.top_entities?.length ? stats.top_entities.map((entity, i) => (
-                            <div key={i} className="flex items-center gap-2 text-sm">
-                                <AlertTriangle className="w-3 h-3 text-destructive" />
-                                <span className="font-mono bg-secondary/30 px-1.5 rounded">{entity}</span>
+                    <div className="flex items-baseline gap-2">
+                        <span className="text-4xl font-bold tracking-tight text-orange-500">{validationQueue.length}</span>
+                        <span className="text-sm text-muted-foreground">alertes</span>
+                    </div>
+
+                    <div className="mt-4 space-y-2">
+                        {validationQueue.slice(0, 2).map(alert => (
+                            <div key={alert.id} className="text-xs flex justify-between items-center p-1.5 bg-background rounded border border-border">
+                                <span className="truncate max-w-[120px]">{new URL(alert.url).hostname}</span>
+                                <span className="font-mono text-orange-500 font-bold">{alert.risk_score}</span>
                             </div>
-                        )) : (
-                            <span className="text-sm text-muted-foreground italic">En attente de détection...</span>
-                        )}
+                        ))}
+                    </div>
+                    <div className="mt-3 text-xs text-primary group-hover:underline flex items-center">
+                        Voir la file d'attente <ArrowRight className="w-3 h-3 ml-1" />
                     </div>
                 </div>
             </div>
 
             {/* MAIN CONTENT SPLIT */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* CHART */}
-                <div className="bg-card border border-border rounded-xl p-6 h-[400px] flex flex-col w-full min-w-0"> {/* added w-full min-w-0 */}
-                    <h3 className="font-semibold text-lg mb-6">Répartition par Niveau de Menace</h3>
-                    <div className="flex-1 w-full h-full relative min-h-[300px]"> {/* added h-full min-h */}
-                        {hasData ? (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* CHART (2/3) */}
+                <div className="lg:col-span-2 bg-card border border-border rounded-xl p-6 h-[400px] flex flex-col">
+                    <h3 className="font-semibold text-lg mb-6">Distribution des Risques</h3>
+                    <div className="flex-1 w-full min-h-0">
+                        {hasData && stats?.threat_distribution ? (
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
                                         data={stats.threat_distribution}
                                         cx="50%"
                                         cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={100}
+                                        innerRadius={80}
+                                        outerRadius={120}
                                         paddingAngle={5}
                                         dataKey="value"
                                     >
@@ -137,46 +168,39 @@ export default function AnalysisPage() {
                                 </PieChart>
                             </ResponsiveContainer>
                         ) : (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
-                                <PieChart className="w-16 h-16 opacity-20 mb-2" />
-                                <p className="text-sm">Données insuffisantes pour la projection.</p>
+                            <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
+                                <Activity className="w-16 h-16 opacity-20 mb-2" />
+                                <p className="text-sm">Données insuffisantes.</p>
                             </div>
                         )}
                     </div>
                 </div>
 
-                {/* EXPLICATION DU MOTEUR (Static for transparency) */}
-                <div className="bg-card border border-border rounded-xl p-6">
+                {/* ACTION / QUEUE DETAILS (1/3) - REPLACES FAKE LOGIC TEXT */}
+                <div className="lg:col-span-1 bg-card border border-border rounded-xl p-6 flex flex-col">
                     <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                        <Activity className="w-5 h-5 text-primary" />
-                        Logique de Décision (Whitelist / Blacklist)
+                        <Users className="w-5 h-5 text-primary" />
+                        Priorités Analyste
                     </h3>
-                    <div className="space-y-4 text-sm text-muted-foreground">
-                        <p>
-                            Le moteur d'analyse utilise une approche déterministe basée sur des règles strictes pour éviter les faux positifs.
-                        </p>
-
-                        <div className="space-y-2">
-                            <div className="p-3 bg-secondary/10 rounded-lg border border-border">
-                                <span className="font-semibold text-green-500">Règle #102 :</span>
-                                <span className="ml-2">Détection de mots-clés "Urgence" + "Paiement" dans le DOM.</span>
+                    <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                        {validationQueue.length > 0 ? (
+                            validationQueue.map(alert => (
+                                <div key={alert.id} className="p-3 rounded-lg border border-border bg-background hover:bg-secondary/50 transition-colors cursor-pointer" onClick={() => navigate(`/alerts/${alert.uuid}`)}>
+                                    <div className="flex justify-between items-start mb-1">
+                                        <span className="text-xs font-bold text-orange-500 uppercase">Score {alert.risk_score}</span>
+                                        <span className="text-[10px] text-muted-foreground">{new Date(alert.created_at).toLocaleDateString()}</span>
+                                    </div>
+                                    <p className="text-sm font-medium truncate" title={alert.url}>{new URL(alert.url).hostname}</p>
+                                    <p className="text-xs text-muted-foreground mt-1 truncate">{alert.source_type}</p>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="text-center py-10 text-muted-foreground">
+                                <CheckCircle className="w-12 h-12 mx-auto mb-3 opacity-20 text-green-500" />
+                                <p className="text-sm">Aucune alerte en attente.</p>
+                                <p className="text-xs opacity-70">Le flux est à jour.</p>
                             </div>
-                            <div className="p-3 bg-secondary/10 rounded-lg border border-border">
-                                <span className="font-semibold text-orange-500">Règle #205 :</span>
-                                <span className="ml-2">Analyse de la date de création du domaine (Whois &lt; 30 jours).</span>
-                            </div>
-                            <div className="p-3 bg-secondary/10 rounded-lg border border-border">
-                                <span className="font-semibold text-red-500">Règle #300 :</span>
-                                <span className="ml-2">Présence de formulaires de saisie de CB sur connexion non-sécurisée.</span>
-                            </div>
-                        </div>
-
-                        <div className="mt-4 p-4 bg-primary/5 border border-primary/20 rounded-md">
-                            <p className="text-xs font-mono text-primary">
-                                System Status: OPTIMAL<br />
-                                Last Model Update: 2026-01-29 14:00 UTC
-                            </p>
-                        </div>
+                        )}
                     </div>
                 </div>
             </div>

@@ -10,7 +10,7 @@ export interface Token {
 export interface User {
     email: string;
     role: 'admin' | 'analyst';
-    // Add other user fields as returned by the backend if any, otherwise keep minimal
+    full_name?: string;
 }
 
 // --- EVIDENCE TYPES ---
@@ -38,7 +38,7 @@ export interface AnalysisResult {
 }
 
 // --- ALERT TYPES ---
-export type AlertStatus = 'NEW' | 'INVESTIGATING' | 'CLOSED' | 'FALSE_POSITIVE';
+export type AlertStatus = 'NEW' | 'INVESTIGATING' | 'CLOSED' | 'FALSE_POSITIVE' | 'CONFIRMED' | 'CLEAN' | 'ANALYZED';
 
 export interface Alert {
     id: number;
@@ -50,6 +50,7 @@ export interface Alert {
     is_confirmed: boolean;
     created_at: ISOString;
     updated_at?: ISOString;
+    analysis_note?: string;
 
     // Derived Frontend fields (optional)
     severity?: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';

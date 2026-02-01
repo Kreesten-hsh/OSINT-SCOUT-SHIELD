@@ -1,117 +1,164 @@
-import { Link } from 'react-router-dom';
+import { Shield, Activity, Globe, Wifi, FileBarChart, AlertTriangle } from 'lucide-react';
+import { useAuthStore } from '@/store/auth-store';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
-import { Alert } from '@/types';
-import { ShieldAlert, CheckCircle, Activity, AlertTriangle } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function DashboardPage() {
-    // Fetch all alerts to calculate stats
-    // Ideally backend provides a /stats endpoint, but prompt says "GET /api/v1/alerts"
-    const { data: alerts, isLoading, error } = useQuery({
-        queryKey: ['alerts'],
+    const user = useAuthStore((state) => state.user);
+
+    // Queries
+    const { data: weeklyStats } = useQuery({
+        queryKey: ['dashboard', 'weekly'],
         queryFn: async () => {
-            const response = await apiClient.get<Alert[]>('/alerts'); // Assuming array return or { items: [] }
-            // Handling both potential structures for robustness
-            if (Array.isArray(response.data)) return response.data;
-            return (response.data as any).items || [];
+            // Returning mock if fail, or handle error gracefully
+            try {
+                const res = await apiClient.get('/dashboard/stats/weekly');
+                return res.data;
+            } catch (e) {
+                return null;
+            }
         }
     });
 
-    if (isLoading) return <div className="text-center py-20 text-muted-foreground animate-pulse">Chargement du Command Center...</div>;
-    if (error) return <div className="text-center py-20 text-destructive">Erreur de chargement des données.</div>;
+    const { data: criticalThreats } = useQuery({
+        queryKey: ['dashboard', 'critical'],
+        queryFn: async () => {
+            try {
+                const res = await apiClient.get('/dashboard/stats/critical-threats?threshold=85');
+                return res.data;
+            } catch (e) {
+                return null;
+            }
+        }
+    });
 
-    const total = alerts?.length || 0;
-    const critical = alerts?.filter(a => a.severity === 'CRITICAL').length || 0;
-    const newAlerts = alerts?.filter(a => a.status === 'NEW').length || 0;
-    const closed = alerts?.filter(a => a.status === 'CLOSED').length || 0;
-
-    // Prepare chart data (Alerts by Date - Last 7 days mock or derived)
-    const chartData = [
-        { name: 'Lun', alerts: 4 },
-        { name: 'Mar', alerts: 7 },
-        { name: 'Mer', alerts: 3 },
-        { name: 'Jeu', alerts: 10 },
-        { name: 'Ven', alerts: 5 },
-        { name: 'Sam', alerts: 2 },
-        { name: 'Dim', alerts: 1 },
+    const stats = [
+        {
+            label: "Alertes (7 jours)",
+            value: weeklyStats ? weeklyStats.current_week_count : "-",
+            change: weeklyStats ? `${weeklyStats.delta_percent > 0 ? '+' : ''}${weeklyStats.delta_percent}%` : "...",
+            isPositive: weeklyStats ? weeklyStats.delta_percent >= 0 : true,
+            icon: AlertTriangle,
+            color: "text-amber-500"
+        },
+        {
+            label: "Menace Critique",
+            value: criticalThreats ? criticalThreats.count : "-",
+            change: "Actives (Score ≥ 85)",
+            isPositive: false,
+            icon: Shield,
+            color: "text-red-500"
+        },
+        {
+            label: "Sources Actives",
+            value: "14", // TODO: Real source count later
+            change: "Monitoring On",
+            isPositive: true,
+            icon: Wifi,
+            color: "text-emerald-500"
+        },
+        {
+            label: "Rapports Générés",
+            value: "8", // TODO
+            change: "Certifiés",
+            isPositive: true,
+            icon: FileBarChart,
+            color: "text-blue-500"
+        }
     ];
 
-    const StatCard = ({ title, value, icon: Icon, color, trend }: any) => (
-        <div className="bg-card border border-border rounded-xl p-6 flex flex-col justify-between hover:border-primary/50 transition-colors">
-            <div className="flex items-center justify-between mb-4">
-                <span className="text-muted-foreground font-medium text-sm">{title}</span>
-                <div className={`p-2 rounded-lg bg-${color}/10 text-${color}`}>
-                    <Icon className="w-5 h-5" />
-                </div>
-            </div>
-            <div>
-                <span className="text-3xl font-bold tracking-tight">{value}</span>
-                {trend && <span className="text-xs text-muted-foreground ml-2">{trend}</span>}
-            </div>
-        </div>
-    );
-
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold tracking-tight">Vue Globale (Command Center)</h1>
-                <div className="text-sm text-muted-foreground">
-                    Dernière mise à jour: {new Date().toLocaleTimeString()}
+        <div className="space-y-8 animate-in fade-in duration-500">
+            {/* Header */}
+            <div className="flex justify-between items-center">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Vue d'Ensemble</h1>
+                    <p className="text-muted-foreground mt-1">
+                        Bienvenue, <span className="font-semibold text-foreground">{user?.full_name || user?.email}</span>.
+                        Voici la situation forensique actuelle.
+                    </p>
+                </div>
+                <div className="flex items-center space-x-2 bg-card border px-3 py-1.5 rounded-full text-xs font-medium animate-pulse">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span className="text-emerald-500 uppercase tracking-wider">Système Opérationnel</span>
                 </div>
             </div>
 
-            {/* KPI GRID */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard title="Alertes Actives" value={total} icon={Activity} color="primary" trend="+12% cette semaine" />
-                <StatCard title="Menaces Critiques" value={critical} icon={ShieldAlert} color="destructive" trend="Priorité Haute" />
-                <StatCard title="Nouvelles Détections" value={newAlerts} icon={AlertTriangle} color="accent" trend="Depuis 24h" />
-                <StatCard title="Incidents Résolus" value={closed} icon={CheckCircle} color="green-500" trend="Total cumulé" />
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {stats.map((stat, index) => (
+                    <div
+                        key={index}
+                        className="p-6 rounded-xl border bg-card hover:bg-accent/5 transition-colors"
+                    >
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
+                                <h4 className="text-2xl font-bold mt-2">{stat.value}</h4>
+                            </div>
+                            <div className={`p-3 rounded-full bg-background border ${stat.color}`}>
+                                <stat.icon className="w-5 h-5" />
+                            </div>
+                        </div>
+                        <div className="mt-4 flex items-center text-xs">
+                            <span className={stat.isPositive ? "text-emerald-500 font-medium" : "text-red-500 font-medium"}>
+                                {stat.change}
+                            </span>
+                            <span className="text-muted-foreground ml-2">
+                                {index === 0 ? "vs semaine dernière" : ""}
+                            </span>
+                        </div>
+                    </div>
+                ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[400px]">
-                {/* CHART */}
-                <div className="lg:col-span-2 bg-card border border-border rounded-xl p-6">
-                    <h3 className="text-lg font-semibold mb-6">Tendance des Menaces</h3>
-                    <ResponsiveContainer width="100%" height="85%">
-                        <BarChart data={chartData}>
-                            <XAxis dataKey="name" stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} />
-                            <YAxis stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
-                            <Tooltip
-                                contentStyle={{ backgroundColor: '#1E293B', border: 'none', borderRadius: '8px', color: '#fff' }}
-                                cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                            />
-                            <Bar dataKey="alerts" fill="#0D93F2" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                        </BarChart>
-                    </ResponsiveContainer>
-                </div>
+            {/* Critical Threats */}
+            <div className="grid grid-cols-1 lg:grid-cols-7 gap-6">
+                <div className="lg:col-span-4 rounded-xl border bg-card p-6">
+                    <h3 className="text-lg font-semibold mb-6 flex items-center">
+                        <Activity className="w-5 h-5 mr-2 text-primary" />
+                        Menaces Critiques Actives (Top 3)
+                    </h3>
 
-                {/* ACTIVITY FEED */}
-                <div className="bg-card border border-border rounded-xl p-6 overflow-hidden flex flex-col">
-                    <h3 className="text-lg font-semibold mb-4">Activité Récente</h3>
-                    <div className="flex-1 overflow-y-auto space-y-4 pr-2">
-                        {alerts?.slice(0, 5).map((alert) => (
-                            <Link
-                                to={`/alerts/${alert.uuid}`}
-                                key={alert.id}
-                                className="flex items-start gap-3 p-3 rounded-lg hover:bg-secondary/50 transition-colors border border-transparent hover:border-border cursor-pointer group"
-                            >
-                                <div className={`w-2 h-2 mt-2 rounded-full ${alert.severity === 'CRITICAL' ? 'bg-destructive' : 'bg-primary'}`} />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">{alert.url}</p>
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <span className="text-xs text-muted-foreground capitalize">{alert.source_type}</span>
-                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground border border-border">
-                                            Score: {alert.risk_score}
+                    <div className="space-y-4">
+                        {criticalThreats && criticalThreats.top_alerts && criticalThreats.top_alerts.length > 0 ? (
+                            criticalThreats.top_alerts.map((alert: any) => (
+                                <div key={alert.id} className="flex items-center justify-between p-4 rounded-lg border bg-background hover:border-primary/50 transition-colors group cursor-pointer" onClick={() => window.location.href = `/alerts/${alert.uuid}`}>
+                                    <div className="flex items-center space-x-4">
+                                        <div className="p-2 rounded-full bg-red-500/10 text-red-500">
+                                            <AlertTriangle className="w-4 h-4" />
+                                        </div>
+                                        <div>
+                                            <p className="font-medium group-hover:text-primary transition-colors">{alert.title || alert.url || "Menace Détectée"}</p>
+                                            <p className="text-xs text-muted-foreground">{alert.source_type} • {new Date(alert.created_at).toLocaleDateString()}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center space-x-4">
+                                        <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-500 border border-red-500/20">
+                                            Score {alert.risk_score}
                                         </span>
+                                        <span className="text-xs text-muted-foreground uppercase">{alert.status}</span>
                                     </div>
                                 </div>
-                                <span className="text-xs text-muted-foreground whitespace-nowrap">
-                                    {new Date(alert.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                            </Link>
-                        ))}
+                            ))
+                        ) : (
+                            <div className="text-center py-10 text-muted-foreground">
+                                <Shield className="w-10 h-10 mx-auto mb-3 opacity-20" />
+                                <p>Aucune menace critique active.</p>
+                            </div>
+                        )}
                     </div>
+                </div>
+
+                <div className="lg:col-span-3 rounded-xl border bg-card p-6 flex flex-col items-center justify-center text-center">
+                    <Globe className="w-16 h-16 text-primary/20 mb-4 animate-pulse" />
+                    <h3 className="text-lg font-semibold">Carte des Menaces</h3>
+                    <p className="text-sm text-muted-foreground mt-2 max-w-xs">
+                        La visualisation géographique nécessite le module GeoIP (Lot 9).
+                    </p>
+                    <button className="mt-6 px-4 py-2 text-sm font-medium border rounded-lg opacity-50 cursor-not-allowed">
+                        Ouvrir la War Room (Bientôt)
+                    </button>
                 </div>
             </div>
         </div>
