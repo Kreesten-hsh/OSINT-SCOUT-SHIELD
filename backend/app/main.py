@@ -23,7 +23,27 @@ async def global_exception_handler(request: Request, exc: Exception):
         
     return JSONResponse(
         status_code=500,
-        content={"message": "Internal Server Error", "detail": str(exc)},
+        content={"success": False, "message": "Internal Server Error", "error": str(exc)},
+    )
+
+from fastapi.exceptions import RequestValidationError
+from fastapi import HTTPException
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"success": False, "message": exc.detail},
+    )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    # Construct a clear message from validation errors
+    errors = exc.errors()
+    msg = "; ".join([f"{e['loc'][-1]}: {e['msg']}" for e in errors])
+    return JSONResponse(
+        status_code=422,
+        content={"success": False, "message": f"Erreur de validation: {msg}", "data": errors},
     )
 
 # Configuration CORS (Pour le Frontend React)

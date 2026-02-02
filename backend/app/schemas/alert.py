@@ -1,5 +1,5 @@
-from typing import List, Optional, Any
-from pydantic import BaseModel, UUID4
+from typing import List, Optional, Any, Literal
+from pydantic import BaseModel, UUID4, field_validator
 from datetime import datetime
 
 # --- EVIDENCE SCHEMAS ---
@@ -36,17 +36,29 @@ class AlertBase(BaseModel):
     url: str
     source_type: str
     risk_score: int
-    status: str
-    is_confirmed: bool
+    status: Literal["NEW", "IN_REVIEW", "CONFIRMED", "DISMISSED"]
 
 class AlertUpdate(BaseModel):
-    status: Optional[str] = None
-    is_confirmed: Optional[bool] = None
+    status: Optional[Literal["NEW", "IN_REVIEW", "CONFIRMED", "DISMISSED"]] = None
     analysis_note: Optional[str] = None
+    
+    from pydantic import model_validator
 
-class AlertResponse(AlertBase):
+    @model_validator(mode='after')
+    def validate_status_with_note(self):
+        """Ensure analysis_note is provided when status is CONFIRMED or DISMISSED"""
+        if self.status in ('CONFIRMED', 'DISMISSED'):
+            if not self.analysis_note or not self.analysis_note.strip():
+                raise ValueError(f"analysis_note is required when status is {self.status}")
+        return self
+
+class AlertResponse(BaseModel):
     id: int
     uuid: UUID4
+    url: str
+    source_type: str
+    risk_score: int
+    status: Literal["NEW", "IN_REVIEW", "CONFIRMED", "DISMISSED"]
     created_at: datetime
     updated_at: Optional[datetime] = None
     analysis_note: Optional[str] = None
@@ -56,3 +68,4 @@ class AlertResponse(AlertBase):
 
     class Config:
         from_attributes = True
+

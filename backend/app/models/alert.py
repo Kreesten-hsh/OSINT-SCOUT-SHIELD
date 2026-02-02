@@ -16,13 +16,11 @@ class Alert(Base):
     source_type = Column(String) # WEB, SOCIAL, DARKWEB
     
     risk_score = Column(Integer, index=True) # Index pour tri/filtre performant
-    is_confirmed = Column(Boolean, default=False) 
-    status = Column(String, default="NEW", index=True) # Index pour filtre workflow
+    status = Column(String, default="NEW", index=True) # NEW, IN_REVIEW, CONFIRMED, DISMISSED
     
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True) # Index pour chronologie
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True) # Index pour chronologie
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    analysis_note = Column(Text, nullable=True) # Note d'analyse persistante
+    analysis_note = Column(Text, nullable=True) # Note d'analyse (obligatoire pour CONFIRMED/DISMISSED)
 
     # Relations
     evidences = relationship("Evidence", back_populates="alert", cascade="all, delete-orphan")

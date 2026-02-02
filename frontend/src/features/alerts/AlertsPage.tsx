@@ -74,9 +74,9 @@ export default function AlertsPage({ title = 'Gestion des Alertes' }: AlertsPage
                     >
                         <option value="">Tous les statuts</option>
                         <option value="NEW">Nouveau</option>
-                        <option value="INVESTIGATING">En cours</option>
-                        <option value="CLOSED">Fermé</option>
-                        <option value="FALSE_POSITIVE">Faux Positif</option>
+                        <option value="IN_REVIEW">En révision</option>
+                        <option value="CONFIRMED">Confirmé</option>
+                        <option value="DISMISSED">Classé sans suite</option>
                     </select>
                 </div>
             </div>
@@ -136,9 +136,10 @@ export default function AlertsPage({ title = 'Gestion des Alertes' }: AlertsPage
                                         <td className="px-6 py-4">
                                             <Badge variant={
                                                 alert.status === 'NEW' ? 'outline' :
-                                                    alert.status === 'CLOSED' ? 'success' : 'default'
+                                                    alert.status === 'IN_REVIEW' ? 'default' :
+                                                        alert.status === 'CONFIRMED' ? 'destructive' : 'secondary'
                                             }>
-                                                {alert.status}
+                                                {alert.status === 'IN_REVIEW' ? 'EN RÉVISION' : alert.status}
                                             </Badge>
                                         </td>
                                         <td className="px-6 py-4 font-mono text-muted-foreground">

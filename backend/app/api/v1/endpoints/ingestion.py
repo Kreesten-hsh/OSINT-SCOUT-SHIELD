@@ -17,7 +17,9 @@ class IngestionRequest(BaseModel):
     source_type: str = "WEB" # WEB, SOCIAL, DARKWEB
     notes: Optional[str] = None
 
-@router.post("/manual", response_model=AlertResponse, status_code=status.HTTP_201_CREATED)
+from app.schemas.response import APIResponse
+
+@router.post("/manual", response_model=APIResponse[AlertResponse], status_code=status.HTTP_201_CREATED)
 async def manual_ingestion(
     request: IngestionRequest,
     db: AsyncSession = Depends(get_db)
@@ -35,18 +37,27 @@ async def manual_ingestion(
         url=request.url,
         source_type=request.source_type,
         risk_score=0, # Sera calculé plus tard
-        status="NEW",
-        is_confirmed=False
+        status="NEW"
     )
     
     db.add(new_alert)
     await db.commit()
     await db.refresh(new_alert)
     
-    # Avoid MissingGreenlet error by setting relationships explicitly
-    # Pydantic tries to access them, triggering a lazy load in async context which fails
-    new_alert.evidences = []
-    new_alert.analysis_results = None
+    # Manually construct AlertResponse to avoid implicit lazy loading triggers
+    response_data = AlertResponse(
+        id=new_alert.id,
+        uuid=new_alert.uuid,
+        url=new_alert.url,
+        source_type=new_alert.source_type,
+        risk_score=new_alert.risk_score,
+        status=new_alert.status,
+        created_at=new_alert.created_at,
+        updated_at=new_alert.updated_at,
+        analysis_note=new_alert.analysis_note,
+        evidences=[],
+        analysis_results=None
+    )
 
     # Push task to Redis worker
     try:
@@ -57,9 +68,13 @@ async def manual_ingestion(
             "source_type": new_alert.source_type
         }
         await r.rpush("osint_to_scan", json.dumps(task_payload))
-        await r.aclose() # Always close connection
+        await r.aclose()
     except Exception as e:
         print(f"ERROR: Failed to push to Redis: {e}")
-        # We don't raise HTTP exception to not fail the request, but logging is critical
+
     
-    return new_alert
+    return APIResponse(
+        success=True,
+        message="Cible ajoutée avec succès. Analyse en cours.",
+        data=response_data
+    )

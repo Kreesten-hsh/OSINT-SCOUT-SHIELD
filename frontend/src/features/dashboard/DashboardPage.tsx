@@ -32,6 +32,30 @@ export default function DashboardPage() {
         }
     });
 
+    const { data: sourcesData } = useQuery({
+        queryKey: ['dashboard', 'sources'],
+        queryFn: async () => {
+            try {
+                const res = await apiClient.get('/dashboard/stats/sources-active');
+                return res.data;
+            } catch (e) {
+                return null;
+            }
+        }
+    });
+
+    const { data: reportsData } = useQuery({
+        queryKey: ['dashboard', 'reports'],
+        queryFn: async () => {
+            try {
+                const res = await apiClient.get('/dashboard/stats/reports-count');
+                return res.data;
+            } catch (e) {
+                return null;
+            }
+        }
+    });
+
     const stats = [
         {
             label: "Alertes (7 jours)",
@@ -51,7 +75,7 @@ export default function DashboardPage() {
         },
         {
             label: "Sources Actives",
-            value: "14", // TODO: Real source count later
+            value: sourcesData ? sourcesData.count : "-",
             change: "Monitoring On",
             isPositive: true,
             icon: Wifi,
@@ -59,7 +83,7 @@ export default function DashboardPage() {
         },
         {
             label: "Rapports Générés",
-            value: "8", // TODO
+            value: reportsData ? reportsData.count : "-",
             change: "Certifiés",
             isPositive: true,
             icon: FileBarChart,
@@ -72,7 +96,7 @@ export default function DashboardPage() {
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Vue d'Ensemble</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
                     <p className="text-muted-foreground mt-1">
                         Bienvenue, <span className="font-semibold text-foreground">{user?.full_name || user?.email}</span>.
                         Voici la situation forensique actuelle.
@@ -89,14 +113,14 @@ export default function DashboardPage() {
                 {stats.map((stat, index) => (
                     <div
                         key={index}
-                        className="p-6 rounded-xl border bg-card hover:bg-accent/5 transition-colors"
+                        className="p-6 rounded-xl border border-input bg-card hover:bg-accent/5 transition-colors"
                     >
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
                                 <h4 className="text-2xl font-bold mt-2">{stat.value}</h4>
                             </div>
-                            <div className={`p-3 rounded-full bg-background border ${stat.color}`}>
+                            <div className={`p-3 rounded-full bg-background border-input border ${stat.color}`}>
                                 <stat.icon className="w-5 h-5" />
                             </div>
                         </div>
@@ -114,7 +138,7 @@ export default function DashboardPage() {
 
             {/* Critical Threats */}
             <div className="grid grid-cols-1 lg:grid-cols-7 gap-6">
-                <div className="lg:col-span-4 rounded-xl border bg-card p-6">
+                <div className="lg:col-span-4 rounded-xl border border-input bg-card p-6">
                     <h3 className="text-lg font-semibold mb-6 flex items-center">
                         <Activity className="w-5 h-5 mr-2 text-primary" />
                         Menaces Critiques Actives (Top 3)
@@ -123,7 +147,7 @@ export default function DashboardPage() {
                     <div className="space-y-4">
                         {criticalThreats && criticalThreats.top_alerts && criticalThreats.top_alerts.length > 0 ? (
                             criticalThreats.top_alerts.map((alert: any) => (
-                                <div key={alert.id} className="flex items-center justify-between p-4 rounded-lg border bg-background hover:border-primary/50 transition-colors group cursor-pointer" onClick={() => window.location.href = `/alerts/${alert.uuid}`}>
+                                <div key={alert.id} className="flex items-center justify-between p-4 rounded-lg border border-input bg-background hover:border-primary/50 transition-colors group cursor-pointer" onClick={() => window.location.href = `/alerts/${alert.uuid}`}>
                                     <div className="flex items-center space-x-4">
                                         <div className="p-2 rounded-full bg-red-500/10 text-red-500">
                                             <AlertTriangle className="w-4 h-4" />
@@ -150,7 +174,7 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
-                <div className="lg:col-span-3 rounded-xl border bg-card p-6 flex flex-col items-center justify-center text-center">
+                <div className="lg:col-span-3 rounded-xl border border-input bg-card p-6 flex flex-col items-center justify-center text-center">
                     <Globe className="w-16 h-16 text-primary/20 mb-4 animate-pulse" />
                     <h3 className="text-lg font-semibold">Carte des Menaces</h3>
                     <p className="text-sm text-muted-foreground mt-2 max-w-xs">

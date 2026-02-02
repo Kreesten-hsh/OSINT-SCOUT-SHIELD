@@ -51,24 +51,11 @@ async def get_critical_threats(
     Status should probably not be 'CLEAN' (assuming 'CLEAN' means resolved safe).
     We focus on NEW, INVESTIGATING, CONFIRMED etc.
     """
-    # Assuming standard status strings, exclude resolved ones e.g. "CLEAN"
-    # Or just show all high risk?
-    # Prompt says: status IN (ANALYZED, CONFIRMED) -- wait, prompt section 2.2 says:
-    # "status IN (ANALYZED, CONFIRMED)"
-    # But new alerts might also be critical.
-    # Let's adjust logic: Prompt explicitly requested "status IN (ANALYZED, CONFIRMED)"
-    # BUT typically critical threats include NEW ones.
-    # I will stick to the Prompt's strict requirement for now, but maybe include NEW if it feels empty?
-    # Prompt Rule: "status IN (ANALYZED, CONFIRMED)"
     
-    target_statuses = ["ANALYZED", "CONFIRMED", "NEW", "INVESTIGATING"] 
-    # Broadening slightly because "Active Threat" implies anything not Closed/Clean.
-    # If user insisted on ANALYZED/CONFIRMED specifically, I should check.
-    # Prompt 2.2 says: "status IN (ANALYZED, CONFIRMED)" explicitly. I will follow that strict instruction.
-    
+    # Prompt 2.2 says: "status IN (ANALYZED, CONFIRMED)" explicitly.    # Query for critical alerts (CONFIRMED only, score >= threshold)
     query_base = select(Alert).where(
-        (Alert.risk_score >= threshold) &
-        (Alert.status.in_(["ANALYZED", "CONFIRMED"]))
+        Alert.risk_score >= threshold,
+        Alert.status == "CONFIRMED"  # Only validated threats
     )
     
     # Count
@@ -96,3 +83,30 @@ async def get_critical_threats(
             for a in top_alerts
         ]
     }
+
+@router.get("/stats/sources-active")
+async def get_active_sources(db: AsyncSession = Depends(get_db)):
+    """
+    Returns the count of active monitoring sources (is_active=True).
+    """
+    from app.models import MonitoringSource
+    
+    query = select(func.count(MonitoringSource.id)).where(MonitoringSource.is_active == True)
+    result = await db.execute(query)
+    count = result.scalar() or 0
+    
+    return {"count": count}
+
+@router.get("/stats/reports-count")
+async def get_reports_count(db: AsyncSession = Depends(get_db)):
+    """
+    Returns the total count of generated reports.
+    """
+    from app.models import Report
+    
+    query = select(func.count(Report.id))
+    result = await db.execute(query)
+    count = result.scalar() or 0
+    
+    return {"count": count}
+

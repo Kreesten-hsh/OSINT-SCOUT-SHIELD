@@ -55,7 +55,9 @@ async def read_alert(
     return alert
 
 
-@router.patch("/{alert_uuid}", response_model=AlertResponse)
+from app.schemas.response import APIResponse
+
+@router.patch("/{alert_uuid}", response_model=APIResponse[AlertResponse])
 async def update_alert(
     alert_uuid: uuid.UUID,
     alert_update: AlertUpdate,
@@ -82,4 +84,8 @@ async def update_alert(
     await db.commit()
     await db.refresh(alert)
     
-    return alert
+    return APIResponse(
+        success=True,
+        message="Alerte mise à jour avec succès",
+        data=alert
+    )

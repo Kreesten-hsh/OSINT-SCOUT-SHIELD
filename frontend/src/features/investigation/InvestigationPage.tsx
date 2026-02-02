@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { Alert, AlertStatus } from '@/types';
+import { APIResponse } from '@/api/types';
 import { Badge } from '@/components/ui/badge';
 import {
     ArrowLeft, ShieldAlert, Clock, Globe,
@@ -39,33 +40,45 @@ export default function InvestigationPage() {
 
     // 2. Mutation for Alert Update (Status or Notes)
     const updateAlertMutation = useMutation({
-        mutationFn: async (data: { status?: string; analysis_note?: string; is_confirmed?: boolean }) => {
-            await apiClient.patch<Alert>(`/alerts/${id}`, data);
+        mutationFn: async (data: { status?: string; analysis_note?: string }) => {
+            // Utilisation du type générique APIResponse<Alert>
+            const res = await apiClient.patch<APIResponse<Alert>>(`/alerts/${id}`, data);
+            return res.data;
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['alert', id] });
-            toast({ title: "Mise à jour enregistrée", description: "Les modifications ont été sauvegardées." });
+        onSuccess: (response) => {
+            if (response.success) {
+                queryClient.invalidateQueries({ queryKey: ['alert', id] });
+                // Message venant du backend
+                toast({ title: "Succès", description: response.message });
+            } else {
+                toast({ title: "Erreur", description: response.message || "Échec de l'action", variant: "destructive" });
+            }
         },
-        onError: () => {
-            toast({ title: "Erreur", description: "Échec de la sauvegarde.", variant: "destructive" });
+        onError: (err: any) => {
+            // Si le backend renvoie 4xx/5xx avec un body standard
+            const msg = err.response?.data?.message || "Échec de la sauvegarde.";
+            toast({ title: "Erreur", description: msg, variant: "destructive" });
         }
     });
 
     // 3. Mutation for Report Generation
     const generateReportMutation = useMutation({
         mutationFn: async () => {
-            // Need numeric ID for report generation usually, but let's check if UUID works or if we have ID
-            // The endpoint /reports/generate/{alert_id} usually takes integer ID in previous implementation.
-            // Alert interface has 'id' (int) and 'uuid' (string).
             if (!alert?.id) throw new Error("Alert ID missing");
-            await apiClient.post(`/reports/generate/${alert.id}`);
+            const res = await apiClient.post<APIResponse<any>>(`/reports/generate/${alert.uuid}`); // Utilisation UUID préférée si possible, sinon ID
+            return res.data;
         },
-        onSuccess: () => {
-            toast({ title: "Rapport Généré", description: "Le rapport forensique est disponible." });
-            navigate('/reports'); // Redirect to reports list
+        onSuccess: (response) => {
+            if (response.success) {
+                toast({ title: "Rapport Généré", description: response.message });
+                navigate('/reports');
+            } else {
+                toast({ title: "Erreur", description: response.message, variant: "destructive" });
+            }
         },
-        onError: (err) => {
-            toast({ title: "Erreur Génération", description: "Impossible de générer le rapport.", variant: "destructive" });
+        onError: (err: any) => {
+            const msg = err.response?.data?.message || "Impossible de générer le rapport.";
+            toast({ title: "Erreur Génération", description: msg, variant: "destructive" });
         }
     });
 
@@ -73,12 +86,25 @@ export default function InvestigationPage() {
         updateAlertMutation.mutate({ analysis_note: notes });
     };
 
-    const handleClose = (confirmed: boolean) => {
-        if (window.confirm(confirmed ? "Confirmer cette menace comme RÉELLE ?" : "Marquer comme FAUX POSITIF ?")) {
-            updateAlertMutation.mutate({
-                status: confirmed ? 'CONFIRMED' : 'CLEAN',
-                is_confirmed: confirmed
-            });
+    const handleConfirm = () => {
+        const noteValue = notes.trim();
+        if (!noteValue) {
+            toast({ title: "Note requise", description: "Vous devez ajouter une note d'analyse avant de confirmer.", variant: "destructive" });
+            return;
+        }
+        if (window.confirm("Confirmer cette menace comme RÉELLE ?")) {
+            updateAlertMutation.mutate({ status: 'CONFIRMED', analysis_note: noteValue });
+        }
+    };
+
+    const handleDismiss = () => {
+        const noteValue = notes.trim();
+        if (!noteValue) {
+            toast({ title: "Note requise", description: "Vous devez ajouter une justification avant de classer sans suite.", variant: "destructive" });
+            return;
+        }
+        if (window.confirm("Classer cette alerte sans suite ?")) {
+            updateAlertMutation.mutate({ status: 'DISMISSED', analysis_note: noteValue });
         }
     };
 
@@ -114,7 +140,7 @@ export default function InvestigationPage() {
     const severityClass = getSeverityColor(alert.risk_score);
     const severityLabel = alert.risk_score >= 90 ? 'CRITICAL' : alert.risk_score >= 70 ? 'HIGH' : alert.risk_score >= 40 ? 'MEDIUM' : 'LOW';
 
-    const canGenerateReport = ['CONFIRMED', 'CLEAN', 'ANALYZED'].includes(alert.status || '');
+    const canGenerateReport = alert.status === 'CONFIRMED';
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -148,36 +174,38 @@ export default function InvestigationPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    {/* ACTION BUTTONS */}
+                    {/* ACTION 1: Prendre en charge (NEW → IN_REVIEW) */}
                     {alert.status === 'NEW' && (
                         <button
-                            onClick={() => updateAlertMutation.mutate({ status: 'INVESTIGATING' })}
+                            onClick={() => updateAlertMutation.mutate({ status: 'IN_REVIEW' })}
                             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm font-medium"
                         >
                             <Activity className="w-4 h-4" />
-                            Démarrer l'Analyse
+                            Prendre en charge
                         </button>
                     )}
 
-                    {(alert.status === 'INVESTIGATING' || alert.status === 'ANALYZED') && (
+                    {/* ACTION 2 & 3: Confirmer ou Classer (IN_REVIEW only) */}
+                    {alert.status === 'IN_REVIEW' && (
                         <>
                             <button
-                                onClick={() => handleClose(false)}
+                                onClick={handleDismiss}
                                 className="flex items-center gap-2 px-3 py-2 bg-secondary text-secondary-foreground border border-input rounded-md hover:bg-secondary/80 transition-colors text-sm font-medium"
                             >
                                 <XCircle className="w-4 h-4" />
-                                Faux Positif
+                                Classer sans suite
                             </button>
                             <button
-                                onClick={() => handleClose(true)}
+                                onClick={handleConfirm}
                                 className="flex items-center gap-2 px-3 py-2 bg-destructive/10 text-destructive border border-destructive/20 rounded-md hover:bg-destructive/20 transition-colors text-sm font-medium"
                             >
                                 <CheckCircle className="w-4 h-4" />
-                                Confirmer Menace
+                                Confirmer la menace
                             </button>
                         </>
                     )}
 
+                    {/* GENERATE REPORT: Only for CONFIRMED alerts */}
                     {canGenerateReport && (
                         <button
                             onClick={() => generateReportMutation.mutate()}

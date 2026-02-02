@@ -23,7 +23,6 @@ async def save_report_to_db(report: dict, db: AsyncSession):
             source_type="WEB", # À affiner selon la source
             risk_score=report.get("risk_score"),
             status="NEW" if report.get("is_alert") else "Closed",
-            is_confirmed=False
         )
         db.add(alert)
         await db.flush() # Pour avoir l'ID

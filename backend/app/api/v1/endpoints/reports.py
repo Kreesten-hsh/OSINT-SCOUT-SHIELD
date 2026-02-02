@@ -28,7 +28,9 @@ async def list_reports(
     result = await db.execute(query)
     return result.scalars().all()
 
-@router.post("/generate/{alert_uuid}")
+from app.schemas.response import APIResponse
+
+@router.post("/generate/{alert_uuid}", response_model=APIResponse[Any])
 async def generate_report(
     alert_uuid: uuid.UUID,
     db: AsyncSession = Depends(get_db)
@@ -94,7 +96,19 @@ async def generate_report(
 
     await db.refresh(new_report)
     
-    return new_report
+    # Manually construction response data to avoid serialization issues of SQLA model
+    report_data = {
+        "id": new_report.id,
+        "uuid": new_report.uuid,
+        "generated_at": new_report.generated_at,
+        "pdf_path": new_report.pdf_path
+    }
+
+    return APIResponse(
+        success=True,
+        message="Rapport généré et preuves scellées avec succès.",
+        data=report_data
+    )
 
 @router.get("/{report_uuid}/download/pdf")
 async def download_pdf(

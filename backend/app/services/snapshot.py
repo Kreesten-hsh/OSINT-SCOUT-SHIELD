@@ -58,12 +58,12 @@ async def create_alert_snapshot(alert_id: int, db: AsyncSession) -> dict:
     alert_core = {
         "uuid": str(alert.uuid),
         "url": alert.url,
-        "source_type": alert.source_type,
-        "status_at_snapshot": alert.status,
-        "risk_score": alert.risk_score,
-        "is_confirmed": alert.is_confirmed,
+        "source_type": alert.source_type or "",
+        "risk_score": alert.risk_score or 0,
+        "status_at_snapshot": alert.status or "UNKNOWN",
         "created_at": alert.created_at.isoformat() if alert.created_at else None,
-        "updated_at": alert.updated_at.isoformat() if alert.updated_at else None
+        "updated_at": alert.updated_at.isoformat() if alert.updated_at else None,
+        "analysis_note": alert.analysis_note or ""
     }
 
     # 3. Assemblage Versionné

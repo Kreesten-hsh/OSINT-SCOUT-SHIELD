@@ -4,8 +4,10 @@ import { apiClient } from '@/api/client';
 import { useNavigate } from 'react-router-dom';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'; // We might need to mock this if not exists or use basic inputs
 import { Label } from '@/components/ui/label';
-import { AlertCircle, CheckCircle2, Globe, FileUp, Shield, ArrowRight, Loader2, Link as LinkIcon, AlertTriangle } from 'lucide-react';
-import { cn } from '@/lib/utils'; // Assuming this exists from previous steps
+import { ArrowRight, Loader2, Link as LinkIcon, AlertTriangle } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { APIResponse } from '@/api/types';
+import { Alert } from '@/types';
 
 export default function IngestionPage() {
     const navigate = useNavigate();
@@ -15,17 +17,20 @@ export default function IngestionPage() {
 
     const mutation = useMutation({
         mutationFn: async (data: { url: string; source_type: string; notes?: string }) => {
-            const response = await apiClient.post('/ingestion/manual', data);
+            const response = await apiClient.post<APIResponse<Alert>>('/ingestion/manual', data);
             return response.data;
         },
-        onSuccess: (data) => {
-            // Redirect to the created alert/investigation
-            // Assuming the backend returns the created alert object with a UUID
-            if (data.uuid) {
-                navigate(`/alerts/${data.uuid}`);
+        onSuccess: (response) => {
+            if (response.success && response.data && response.data.uuid) {
+                navigate(`/alerts/${response.data.uuid}`);
             } else {
+                // Fallback or error handling
+                console.error("Ingestion success but no data", response);
                 navigate('/alerts');
             }
+        },
+        onError: (err: any) => {
+            console.error("Ingestion error", err);
         }
     });
 
@@ -125,7 +130,7 @@ export default function IngestionPage() {
                         <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-md flex items-center gap-3 text-destructive animate-in slide-in-from-top-2">
                             <AlertTriangle className="w-5 h-5" />
                             <div className="text-sm font-medium">
-                                Échec de l'ingestion : Vérifiez l'URL ou la connexion backend.
+                                {(mutation.error as any)?.response?.data?.message || "Échec de l'ingestion : Vérifiez l'URL ou la connexion backend."}
                             </div>
                         </div>
                     )}
