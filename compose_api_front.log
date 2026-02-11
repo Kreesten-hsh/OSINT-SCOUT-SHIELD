@@ -895,3 +895,27 @@ osint_api       | FROM monitoring_sources
 osint_api       | WHERE monitoring_sources.is_active = true
 osint_api       | 2026-02-11 22:31:38,162 INFO sqlalchemy.engine.Engine [cached since 301.5s ago] ()
 osint_api       | 2026-02-11 22:31:38,167 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:32:38,162 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:32:38,163 INFO sqlalchemy.engine.Engine SELECT monitoring_sources.id, monitoring_sources.uuid, monitoring_sources.name, monitoring_sources.url, monitoring_sources.source_type, monitoring_sources.frequency_minutes, monitoring_sources.is_active, monitoring_sources.last_run_at, monitoring_sources.last_status, monitoring_sources.next_run_at, monitoring_sources.created_at 
+osint_api       | FROM monitoring_sources 
+osint_api       | WHERE monitoring_sources.is_active = true
+osint_api       | 2026-02-11 22:32:38,164 INFO sqlalchemy.engine.Engine [cached since 361.5s ago] ()
+osint_api       | 2026-02-11 22:32:38,172 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:33:38,175 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:33:38,195 INFO sqlalchemy.engine.Engine SELECT monitoring_sources.id, monitoring_sources.uuid, monitoring_sources.name, monitoring_sources.url, monitoring_sources.source_type, monitoring_sources.frequency_minutes, monitoring_sources.is_active, monitoring_sources.last_run_at, monitoring_sources.last_status, monitoring_sources.next_run_at, monitoring_sources.created_at 
+osint_api       | FROM monitoring_sources 
+osint_api       | WHERE monitoring_sources.is_active = true
+osint_api       | 2026-02-11 22:33:38,204 INFO sqlalchemy.engine.Engine [cached since 421.6s ago] ()
+osint_api       | 2026-02-11 22:33:38,245 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:34:38,238 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:34:38,239 INFO sqlalchemy.engine.Engine SELECT monitoring_sources.id, monitoring_sources.uuid, monitoring_sources.name, monitoring_sources.url, monitoring_sources.source_type, monitoring_sources.frequency_minutes, monitoring_sources.is_active, monitoring_sources.last_run_at, monitoring_sources.last_status, monitoring_sources.next_run_at, monitoring_sources.created_at 
+osint_api       | FROM monitoring_sources 
+osint_api       | WHERE monitoring_sources.is_active = true
+osint_api       | 2026-02-11 22:34:38,239 INFO sqlalchemy.engine.Engine [cached since 481.7s ago] ()
+osint_api       | 2026-02-11 22:34:38,245 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:35:38,236 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:35:38,237 INFO sqlalchemy.engine.Engine SELECT monitoring_sources.id, monitoring_sources.uuid, monitoring_sources.name, monitoring_sources.url, monitoring_sources.source_type, monitoring_sources.frequency_minutes, monitoring_sources.is_active, monitoring_sources.last_run_at, monitoring_sources.last_status, monitoring_sources.next_run_at, monitoring_sources.created_at 
+osint_api       | FROM monitoring_sources 
+osint_api       | WHERE monitoring_sources.is_active = true
+osint_api       | 2026-02-11 22:35:38,237 INFO sqlalchemy.engine.Engine [cached since 541.7s ago] ()
+osint_api       | 2026-02-11 22:35:38,243 INFO sqlalchemy.engine.Engine ROLLBACK
