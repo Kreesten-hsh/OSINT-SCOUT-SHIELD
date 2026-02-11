@@ -1,0 +1,897 @@
+time="2026-02-11T23:22:56+01:00" level=warning msg="C:\\Users\\AGBOTON\\OneDrive\\Bureau\\OSINT-SCOUT & SHIELD\\docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+ Image osint-scoutshield-frontend Building 
+ Image osint-scoutshield-api Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.15kB 2.7s done
+#1 DONE 3.3s
+
+#2 [api internal] load build definition from Dockerfile
+#2 transferring dockerfile:
+#2 transferring dockerfile: 817B 0.5s done
+#2 ...
+
+#3 [frontend internal] load build definition from Dockerfile.dev
+#3 transferring dockerfile: 213B 0.2s done
+#3 DONE 1.2s
+
+#2 [api internal] load build definition from Dockerfile
+#2 DONE 1.4s
+
+#4 [api internal] load metadata for docker.io/library/python:3.12-slim
+#4 ...
+
+#5 [auth] library/node:pull token for registry-1.docker.io
+#5 DONE 0.0s
+
+#6 [auth] library/python:pull token for registry-1.docker.io
+#6 DONE 0.0s
+
+#7 [frontend internal] load metadata for docker.io/library/node:20-alpine
+#7 ...
+
+#4 [api internal] load metadata for docker.io/library/python:3.12-slim
+#4 DONE 3.8s
+
+#8 [api internal] load .dockerignore
+#8 transferring context:
+#8 ...
+
+#7 [frontend internal] load metadata for docker.io/library/node:20-alpine
+#7 DONE 4.1s
+
+#8 [api internal] load .dockerignore
+#8 transferring context: 2B done
+#8 DONE 0.6s
+
+#9 [frontend internal] load .dockerignore
+#9 transferring context: 72B 0.0s done
+#9 DONE 0.9s
+
+#10 [api internal] load build context
+#10 transferring context: 3.35kB 0.1s done
+#10 DONE 1.1s
+
+#11 [frontend internal] load build context
+#11 transferring context: 3.08kB 0.1s done
+#11 DONE 1.9s
+
+#12 [frontend 1/5] FROM docker.io/library/node:20-alpine@sha256:09e2b3d9726018aecf269bd35325f46bf75046a643a66d28360ec71132750ec8
+#12 resolve docker.io/library/node:20-alpine@sha256:09e2b3d9726018aecf269bd35325f46bf75046a643a66d28360ec71132750ec8
+#12 ...
+
+#13 [api 1/6] FROM docker.io/library/python:3.12-slim@sha256:9e01bf1ae5db7649a236da7be1e94ffbbbdd7a93f867dd0d8d5720d9e1f89fab
+#13 resolve docker.io/library/python:3.12-slim@sha256:9e01bf1ae5db7649a236da7be1e94ffbbbdd7a93f867dd0d8d5720d9e1f89fab 2.5s done
+#13 DONE 2.6s
+
+#12 [frontend 1/5] FROM docker.io/library/node:20-alpine@sha256:09e2b3d9726018aecf269bd35325f46bf75046a643a66d28360ec71132750ec8
+#12 ...
+
+#14 [api 3/6] RUN apt-get update     && apt-get install -y --no-install-recommends gcc libpq-dev     && apt-get clean     && rm -rf /var/lib/apt/lists/*
+#14 CACHED
+
+#15 [api 4/6] COPY requirements.txt .
+#15 CACHED
+
+#16 [api 5/6] RUN pip install --no-cache-dir -r requirements.txt
+#16 CACHED
+
+#17 [api 2/6] WORKDIR /app
+#17 CACHED
+
+#18 [api 6/6] COPY . .
+#18 CACHED
+
+#12 [frontend 1/5] FROM docker.io/library/node:20-alpine@sha256:09e2b3d9726018aecf269bd35325f46bf75046a643a66d28360ec71132750ec8
+#12 resolve docker.io/library/node:20-alpine@sha256:09e2b3d9726018aecf269bd35325f46bf75046a643a66d28360ec71132750ec8 2.5s done
+#12 DONE 2.9s
+
+#19 [api] exporting to image
+#19 exporting layers
+#19 ...
+
+#20 [frontend 2/5] WORKDIR /app
+#20 CACHED
+
+#21 [frontend 3/5] COPY package.json .
+#21 CACHED
+
+#22 [frontend 4/5] RUN npm install --legacy-peer-deps
+#22 CACHED
+
+#23 [frontend 5/5] COPY . .
+#23 CACHED
+
+#19 [api] exporting to image
+#19 exporting layers 0.0s done
+#19 exporting manifest sha256:33b62faa09e1213062c8d46859006994745a44d832206e4fa84107d42b11a59b
+#19 exporting manifest sha256:33b62faa09e1213062c8d46859006994745a44d832206e4fa84107d42b11a59b 0.3s done
+#19 exporting config sha256:6a44dd95b58a18a3973db1b35416ff23d9dd5e3bdab650b6036269d9fe7b690f
+#19 exporting config sha256:6a44dd95b58a18a3973db1b35416ff23d9dd5e3bdab650b6036269d9fe7b690f 0.1s done
+#19 exporting attestation manifest sha256:9023a52253b2722a4a0a70534db327cc76ffa20200e855902b55879441e73896
+#19 exporting attestation manifest sha256:9023a52253b2722a4a0a70534db327cc76ffa20200e855902b55879441e73896 2.3s done
+#19 exporting manifest list sha256:794934e6110117a3f31d7c71f3d467b9220b8b5a49e691517d74b5bb393dce98
+#19 exporting manifest list sha256:794934e6110117a3f31d7c71f3d467b9220b8b5a49e691517d74b5bb393dce98 1.5s done
+#19 naming to docker.io/library/osint-scoutshield-api:latest
+#19 naming to docker.io/library/osint-scoutshield-api:latest 0.4s done
+#19 unpacking to docker.io/library/osint-scoutshield-api:latest
+#19 unpacking to docker.io/library/osint-scoutshield-api:latest 0.1s done
+#19 DONE 6.2s
+
+#24 [frontend] exporting to image
+#24 exporting layers done
+#24 exporting manifest sha256:5c163d97ef5cbd5734932bef0d0f2664fa2753990bc25be5295377e958f5734c 0.1s done
+#24 exporting config sha256:2a4e5ae9b3969bd1b2c3b37a94c8a9abc6b994b448b639a456db90016c12451d 0.1s done
+#24 exporting attestation manifest sha256:dad2cea033937ca0e81ef99f17ea95fb500661c1fc6be987034f68d4f77f5adf 2.2s done
+#24 exporting manifest list sha256:74ad9a925bfd986906e3d6b9763e60ea033048764ff79705782f128146b137a9 1.6s done
+#24 naming to docker.io/library/osint-scoutshield-frontend:latest 0.3s done
+#24 unpacking to docker.io/library/osint-scoutshield-frontend:latest 0.1s done
+#24 DONE 6.1s
+
+#25 [api] resolving provenance for metadata file
+#25 ...
+
+#26 [frontend] resolving provenance for metadata file
+#26 DONE 1.0s
+
+#25 [api] resolving provenance for metadata file
+#25 DONE 2.0s
+ Image osint-scoutshield-api Built 
+ Image osint-scoutshield-frontend Built 
+ Container osint_db Running 
+ Container osint_redis Running 
+ Container osint_api Recreate 
+ Container osint_api Recreated 
+ Container osint_frontend Recreate 
+ Container osint_frontend Recreated 
+Attaching to osint_api, osint_frontend
+ Container osint_redis Waiting 
+ Container osint_db Waiting 
+ Container osint_redis Healthy 
+ Container osint_db Healthy 
+ Container osint_api Starting 
+ Container osint_api Started 
+ Container osint_frontend Starting 
+osint_api  | INFO:     Will watch for changes in these directories: ['/app']
+osint_api  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+osint_api  | INFO:     Started reloader process [1] using StatReload
+ Container osint_frontend Started 
+osint_frontend  | 
+osint_frontend  | > frontend@0.0.0 dev
+osint_frontend  | > vite --host
+osint_frontend  | 
+osint_frontend  | 
+osint_frontend  |   VITE v7.3.1  ready in 9659 ms
+osint_frontend  | 
+osint_frontend  |   ➜  Local:   http://localhost:5173/
+osint_frontend  |   ➜  Network: http://172.18.0.6:5173/
+osint_api       | INFO:     Started server process [14]
+osint_api       | INFO:     Waiting for application startup.
+osint_api       | 2026-02-11 22:26:35,127 INFO sqlalchemy.engine.Engine select pg_catalog.version()
+osint_api       | 2026-02-11 22:26:35,128 INFO sqlalchemy.engine.Engine [raw sql] ()
+osint_api       | 2026-02-11 22:26:35,419 INFO sqlalchemy.engine.Engine select current_schema()
+osint_api       | 2026-02-11 22:26:35,419 INFO sqlalchemy.engine.Engine [raw sql] ()
+osint_api       | 2026-02-11 22:26:35,698 INFO sqlalchemy.engine.Engine show standard_conforming_strings
+osint_api       | 2026-02-11 22:26:35,698 INFO sqlalchemy.engine.Engine [raw sql] ()
+osint_api       | 2026-02-11 22:26:35,703 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:26:35,764 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+osint_api       | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+osint_api       | WHERE pg_catalog.pg_class.relname = $1::VARCHAR AND pg_catalog.pg_class.relkind = ANY (ARRAY[$2::VARCHAR, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != $7::VARCHAR
+osint_api       | 2026-02-11 22:26:35,768 INFO sqlalchemy.engine.Engine [generated in 0.00428s] ('alerts', 'r', 'p', 'f', 'v', 'm', 'pg_catalog')
+osint_api       | 2026-02-11 22:26:36,313 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+osint_api       | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+osint_api       | WHERE pg_catalog.pg_class.relname = $1::VARCHAR AND pg_catalog.pg_class.relkind = ANY (ARRAY[$2::VARCHAR, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != $7::VARCHAR
+osint_api       | 2026-02-11 22:26:36,314 INFO sqlalchemy.engine.Engine [cached since 0.5505s ago] ('analysis_results', 'r', 'p', 'f', 'v', 'm', 'pg_catalog')
+osint_api       | 2026-02-11 22:26:36,338 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+osint_api       | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+osint_api       | WHERE pg_catalog.pg_class.relname = $1::VARCHAR AND pg_catalog.pg_class.relkind = ANY (ARRAY[$2::VARCHAR, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != $7::VARCHAR
+osint_api       | 2026-02-11 22:26:36,339 INFO sqlalchemy.engine.Engine [cached since 0.5756s ago] ('evidences', 'r', 'p', 'f', 'v', 'm', 'pg_catalog')
+osint_api       | 2026-02-11 22:26:36,343 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+osint_api       | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+osint_api       | WHERE pg_catalog.pg_class.relname = $1::VARCHAR AND pg_catalog.pg_class.relkind = ANY (ARRAY[$2::VARCHAR, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != $7::VARCHAR
+osint_api       | 2026-02-11 22:26:36,343 INFO sqlalchemy.engine.Engine [cached since 0.58s ago] ('monitoring_sources', 'r', 'p', 'f', 'v', 'm', 'pg_catalog')
+osint_api       | 2026-02-11 22:26:36,347 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+osint_api       | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+osint_api       | WHERE pg_catalog.pg_class.relname = $1::VARCHAR AND pg_catalog.pg_class.relkind = ANY (ARRAY[$2::VARCHAR, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != $7::VARCHAR
+osint_api       | 2026-02-11 22:26:36,356 INFO sqlalchemy.engine.Engine [cached since 0.593s ago] ('scraping_runs', 'r', 'p', 'f', 'v', 'm', 'pg_catalog')
+osint_api       | 2026-02-11 22:26:36,360 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+osint_api       | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+osint_api       | WHERE pg_catalog.pg_class.relname = $1::VARCHAR AND pg_catalog.pg_class.relkind = ANY (ARRAY[$2::VARCHAR, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != $7::VARCHAR
+osint_api       | 2026-02-11 22:26:36,361 INFO sqlalchemy.engine.Engine [cached since 0.5973s ago] ('reports', 'r', 'p', 'f', 'v', 'm', 'pg_catalog')
+osint_api       | 2026-02-11 22:26:36,449 INFO sqlalchemy.engine.Engine COMMIT
+osint_api       | 2026-02-11 22:26:36,458 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:26:36,616 INFO sqlalchemy.engine.Engine SELECT monitoring_sources.id, monitoring_sources.uuid, monitoring_sources.name, monitoring_sources.url, monitoring_sources.source_type, monitoring_sources.frequency_minutes, monitoring_sources.is_active, monitoring_sources.last_run_at, monitoring_sources.last_status, monitoring_sources.next_run_at, monitoring_sources.created_at 
+osint_api       | FROM monitoring_sources 
+osint_api       | WHERE monitoring_sources.is_active = true
+osint_api       | 2026-02-11 22:26:36,617 INFO sqlalchemy.engine.Engine [generated in 0.00131s] ()
+osint_api       | INFO:     Application startup complete.
+osint_api       | 2026-02-11 22:26:37,487 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:27:37,589 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:27:37,592 INFO sqlalchemy.engine.Engine SELECT monitoring_sources.id, monitoring_sources.uuid, monitoring_sources.name, monitoring_sources.url, monitoring_sources.source_type, monitoring_sources.frequency_minutes, monitoring_sources.is_active, monitoring_sources.last_run_at, monitoring_sources.last_status, monitoring_sources.next_run_at, monitoring_sources.created_at 
+osint_api       | FROM monitoring_sources 
+osint_api       | WHERE monitoring_sources.is_active = true
+osint_api       | 2026-02-11 22:27:37,593 INFO sqlalchemy.engine.Engine [cached since 60.93s ago] ()
+osint_api       | 2026-02-11 22:27:37,620 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | INFO:     172.18.0.1:60440 - "OPTIONS /api/v1/dashboard/stats/weekly HTTP/1.1" 200 OK
+osint_api       | INFO:     172.18.0.1:60450 - "OPTIONS /api/v1/dashboard/stats/critical-threats?threshold=85 HTTP/1.1" 200 OK
+osint_api       | INFO:     172.18.0.1:60456 - "OPTIONS /api/v1/dashboard/stats/sources-active HTTP/1.1" 200 OK
+osint_api       | INFO:     172.18.0.1:60464 - "OPTIONS /api/v1/dashboard/stats/reports-count HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:28:16,419 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:28:16,434 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+osint_api       | FROM (SELECT alerts.id AS id, alerts.uuid AS uuid, alerts.url AS url, alerts.source_type AS source_type, alerts.risk_score AS risk_score, alerts.status AS status, alerts.created_at AS created_at, alerts.updated_at AS updated_at, alerts.analysis_note AS analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.risk_score >= $1::INTEGER AND alerts.status = $2::VARCHAR) AS anon_1
+osint_api       | 2026-02-11 22:28:16,435 INFO sqlalchemy.engine.Engine [generated in 0.00067s] (85, 'CONFIRMED')
+osint_api       | 2026-02-11 22:28:16,929 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.risk_score >= $1::INTEGER AND alerts.status = $2::VARCHAR ORDER BY alerts.risk_score DESC, alerts.created_at DESC 
+osint_api       |  LIMIT $3::INTEGER
+osint_api       | 2026-02-11 22:28:16,930 INFO sqlalchemy.engine.Engine [generated in 0.00045s] (85, 'CONFIRMED', 3)
+osint_api       | 2026-02-11 22:28:16,932 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:28:16,933 INFO sqlalchemy.engine.Engine SELECT count(alerts.id) AS count_1 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.created_at >= $1::TIMESTAMP WITH TIME ZONE
+osint_api       | 2026-02-11 22:28:16,933 INFO sqlalchemy.engine.Engine [generated in 0.00029s] (datetime.datetime(2026, 2, 4, 22, 28, 16, 448947, tzinfo=<UTC>),)
+osint_api       | 2026-02-11 22:28:16,934 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:28:16,936 INFO sqlalchemy.engine.Engine SELECT count(reports.id) AS count_1 
+osint_api       | FROM reports
+osint_api       | 2026-02-11 22:28:16,936 INFO sqlalchemy.engine.Engine [generated in 0.00051s] ()
+osint_api       | 2026-02-11 22:28:16,973 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:28:16,975 INFO sqlalchemy.engine.Engine SELECT count(monitoring_sources.id) AS count_1 
+osint_api       | FROM monitoring_sources 
+osint_api       | WHERE monitoring_sources.is_active = true
+osint_api       | 2026-02-11 22:28:16,975 INFO sqlalchemy.engine.Engine [generated in 0.00045s] ()
+osint_api       | INFO:     172.18.0.1:60456 - "GET /api/v1/dashboard/stats/critical-threats?threshold=85 HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:28:16,981 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | INFO:     172.18.0.1:60470 - "GET /api/v1/dashboard/stats/sources-active HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:28:17,014 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:28:17,022 INFO sqlalchemy.engine.Engine SELECT count(alerts.id) AS count_1 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.created_at >= $1::TIMESTAMP WITH TIME ZONE AND alerts.created_at < $2::TIMESTAMP WITH TIME ZONE
+osint_api       | 2026-02-11 22:28:17,023 INFO sqlalchemy.engine.Engine [generated in 0.00180s] (datetime.datetime(2026, 1, 28, 22, 28, 16, 448947, tzinfo=<UTC>), datetime.datetime(2026, 2, 4, 22, 28, 16, 448947, tzinfo=<UTC>))
+osint_api       | INFO:     172.18.0.1:60464 - "GET /api/v1/dashboard/stats/weekly HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:28:17,038 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | INFO:     172.18.0.1:60450 - "GET /api/v1/dashboard/stats/reports-count HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:28:17,082 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:28:21,535 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:28:21,537 INFO sqlalchemy.engine.Engine SELECT count(alerts.id) AS count_1 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.created_at >= $1::TIMESTAMP WITH TIME ZONE
+osint_api       | 2026-02-11 22:28:21,537 INFO sqlalchemy.engine.Engine [cached since 4.604s ago] (datetime.datetime(2026, 2, 4, 22, 28, 21, 534742, tzinfo=<UTC>),)
+osint_api       | 2026-02-11 22:28:21,545 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:28:21,546 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+osint_api       | FROM (SELECT alerts.id AS id, alerts.uuid AS uuid, alerts.url AS url, alerts.source_type AS source_type, alerts.risk_score AS risk_score, alerts.status AS status, alerts.created_at AS created_at, alerts.updated_at AS updated_at, alerts.analysis_note AS analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.risk_score >= $1::INTEGER AND alerts.status = $2::VARCHAR) AS anon_1
+osint_api       | 2026-02-11 22:28:21,546 INFO sqlalchemy.engine.Engine [cached since 5.113s ago] (85, 'CONFIRMED')
+osint_api       | 2026-02-11 22:28:21,560 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | Task was destroyed but it is pending!
+osint_api       | task: <Task pending name='Task-5' coro=<start_result_consumer() running at /app/app/workers/result_consumer.py:138> wait_for=<Future pending cb=[Task.task_wakeup()]>>
+osint_api       | Exception ignored in: <coroutine object start_result_consumer at 0x79dcdaeb3b40>
+osint_api       | Traceback (most recent call last):
+osint_api       |   File "/usr/local/lib/python3.12/logging/__init__.py", line 200, in _is_internal_frame
+osint_api       | 2026-02-11 22:28:21,890 INFO sqlalchemy.engine.Engine SELECT count(monitoring_sources.id) AS count_1 
+osint_api       | FROM monitoring_sources 
+osint_api       | WHERE monitoring_sources.is_active = true
+osint_api       | 2026-02-11 22:28:21,891 INFO sqlalchemy.engine.Engine [cached since 4.916s ago] ()
+osint_api       | 2026-02-11 22:28:21,892 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:28:21,893 INFO sqlalchemy.engine.Engine SELECT count(reports.id) AS count_1 
+osint_api       | FROM reports
+osint_api       | 2026-02-11 22:28:21,893 INFO sqlalchemy.engine.Engine [cached since 4.958s ago] ()
+osint_api       |     def _is_internal_frame(frame):
+osint_api       |     
+osint_api       | RuntimeError: coroutine ignored GeneratorExit
+osint_api       | INFO:     172.18.0.1:60456 - "GET /api/v1/dashboard/stats/reports-count HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:28:21,912 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:28:21,924 INFO sqlalchemy.engine.Engine SELECT count(alerts.id) AS count_1 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.created_at >= $1::TIMESTAMP WITH TIME ZONE AND alerts.created_at < $2::TIMESTAMP WITH TIME ZONE
+osint_api       | 2026-02-11 22:28:21,925 INFO sqlalchemy.engine.Engine [cached since 4.904s ago] (datetime.datetime(2026, 1, 28, 22, 28, 21, 534742, tzinfo=<UTC>), datetime.datetime(2026, 2, 4, 22, 28, 21, 534742, tzinfo=<UTC>))
+osint_api       | INFO:     172.18.0.1:60470 - "GET /api/v1/dashboard/stats/sources-active HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:28:21,929 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | INFO:     172.18.0.1:60450 - "GET /api/v1/dashboard/stats/weekly HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:28:21,959 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:28:21,976 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.risk_score >= $1::INTEGER AND alerts.status = $2::VARCHAR ORDER BY alerts.risk_score DESC, alerts.created_at DESC 
+osint_api       |  LIMIT $3::INTEGER
+osint_api       | 2026-02-11 22:28:21,981 INFO sqlalchemy.engine.Engine [generated in 0.00508s] (85, 'CONFIRMED', 3)
+osint_api       | INFO:     172.18.0.1:60464 - "GET /api/v1/dashboard/stats/critical-threats?threshold=85 HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:28:22,017 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | INFO:     172.18.0.1:60464 - "OPTIONS /api/v1/alerts?skip=0&limit=10 HTTP/1.1" 200 OK
+osint_api       | INFO:     172.18.0.1:60464 - "GET /api/v1/alerts?skip=0&limit=10 HTTP/1.1" 307 Temporary Redirect
+osint_api       | INFO:     172.18.0.1:60464 - "OPTIONS /api/v1/alerts/?skip=0&limit=10 HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:28:24,467 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:28:24,482 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts ORDER BY alerts.created_at DESC 
+osint_api       |  LIMIT $1::INTEGER OFFSET $2::INTEGER
+osint_api       | 2026-02-11 22:28:24,482 INFO sqlalchemy.engine.Engine [generated in 0.00056s] (10, 0)
+osint_api       | 2026-02-11 22:28:24,686 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER, $2::INTEGER, $3::INTEGER, $4::INTEGER)
+osint_api       | 2026-02-11 22:28:24,686 INFO sqlalchemy.engine.Engine [generated in 0.00072s] (1, 2, 3, 4)
+osint_api       | 2026-02-11 22:28:24,948 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER, $2::INTEGER, $3::INTEGER, $4::INTEGER)
+osint_api       | 2026-02-11 22:28:24,949 INFO sqlalchemy.engine.Engine [generated in 0.00065s] (1, 2, 3, 4)
+osint_api       | INFO:     172.18.0.1:60450 - "GET /api/v1/alerts/?skip=0&limit=10 HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:28:24,965 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | INFO:     172.18.0.1:60450 - "OPTIONS /api/v1/alerts/ff411e8c-b7f8-4f7b-bd9d-445c38e0833d HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:28:29,579 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:28:29,584 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.uuid = $1::UUID
+osint_api       | 2026-02-11 22:28:29,584 INFO sqlalchemy.engine.Engine [generated in 0.00063s] (UUID('ff411e8c-b7f8-4f7b-bd9d-445c38e0833d'),)
+osint_api       | 2026-02-11 22:28:29,596 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:28:29,597 INFO sqlalchemy.engine.Engine [cached since 4.911s ago] (1,)
+osint_api       | 2026-02-11 22:28:29,611 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:28:29,614 INFO sqlalchemy.engine.Engine [cached since 4.664s ago] (1,)
+osint_api       | INFO:     172.18.0.1:60450 - "GET /api/v1/alerts/ff411e8c-b7f8-4f7b-bd9d-445c38e0833d HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:28:29,627 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | INFO:     172.18.0.1:60450 - "OPTIONS /api/v1/alerts/ff411e8c-b7f8-4f7b-bd9d-445c38e0833d HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:28:34,326 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:28:34,327 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.uuid = $1::UUID
+osint_api       | 2026-02-11 22:28:34,327 INFO sqlalchemy.engine.Engine [cached since 4.744s ago] (UUID('ff411e8c-b7f8-4f7b-bd9d-445c38e0833d'),)
+osint_api       | 2026-02-11 22:28:34,345 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:28:34,346 INFO sqlalchemy.engine.Engine [cached since 9.66s ago] (1,)
+osint_api       | 2026-02-11 22:28:34,378 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:28:34,378 INFO sqlalchemy.engine.Engine [cached since 9.43s ago] (1,)
+osint_api       | 2026-02-11 22:28:34,398 INFO sqlalchemy.engine.Engine UPDATE alerts SET status=$1::VARCHAR, updated_at=now() WHERE alerts.id = $2::INTEGER
+osint_api       | 2026-02-11 22:28:34,398 INFO sqlalchemy.engine.Engine [generated in 0.00045s] ('CONFIRMED', 1)
+osint_api       | 2026-02-11 22:28:34,415 INFO sqlalchemy.engine.Engine COMMIT
+osint_api       | 2026-02-11 22:28:34,590 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:28:34,592 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.uuid = $1::UUID
+osint_api       | 2026-02-11 22:28:34,592 INFO sqlalchemy.engine.Engine [cached since 5.008s ago] (UUID('ff411e8c-b7f8-4f7b-bd9d-445c38e0833d'),)
+osint_api       | 2026-02-11 22:28:34,598 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:28:34,598 INFO sqlalchemy.engine.Engine [cached since 9.913s ago] (1,)
+osint_api       | 2026-02-11 22:28:34,608 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:28:34,609 INFO sqlalchemy.engine.Engine [cached since 9.661s ago] (1,)
+osint_api       | INFO:     172.18.0.1:46196 - "PATCH /api/v1/alerts/ff411e8c-b7f8-4f7b-bd9d-445c38e0833d HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:28:34,618 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:28:34,631 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:28:34,633 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.uuid = $1::UUID
+osint_api       | 2026-02-11 22:28:34,633 INFO sqlalchemy.engine.Engine [cached since 5.049s ago] (UUID('ff411e8c-b7f8-4f7b-bd9d-445c38e0833d'),)
+osint_api       | 2026-02-11 22:28:34,648 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:28:34,648 INFO sqlalchemy.engine.Engine [cached since 9.963s ago] (1,)
+osint_api       | 2026-02-11 22:28:34,660 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:28:34,660 INFO sqlalchemy.engine.Engine [cached since 9.712s ago] (1,)
+osint_api       | INFO:     172.18.0.1:46196 - "GET /api/v1/alerts/ff411e8c-b7f8-4f7b-bd9d-445c38e0833d HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:28:34,682 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:28:38,173 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:28:38,174 INFO sqlalchemy.engine.Engine SELECT monitoring_sources.id, monitoring_sources.uuid, monitoring_sources.name, monitoring_sources.url, monitoring_sources.source_type, monitoring_sources.frequency_minutes, monitoring_sources.is_active, monitoring_sources.last_run_at, monitoring_sources.last_status, monitoring_sources.next_run_at, monitoring_sources.created_at 
+osint_api       | FROM monitoring_sources 
+osint_api       | WHERE monitoring_sources.is_active = true
+osint_api       | 2026-02-11 22:28:38,174 INFO sqlalchemy.engine.Engine [cached since 121.5s ago] ()
+osint_api       | 2026-02-11 22:28:38,178 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | INFO:     172.18.0.1:46196 - "OPTIONS /api/v1/reports/generate/ff411e8c-b7f8-4f7b-bd9d-445c38e0833d HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:28:39,310 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:28:39,312 INFO sqlalchemy.engine.Engine SELECT alerts.id 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.uuid = $1::UUID
+osint_api       | 2026-02-11 22:28:39,312 INFO sqlalchemy.engine.Engine [generated in 0.00058s] (UUID('ff411e8c-b7f8-4f7b-bd9d-445c38e0833d'),)
+osint_api       | 2026-02-11 22:28:39,322 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.id = $1::INTEGER
+osint_api       | 2026-02-11 22:28:39,324 INFO sqlalchemy.engine.Engine [generated in 0.00147s] (1,)
+osint_api       | 2026-02-11 22:28:39,332 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:28:39,332 INFO sqlalchemy.engine.Engine [cached since 14.65s ago] (1,)
+osint_api       | 2026-02-11 22:28:39,337 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:28:39,338 INFO sqlalchemy.engine.Engine [cached since 14.39s ago] (1,)
+osint_api       | 2026-02-11 22:28:39,383 INFO sqlalchemy.engine.Engine INSERT INTO reports (uuid, alert_id, snapshot_json, report_hash, snapshot_version, snapshot_hash_sha256, generated_by, pdf_path) VALUES ($1::UUID, $2::INTEGER, $3::JSONB, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::VARCHAR, $8::VARCHAR) RETURNING reports.id, reports.generated_at
+osint_api       | 2026-02-11 22:28:39,384 INFO sqlalchemy.engine.Engine [generated in 0.00048s] (UUID('f5e02024-aa82-40b2-84ba-5daf6efee70c'), 1, '{"snapshot_version": "1.0", "engine_version": "v1.0.3", "generated_at": "2026-02-11T22:28:39.341129", "data": {"alert": {"uuid": "ff411e8c-b7f8-4f7b- ... (173 characters truncated) ... 6-02-11T19:43:35.636130+00:00", "updated_at": "2026-02-11T22:28:34.328592+00:00", "analysis_note": "note smoke"}, "evidences": [], "analysis": null}}', '1be873d43018f5f08e101b3804b2880f7bf07dffd434b539da387b5cae47d9de', '1.0', '1be873d43018f5f08e101b3804b2880f7bf07dffd434b539da387b5cae47d9de', None, 'report_1be873d4.pdf')
+osint_api       | 2026-02-11 22:28:39,693 INFO sqlalchemy.engine.Engine COMMIT
+osint_api       | 2026-02-11 22:28:40,405 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:28:40,410 INFO sqlalchemy.engine.Engine SELECT reports.id, reports.uuid, reports.alert_id, reports.snapshot_json, reports.report_hash, reports.snapshot_version, reports.snapshot_hash_sha256, reports.generated_by, reports.pdf_path, reports.generated_at 
+osint_api       | FROM reports 
+osint_api       | WHERE reports.id = $1::INTEGER
+osint_api       | 2026-02-11 22:28:40,411 INFO sqlalchemy.engine.Engine [generated in 0.00039s] (2,)
+osint_api       | INFO:     172.18.0.1:46196 - "POST /api/v1/reports/generate/ff411e8c-b7f8-4f7b-bd9d-445c38e0833d HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:28:40,433 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | INFO:     172.18.0.1:46196 - "OPTIONS /api/v1/reports/ HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:28:40,697 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:28:40,700 INFO sqlalchemy.engine.Engine SELECT reports.id, reports.uuid, reports.alert_id, reports.snapshot_json, reports.report_hash, reports.snapshot_version, reports.snapshot_hash_sha256, reports.generated_by, reports.pdf_path, reports.generated_at 
+osint_api       | FROM reports ORDER BY reports.generated_at DESC 
+osint_api       |  LIMIT $1::INTEGER OFFSET $2::INTEGER
+osint_api       | 2026-02-11 22:28:40,701 INFO sqlalchemy.engine.Engine [generated in 0.00037s] (100, 0)
+osint_api       | INFO:     172.18.0.1:46196 - "GET /api/v1/reports/ HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:28:40,706 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:28:43,193 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:28:43,194 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.uuid = $1::UUID
+osint_api       | 2026-02-11 22:28:43,196 INFO sqlalchemy.engine.Engine [cached since 13.61s ago] (UUID('ff411e8c-b7f8-4f7b-bd9d-445c38e0833d'),)
+osint_api       | 2026-02-11 22:28:43,211 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:28:43,211 INFO sqlalchemy.engine.Engine [cached since 18.53s ago] (1,)
+osint_api       | 2026-02-11 22:28:43,215 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:28:43,216 INFO sqlalchemy.engine.Engine [cached since 18.27s ago] (1,)
+osint_api       | INFO:     172.18.0.1:46196 - "GET /api/v1/alerts/ff411e8c-b7f8-4f7b-bd9d-445c38e0833d HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:28:43,230 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:28:54,205 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:28:54,205 INFO sqlalchemy.engine.Engine SELECT alerts.id 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.uuid = $1::UUID
+osint_api       | 2026-02-11 22:28:54,206 INFO sqlalchemy.engine.Engine [cached since 14.89s ago] (UUID('ff411e8c-b7f8-4f7b-bd9d-445c38e0833d'),)
+osint_api       | 2026-02-11 22:28:54,212 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.id = $1::INTEGER
+osint_api       | 2026-02-11 22:28:54,213 INFO sqlalchemy.engine.Engine [cached since 14.89s ago] (1,)
+osint_api       | 2026-02-11 22:28:54,217 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:28:54,218 INFO sqlalchemy.engine.Engine [cached since 29.53s ago] (1,)
+osint_api       | 2026-02-11 22:28:54,222 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:28:54,223 INFO sqlalchemy.engine.Engine [cached since 29.28s ago] (1,)
+osint_api       | 2026-02-11 22:28:54,251 INFO sqlalchemy.engine.Engine INSERT INTO reports (uuid, alert_id, snapshot_json, report_hash, snapshot_version, snapshot_hash_sha256, generated_by, pdf_path) VALUES ($1::UUID, $2::INTEGER, $3::JSONB, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::VARCHAR, $8::VARCHAR) RETURNING reports.id, reports.generated_at
+osint_api       | 2026-02-11 22:28:54,252 INFO sqlalchemy.engine.Engine [cached since 14.87s ago] (UUID('df873218-7428-4610-806c-cf1664e3bdf4'), 1, '{"snapshot_version": "1.0", "engine_version": "v1.0.3", "generated_at": "2026-02-11T22:28:54.226087", "data": {"alert": {"uuid": "ff411e8c-b7f8-4f7b- ... (173 characters truncated) ... 6-02-11T19:43:35.636130+00:00", "updated_at": "2026-02-11T22:28:34.328592+00:00", "analysis_note": "note smoke"}, "evidences": [], "analysis": null}}', '2d76c79d9d4efd3655d270cd47422cea5a8b9f5f62e76d36884859c8e090409d', '1.0', '2d76c79d9d4efd3655d270cd47422cea5a8b9f5f62e76d36884859c8e090409d', None, 'report_2d76c79d.pdf')
+osint_api       | 2026-02-11 22:28:54,255 INFO sqlalchemy.engine.Engine COMMIT
+osint_api       | 2026-02-11 22:28:54,375 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:28:54,377 INFO sqlalchemy.engine.Engine SELECT reports.id, reports.uuid, reports.alert_id, reports.snapshot_json, reports.report_hash, reports.snapshot_version, reports.snapshot_hash_sha256, reports.generated_by, reports.pdf_path, reports.generated_at 
+osint_api       | FROM reports 
+osint_api       | WHERE reports.id = $1::INTEGER
+osint_api       | 2026-02-11 22:28:54,377 INFO sqlalchemy.engine.Engine [cached since 13.97s ago] (3,)
+osint_api       | INFO:     172.18.0.1:42572 - "POST /api/v1/reports/generate/ff411e8c-b7f8-4f7b-bd9d-445c38e0833d HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:28:54,383 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | INFO:     172.18.0.1:42582 - "GET /api/v1/reports/undefined/download/pdf HTTP/1.1" 422 Unprocessable Entity
+osint_api       | INFO:     172.18.0.1:42582 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+osint_api       | INFO:     172.18.0.1:52012 - "OPTIONS /api/v1/scraping/sources HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:29:05,181 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:29:05,185 INFO sqlalchemy.engine.Engine SELECT monitoring_sources.id, monitoring_sources.uuid, monitoring_sources.name, monitoring_sources.url, monitoring_sources.source_type, monitoring_sources.frequency_minutes, monitoring_sources.is_active, monitoring_sources.last_run_at, monitoring_sources.last_status, monitoring_sources.next_run_at, monitoring_sources.created_at 
+osint_api       | FROM monitoring_sources ORDER BY monitoring_sources.id DESC 
+osint_api       |  LIMIT $1::INTEGER OFFSET $2::INTEGER
+osint_api       | 2026-02-11 22:29:05,185 INFO sqlalchemy.engine.Engine [generated in 0.00066s] (100, 0)
+osint_api       | INFO:     172.18.0.1:52012 - "GET /api/v1/scraping/sources HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:29:05,209 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | INFO:     172.18.0.1:52012 - "GET /api/v1/alerts?skip=0&limit=10 HTTP/1.1" 307 Temporary Redirect
+osint_api       | 2026-02-11 22:29:08,398 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:29:08,407 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts ORDER BY alerts.created_at DESC 
+osint_api       |  LIMIT $1::INTEGER OFFSET $2::INTEGER
+osint_api       | 2026-02-11 22:29:08,407 INFO sqlalchemy.engine.Engine [cached since 43.93s ago] (10, 0)
+osint_api       | 2026-02-11 22:29:08,432 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER, $2::INTEGER, $3::INTEGER, $4::INTEGER)
+osint_api       | 2026-02-11 22:29:08,433 INFO sqlalchemy.engine.Engine [cached since 43.75s ago] (1, 2, 3, 4)
+osint_api       | 2026-02-11 22:29:08,443 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER, $2::INTEGER, $3::INTEGER, $4::INTEGER)
+osint_api       | 2026-02-11 22:29:08,444 INFO sqlalchemy.engine.Engine [cached since 43.5s ago] (1, 2, 3, 4)
+osint_api       | INFO:     172.18.0.1:52012 - "GET /api/v1/alerts/?skip=0&limit=10 HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:29:08,452 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:29:10,235 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:29:10,236 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.uuid = $1::UUID
+osint_api       | 2026-02-11 22:29:10,236 INFO sqlalchemy.engine.Engine [cached since 40.66s ago] (UUID('ff411e8c-b7f8-4f7b-bd9d-445c38e0833d'),)
+osint_api       | 2026-02-11 22:29:10,249 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:29:10,254 INFO sqlalchemy.engine.Engine [cached since 45.57s ago] (1,)
+osint_api       | 2026-02-11 22:29:10,261 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:29:10,262 INFO sqlalchemy.engine.Engine [cached since 45.32s ago] (1,)
+osint_api       | INFO:     172.18.0.1:52012 - "GET /api/v1/alerts/ff411e8c-b7f8-4f7b-bd9d-445c38e0833d HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:29:10,277 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:29:15,795 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:29:15,796 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.uuid = $1::UUID
+osint_api       | 2026-02-11 22:29:15,796 INFO sqlalchemy.engine.Engine [cached since 46.22s ago] (UUID('ff411e8c-b7f8-4f7b-bd9d-445c38e0833d'),)
+osint_api       | 2026-02-11 22:29:15,808 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:29:15,809 INFO sqlalchemy.engine.Engine [cached since 51.13s ago] (1,)
+osint_api       | 2026-02-11 22:29:15,814 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:29:15,814 INFO sqlalchemy.engine.Engine [cached since 50.87s ago] (1,)
+osint_api       | 2026-02-11 22:29:15,823 INFO sqlalchemy.engine.Engine UPDATE alerts SET updated_at=now(), analysis_note=$1::VARCHAR WHERE alerts.id = $2::INTEGER
+osint_api       | 2026-02-11 22:29:15,824 INFO sqlalchemy.engine.Engine [generated in 0.00077s] ('note smoke oui', 1)
+osint_api       | 2026-02-11 22:29:15,829 INFO sqlalchemy.engine.Engine COMMIT
+osint_api       | 2026-02-11 22:29:15,978 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:29:15,979 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.uuid = $1::UUID
+osint_api       | 2026-02-11 22:29:15,980 INFO sqlalchemy.engine.Engine [cached since 46.4s ago] (UUID('ff411e8c-b7f8-4f7b-bd9d-445c38e0833d'),)
+osint_api       | 2026-02-11 22:29:15,985 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:29:15,985 INFO sqlalchemy.engine.Engine [cached since 51.3s ago] (1,)
+osint_api       | 2026-02-11 22:29:15,989 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:29:15,990 INFO sqlalchemy.engine.Engine [cached since 51.05s ago] (1,)
+osint_api       | INFO:     172.18.0.1:45444 - "PATCH /api/v1/alerts/ff411e8c-b7f8-4f7b-bd9d-445c38e0833d HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:29:15,993 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:29:16,005 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:29:16,006 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.uuid = $1::UUID
+osint_api       | 2026-02-11 22:29:16,007 INFO sqlalchemy.engine.Engine [cached since 46.43s ago] (UUID('ff411e8c-b7f8-4f7b-bd9d-445c38e0833d'),)
+osint_api       | 2026-02-11 22:29:16,013 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:29:16,014 INFO sqlalchemy.engine.Engine [cached since 51.33s ago] (1,)
+osint_api       | 2026-02-11 22:29:16,019 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:29:16,019 INFO sqlalchemy.engine.Engine [cached since 51.08s ago] (1,)
+osint_api       | INFO:     172.18.0.1:45444 - "GET /api/v1/alerts/ff411e8c-b7f8-4f7b-bd9d-445c38e0833d HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:29:16,025 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | INFO:     172.18.0.1:45444 - "GET /api/v1/alerts?skip=0&limit=10 HTTP/1.1" 307 Temporary Redirect
+osint_api       | 2026-02-11 22:29:20,916 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:29:20,917 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts ORDER BY alerts.created_at DESC 
+osint_api       |  LIMIT $1::INTEGER OFFSET $2::INTEGER
+osint_api       | 2026-02-11 22:29:20,918 INFO sqlalchemy.engine.Engine [cached since 56.44s ago] (10, 0)
+osint_api       | 2026-02-11 22:29:20,933 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER, $2::INTEGER, $3::INTEGER, $4::INTEGER)
+osint_api       | 2026-02-11 22:29:20,934 INFO sqlalchemy.engine.Engine [cached since 56.25s ago] (1, 2, 3, 4)
+osint_api       | 2026-02-11 22:29:20,945 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER, $2::INTEGER, $3::INTEGER, $4::INTEGER)
+osint_api       | 2026-02-11 22:29:20,945 INFO sqlalchemy.engine.Engine [cached since 56s ago] (1, 2, 3, 4)
+osint_api       | INFO:     172.18.0.1:45444 - "GET /api/v1/alerts/?skip=0&limit=10 HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:29:20,953 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | INFO:     172.18.0.1:45444 - "OPTIONS /api/v1/alerts/56e71aa5-27a8-41b0-b6da-9b04e881181a HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:29:25,886 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:29:25,887 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.uuid = $1::UUID
+osint_api       | 2026-02-11 22:29:25,888 INFO sqlalchemy.engine.Engine [cached since 56.31s ago] (UUID('56e71aa5-27a8-41b0-b6da-9b04e881181a'),)
+osint_api       | 2026-02-11 22:29:25,894 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:29:25,897 INFO sqlalchemy.engine.Engine [cached since 61.21s ago] (2,)
+osint_api       | 2026-02-11 22:29:25,906 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:29:25,906 INFO sqlalchemy.engine.Engine [cached since 60.96s ago] (2,)
+osint_api       | INFO:     172.18.0.1:45444 - "GET /api/v1/alerts/56e71aa5-27a8-41b0-b6da-9b04e881181a HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:29:25,911 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:29:38,177 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:29:38,178 INFO sqlalchemy.engine.Engine SELECT monitoring_sources.id, monitoring_sources.uuid, monitoring_sources.name, monitoring_sources.url, monitoring_sources.source_type, monitoring_sources.frequency_minutes, monitoring_sources.is_active, monitoring_sources.last_run_at, monitoring_sources.last_status, monitoring_sources.next_run_at, monitoring_sources.created_at 
+osint_api       | FROM monitoring_sources 
+osint_api       | WHERE monitoring_sources.is_active = true
+osint_api       | 2026-02-11 22:29:38,178 INFO sqlalchemy.engine.Engine [cached since 181.5s ago] ()
+osint_api       | 2026-02-11 22:29:38,183 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | INFO:     172.18.0.1:53024 - "OPTIONS /api/v1/alerts/56e71aa5-27a8-41b0-b6da-9b04e881181a HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:29:46,107 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:29:46,110 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.uuid = $1::UUID
+osint_api       | 2026-02-11 22:29:46,111 INFO sqlalchemy.engine.Engine [cached since 76.53s ago] (UUID('56e71aa5-27a8-41b0-b6da-9b04e881181a'),)
+osint_api       | 2026-02-11 22:29:46,118 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:29:46,118 INFO sqlalchemy.engine.Engine [cached since 81.44s ago] (2,)
+osint_api       | 2026-02-11 22:29:46,123 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:29:46,123 INFO sqlalchemy.engine.Engine [cached since 81.18s ago] (2,)
+osint_api       | 2026-02-11 22:29:46,131 INFO sqlalchemy.engine.Engine UPDATE alerts SET updated_at=now(), analysis_note=$1::VARCHAR WHERE alerts.id = $2::INTEGER
+osint_api       | 2026-02-11 22:29:46,131 INFO sqlalchemy.engine.Engine [cached since 30.31s ago] ('Juste une fausse alerte', 2)
+osint_api       | 2026-02-11 22:29:46,137 INFO sqlalchemy.engine.Engine COMMIT
+osint_api       | 2026-02-11 22:29:46,404 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:29:46,404 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.uuid = $1::UUID
+osint_api       | 2026-02-11 22:29:46,404 INFO sqlalchemy.engine.Engine [cached since 76.83s ago] (UUID('56e71aa5-27a8-41b0-b6da-9b04e881181a'),)
+osint_api       | 2026-02-11 22:29:46,409 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:29:46,409 INFO sqlalchemy.engine.Engine [cached since 81.73s ago] (2,)
+osint_api       | 2026-02-11 22:29:46,414 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:29:46,415 INFO sqlalchemy.engine.Engine [cached since 81.47s ago] (2,)
+osint_api       | INFO:     172.18.0.1:53024 - "PATCH /api/v1/alerts/56e71aa5-27a8-41b0-b6da-9b04e881181a HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:29:46,421 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:29:46,474 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:29:46,476 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.uuid = $1::UUID
+osint_api       | 2026-02-11 22:29:46,477 INFO sqlalchemy.engine.Engine [cached since 76.9s ago] (UUID('56e71aa5-27a8-41b0-b6da-9b04e881181a'),)
+osint_api       | 2026-02-11 22:29:46,485 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:29:46,485 INFO sqlalchemy.engine.Engine [cached since 81.81s ago] (2,)
+osint_api       | 2026-02-11 22:29:46,491 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:29:46,491 INFO sqlalchemy.engine.Engine [cached since 81.55s ago] (2,)
+osint_api       | INFO:     172.18.0.1:53024 - "GET /api/v1/alerts/56e71aa5-27a8-41b0-b6da-9b04e881181a HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:29:46,499 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:29:49,577 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:29:49,578 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.uuid = $1::UUID
+osint_api       | 2026-02-11 22:29:49,579 INFO sqlalchemy.engine.Engine [cached since 80s ago] (UUID('56e71aa5-27a8-41b0-b6da-9b04e881181a'),)
+osint_api       | 2026-02-11 22:29:49,583 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:29:49,583 INFO sqlalchemy.engine.Engine [cached since 84.91s ago] (2,)
+osint_api       | 2026-02-11 22:29:49,597 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:29:49,597 INFO sqlalchemy.engine.Engine [cached since 84.66s ago] (2,)
+osint_api       | 2026-02-11 22:29:49,607 INFO sqlalchemy.engine.Engine UPDATE alerts SET status=$1::VARCHAR, updated_at=now() WHERE alerts.id = $2::INTEGER
+osint_api       | 2026-02-11 22:29:49,607 INFO sqlalchemy.engine.Engine [cached since 75.22s ago] ('DISMISSED', 2)
+osint_api       | 2026-02-11 22:29:49,618 INFO sqlalchemy.engine.Engine COMMIT
+osint_api       | 2026-02-11 22:29:49,648 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:29:49,649 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.uuid = $1::UUID
+osint_api       | 2026-02-11 22:29:49,649 INFO sqlalchemy.engine.Engine [cached since 80.07s ago] (UUID('56e71aa5-27a8-41b0-b6da-9b04e881181a'),)
+osint_api       | 2026-02-11 22:29:49,655 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:29:49,655 INFO sqlalchemy.engine.Engine [cached since 84.98s ago] (2,)
+osint_api       | 2026-02-11 22:29:49,665 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:29:49,666 INFO sqlalchemy.engine.Engine [cached since 84.73s ago] (2,)
+osint_api       | INFO:     172.18.0.1:53024 - "PATCH /api/v1/alerts/56e71aa5-27a8-41b0-b6da-9b04e881181a HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:29:49,671 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:29:49,687 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:29:49,688 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.uuid = $1::UUID
+osint_api       | 2026-02-11 22:29:49,689 INFO sqlalchemy.engine.Engine [cached since 80.11s ago] (UUID('56e71aa5-27a8-41b0-b6da-9b04e881181a'),)
+osint_api       | 2026-02-11 22:29:49,695 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:29:49,695 INFO sqlalchemy.engine.Engine [cached since 85.02s ago] (2,)
+osint_api       | 2026-02-11 22:29:49,700 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:29:49,701 INFO sqlalchemy.engine.Engine [cached since 84.76s ago] (2,)
+osint_api       | INFO:     172.18.0.1:53024 - "GET /api/v1/alerts/56e71aa5-27a8-41b0-b6da-9b04e881181a HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:29:49,714 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | INFO:     172.18.0.1:53024 - "GET /api/v1/alerts?skip=0&limit=10 HTTP/1.1" 307 Temporary Redirect
+osint_api       | 2026-02-11 22:29:53,498 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:29:53,500 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts ORDER BY alerts.created_at DESC 
+osint_api       |  LIMIT $1::INTEGER OFFSET $2::INTEGER
+osint_api       | 2026-02-11 22:29:53,500 INFO sqlalchemy.engine.Engine [cached since 89.03s ago] (10, 0)
+osint_api       | 2026-02-11 22:29:53,509 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER, $2::INTEGER, $3::INTEGER, $4::INTEGER)
+osint_api       | 2026-02-11 22:29:53,510 INFO sqlalchemy.engine.Engine [cached since 88.83s ago] (2, 1, 3, 4)
+osint_api       | 2026-02-11 22:29:53,518 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER, $2::INTEGER, $3::INTEGER, $4::INTEGER)
+osint_api       | 2026-02-11 22:29:53,519 INFO sqlalchemy.engine.Engine [cached since 88.58s ago] (2, 1, 3, 4)
+osint_api       | INFO:     172.18.0.1:53024 - "GET /api/v1/alerts/?skip=0&limit=10 HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:29:53,530 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:29:59,047 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:29:59,049 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.uuid = $1::UUID
+osint_api       | 2026-02-11 22:29:59,049 INFO sqlalchemy.engine.Engine [cached since 89.47s ago] (UUID('ff411e8c-b7f8-4f7b-bd9d-445c38e0833d'),)
+osint_api       | 2026-02-11 22:29:59,059 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:29:59,060 INFO sqlalchemy.engine.Engine [cached since 94.38s ago] (1,)
+osint_api       | 2026-02-11 22:29:59,066 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:29:59,066 INFO sqlalchemy.engine.Engine [cached since 94.13s ago] (1,)
+osint_api       | INFO:     172.18.0.1:57654 - "GET /api/v1/alerts/ff411e8c-b7f8-4f7b-bd9d-445c38e0833d HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:29:59,076 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | INFO:     172.18.0.1:57654 - "OPTIONS /api/v1/alerts/c8096fbe-c95a-42e2-93f7-536b39f6c734 HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:30:03,692 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:30:03,693 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.uuid = $1::UUID
+osint_api       | 2026-02-11 22:30:03,693 INFO sqlalchemy.engine.Engine [cached since 94.12s ago] (UUID('c8096fbe-c95a-42e2-93f7-536b39f6c734'),)
+osint_api       | 2026-02-11 22:30:03,698 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:30:03,698 INFO sqlalchemy.engine.Engine [cached since 99.02s ago] (3,)
+osint_api       | 2026-02-11 22:30:03,704 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:30:03,704 INFO sqlalchemy.engine.Engine [cached since 98.76s ago] (3,)
+osint_api       | INFO:     172.18.0.1:57654 - "GET /api/v1/alerts/c8096fbe-c95a-42e2-93f7-536b39f6c734 HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:30:03,709 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:30:08,411 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:30:08,413 INFO sqlalchemy.engine.Engine SELECT count(alerts.id) AS count_1 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.created_at >= $1::TIMESTAMP WITH TIME ZONE
+osint_api       | 2026-02-11 22:30:08,416 INFO sqlalchemy.engine.Engine [cached since 111.5s ago] (datetime.datetime(2026, 2, 4, 22, 30, 8, 405912, tzinfo=<UTC>),)
+osint_api       | 2026-02-11 22:30:08,426 INFO sqlalchemy.engine.Engine SELECT count(alerts.id) AS count_1 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.created_at >= $1::TIMESTAMP WITH TIME ZONE AND alerts.created_at < $2::TIMESTAMP WITH TIME ZONE
+osint_api       | 2026-02-11 22:30:08,426 INFO sqlalchemy.engine.Engine [cached since 111.4s ago] (datetime.datetime(2026, 1, 28, 22, 30, 8, 405912, tzinfo=<UTC>), datetime.datetime(2026, 2, 4, 22, 30, 8, 405912, tzinfo=<UTC>))
+osint_api       | INFO:     172.18.0.1:57654 - "GET /api/v1/dashboard/stats/weekly HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:30:08,431 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:30:08,450 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:30:08,455 INFO sqlalchemy.engine.Engine SELECT count(monitoring_sources.id) AS count_1 
+osint_api       | FROM monitoring_sources 
+osint_api       | WHERE monitoring_sources.is_active = true
+osint_api       | 2026-02-11 22:30:08,457 INFO sqlalchemy.engine.Engine [cached since 111.5s ago] ()
+osint_api       | 2026-02-11 22:30:08,464 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:30:08,466 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+osint_api       | FROM (SELECT alerts.id AS id, alerts.uuid AS uuid, alerts.url AS url, alerts.source_type AS source_type, alerts.risk_score AS risk_score, alerts.status AS status, alerts.created_at AS created_at, alerts.updated_at AS updated_at, alerts.analysis_note AS analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.risk_score >= $1::INTEGER AND alerts.status = $2::VARCHAR) AS anon_1
+osint_api       | 2026-02-11 22:30:08,466 INFO sqlalchemy.engine.Engine [cached since 112s ago] (85, 'CONFIRMED')
+osint_api       | 2026-02-11 22:30:08,483 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:30:08,483 INFO sqlalchemy.engine.Engine SELECT count(reports.id) AS count_1 
+osint_api       | FROM reports
+osint_api       | 2026-02-11 22:30:08,484 INFO sqlalchemy.engine.Engine [cached since 111.6s ago] ()
+osint_api       | INFO:     172.18.0.1:34308 - "GET /api/v1/dashboard/stats/sources-active HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:30:08,488 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:30:08,503 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.risk_score >= $1::INTEGER AND alerts.status = $2::VARCHAR ORDER BY alerts.risk_score DESC, alerts.created_at DESC 
+osint_api       |  LIMIT $3::INTEGER
+osint_api       | 2026-02-11 22:30:08,503 INFO sqlalchemy.engine.Engine [cached since 106.5s ago] (85, 'CONFIRMED', 3)
+osint_api       | INFO:     172.18.0.1:34310 - "GET /api/v1/dashboard/stats/critical-threats?threshold=85 HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:30:08,520 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | INFO:     172.18.0.1:34314 - "GET /api/v1/dashboard/stats/reports-count HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:30:08,525 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | INFO:     172.18.0.1:55180 - "OPTIONS /api/v1/alerts/0433f476-b2fa-4ebd-b75e-ead9fd353e8d HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:30:14,019 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:30:14,021 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.uuid = $1::UUID
+osint_api       | 2026-02-11 22:30:14,021 INFO sqlalchemy.engine.Engine [cached since 104.4s ago] (UUID('0433f476-b2fa-4ebd-b75e-ead9fd353e8d'),)
+osint_api       | 2026-02-11 22:30:14,028 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:30:14,028 INFO sqlalchemy.engine.Engine [cached since 109.4s ago] (4,)
+osint_api       | 2026-02-11 22:30:14,031 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:30:14,032 INFO sqlalchemy.engine.Engine [cached since 109.1s ago] (4,)
+osint_api       | INFO:     172.18.0.1:55180 - "GET /api/v1/alerts/0433f476-b2fa-4ebd-b75e-ead9fd353e8d HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:30:14,044 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:30:18,737 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:30:18,739 INFO sqlalchemy.engine.Engine SELECT monitoring_sources.id, monitoring_sources.uuid, monitoring_sources.name, monitoring_sources.url, monitoring_sources.source_type, monitoring_sources.frequency_minutes, monitoring_sources.is_active, monitoring_sources.last_run_at, monitoring_sources.last_status, monitoring_sources.next_run_at, monitoring_sources.created_at 
+osint_api       | FROM monitoring_sources ORDER BY monitoring_sources.id DESC 
+osint_api       |  LIMIT $1::INTEGER OFFSET $2::INTEGER
+osint_api       | 2026-02-11 22:30:18,739 INFO sqlalchemy.engine.Engine [cached since 73.56s ago] (100, 0)
+osint_api       | INFO:     172.18.0.1:55180 - "GET /api/v1/scraping/sources HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:30:18,760 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:30:38,181 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:30:38,181 INFO sqlalchemy.engine.Engine SELECT monitoring_sources.id, monitoring_sources.uuid, monitoring_sources.name, monitoring_sources.url, monitoring_sources.source_type, monitoring_sources.frequency_minutes, monitoring_sources.is_active, monitoring_sources.last_run_at, monitoring_sources.last_status, monitoring_sources.next_run_at, monitoring_sources.created_at 
+osint_api       | FROM monitoring_sources 
+osint_api       | WHERE monitoring_sources.is_active = true
+osint_api       | 2026-02-11 22:30:38,182 INFO sqlalchemy.engine.Engine [cached since 241.5s ago] ()
+osint_api       | 2026-02-11 22:30:38,185 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | INFO:     172.18.0.1:47014 - "OPTIONS /api/v1/evidence?skip=0&limit=20 HTTP/1.1" 200 OK
+osint_api       | INFO:     172.18.0.1:47014 - "GET /api/v1/evidence?skip=0&limit=20 HTTP/1.1" 307 Temporary Redirect
+osint_api       | INFO:     172.18.0.1:47014 - "OPTIONS /api/v1/evidence/?skip=0&limit=20 HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:30:41,742 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:30:41,744 INFO sqlalchemy.engine.Engine SELECT evidences.id, evidences.alert_id, evidences.type, evidences.file_path, evidences.file_hash, evidences.content_text_preview, evidences.metadata_json, evidences.status, evidences.captured_at, evidences.sealed_at 
+osint_api       | FROM evidences 
+osint_api       |  LIMIT $1::INTEGER OFFSET $2::INTEGER
+osint_api       | 2026-02-11 22:30:41,745 INFO sqlalchemy.engine.Engine [generated in 0.00051s] (20, 0)
+osint_api       | INFO:     172.18.0.1:47028 - "GET /api/v1/evidence/?skip=0&limit=20 HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:30:41,759 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | INFO:     172.18.0.1:47028 - "OPTIONS /api/v1/analysis/stats HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:30:44,222 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:30:44,228 INFO sqlalchemy.engine.Engine SELECT avg(alerts.risk_score) AS avg_1 
+osint_api       | FROM alerts
+osint_api       | 2026-02-11 22:30:44,228 INFO sqlalchemy.engine.Engine [generated in 0.00030s] ()
+osint_api       | INFO:     172.18.0.1:47146 - "OPTIONS /api/v1/alerts?status=IN_REVIEW&limit=50 HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:30:44,577 INFO sqlalchemy.engine.Engine SELECT count(alerts.id) AS count_1 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.status != $1::VARCHAR
+osint_api       | 2026-02-11 22:30:44,577 INFO sqlalchemy.engine.Engine [generated in 0.00051s] ('NEW',)
+osint_api       | INFO:     172.18.0.1:47158 - "GET /api/v1/alerts?status=IN_REVIEW&limit=50 HTTP/1.1" 307 Temporary Redirect
+osint_api       | 2026-02-11 22:30:44,618 INFO sqlalchemy.engine.Engine SELECT count(alerts.id) AS count_1 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.risk_score < $1::INTEGER
+osint_api       | 2026-02-11 22:30:44,619 INFO sqlalchemy.engine.Engine [generated in 0.00048s] (30,)
+osint_api       | INFO:     172.18.0.1:47158 - "OPTIONS /api/v1/alerts/?status=IN_REVIEW&limit=50 HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:30:44,647 INFO sqlalchemy.engine.Engine SELECT count(alerts.id) AS count_1 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.risk_score >= $1::INTEGER AND alerts.risk_score < $2::INTEGER
+osint_api       | 2026-02-11 22:30:44,648 INFO sqlalchemy.engine.Engine [generated in 0.00055s] (30, 70)
+osint_api       | 2026-02-11 22:30:44,663 INFO sqlalchemy.engine.Engine SELECT count(alerts.id) AS count_1 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.risk_score >= $1::INTEGER
+osint_api       | 2026-02-11 22:30:44,663 INFO sqlalchemy.engine.Engine [generated in 0.00040s] (70,)
+osint_api       | 2026-02-11 22:30:44,668 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:30:44,671 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.status = $1::VARCHAR ORDER BY alerts.created_at DESC 
+osint_api       |  LIMIT $2::INTEGER OFFSET $3::INTEGER
+osint_api       | 2026-02-11 22:30:44,672 INFO sqlalchemy.engine.Engine [generated in 0.00097s] ('IN_REVIEW', 50, 0)
+osint_api       | INFO:     172.18.0.1:47028 - "GET /api/v1/analysis/stats HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:30:44,976 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | INFO:     172.18.0.1:47166 - "GET /api/v1/alerts/?status=IN_REVIEW&limit=50 HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:30:44,983 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:30:49,592 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:30:49,593 INFO sqlalchemy.engine.Engine SELECT count(alerts.id) AS count_1 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.created_at >= $1::TIMESTAMP WITH TIME ZONE
+osint_api       | 2026-02-11 22:30:49,594 INFO sqlalchemy.engine.Engine [cached since 152.7s ago] (datetime.datetime(2026, 2, 4, 22, 30, 49, 591293, tzinfo=<UTC>),)
+osint_api       | 2026-02-11 22:30:49,606 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:30:49,607 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+osint_api       | FROM (SELECT alerts.id AS id, alerts.uuid AS uuid, alerts.url AS url, alerts.source_type AS source_type, alerts.risk_score AS risk_score, alerts.status AS status, alerts.created_at AS created_at, alerts.updated_at AS updated_at, alerts.analysis_note AS analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.risk_score >= $1::INTEGER AND alerts.status = $2::VARCHAR) AS anon_1
+osint_api       | 2026-02-11 22:30:49,607 INFO sqlalchemy.engine.Engine [cached since 153.2s ago] (85, 'CONFIRMED')
+osint_api       | 2026-02-11 22:30:49,613 INFO sqlalchemy.engine.Engine SELECT count(alerts.id) AS count_1 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.created_at >= $1::TIMESTAMP WITH TIME ZONE AND alerts.created_at < $2::TIMESTAMP WITH TIME ZONE
+osint_api       | 2026-02-11 22:30:49,614 INFO sqlalchemy.engine.Engine [cached since 152.6s ago] (datetime.datetime(2026, 1, 28, 22, 30, 49, 591293, tzinfo=<UTC>), datetime.datetime(2026, 2, 4, 22, 30, 49, 591293, tzinfo=<UTC>))
+osint_api       | 2026-02-11 22:30:49,708 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.risk_score >= $1::INTEGER AND alerts.status = $2::VARCHAR ORDER BY alerts.risk_score DESC, alerts.created_at DESC 
+osint_api       |  LIMIT $3::INTEGER
+osint_api       | 2026-02-11 22:30:49,708 INFO sqlalchemy.engine.Engine [cached since 147.8s ago] (85, 'CONFIRMED', 3)
+osint_api       | INFO:     172.18.0.1:47166 - "GET /api/v1/dashboard/stats/weekly HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:30:49,714 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | INFO:     172.18.0.1:47028 - "GET /api/v1/dashboard/stats/critical-threats?threshold=85 HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:30:49,730 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:30:49,838 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:30:49,839 INFO sqlalchemy.engine.Engine SELECT count(reports.id) AS count_1 
+osint_api       | FROM reports
+osint_api       | 2026-02-11 22:30:49,839 INFO sqlalchemy.engine.Engine [cached since 152.9s ago] ()
+osint_api       | 2026-02-11 22:30:49,841 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:30:49,842 INFO sqlalchemy.engine.Engine SELECT count(monitoring_sources.id) AS count_1 
+osint_api       | FROM monitoring_sources 
+osint_api       | WHERE monitoring_sources.is_active = true
+osint_api       | 2026-02-11 22:30:49,843 INFO sqlalchemy.engine.Engine [cached since 152.9s ago] ()
+osint_api       | INFO:     172.18.0.1:47176 - "GET /api/v1/dashboard/stats/sources-active HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:30:49,857 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | INFO:     172.18.0.1:47170 - "GET /api/v1/dashboard/stats/reports-count HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:30:49,861 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:30:53,772 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:30:53,774 INFO sqlalchemy.engine.Engine SELECT alerts.id, alerts.uuid, alerts.url, alerts.source_type, alerts.risk_score, alerts.status, alerts.created_at, alerts.updated_at, alerts.analysis_note 
+osint_api       | FROM alerts 
+osint_api       | WHERE alerts.uuid = $1::UUID
+osint_api       | 2026-02-11 22:30:53,774 INFO sqlalchemy.engine.Engine [cached since 144.2s ago] (UUID('ff411e8c-b7f8-4f7b-bd9d-445c38e0833d'),)
+osint_api       | 2026-02-11 22:30:53,780 INFO sqlalchemy.engine.Engine SELECT evidences.alert_id AS evidences_alert_id, evidences.id AS evidences_id, evidences.type AS evidences_type, evidences.file_path AS evidences_file_path, evidences.file_hash AS evidences_file_hash, evidences.content_text_preview AS evidences_content_text_preview, evidences.metadata_json AS evidences_metadata_json, evidences.status AS evidences_status, evidences.captured_at AS evidences_captured_at, evidences.sealed_at AS evidences_sealed_at 
+osint_api       | FROM evidences 
+osint_api       | WHERE evidences.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:30:53,781 INFO sqlalchemy.engine.Engine [cached since 149.1s ago] (1,)
+osint_api       | 2026-02-11 22:30:53,794 INFO sqlalchemy.engine.Engine SELECT analysis_results.alert_id AS analysis_results_alert_id, analysis_results.id AS analysis_results_id, analysis_results.categories AS analysis_results_categories, analysis_results.entities AS analysis_results_entities 
+osint_api       | FROM analysis_results 
+osint_api       | WHERE analysis_results.alert_id IN ($1::INTEGER)
+osint_api       | 2026-02-11 22:30:53,794 INFO sqlalchemy.engine.Engine [cached since 148.9s ago] (1,)
+osint_api       | INFO:     172.18.0.1:47170 - "GET /api/v1/alerts/ff411e8c-b7f8-4f7b-bd9d-445c38e0833d HTTP/1.1" 200 OK
+osint_api       | 2026-02-11 22:30:53,808 INFO sqlalchemy.engine.Engine ROLLBACK
+osint_api       | 2026-02-11 22:31:38,161 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+osint_api       | 2026-02-11 22:31:38,162 INFO sqlalchemy.engine.Engine SELECT monitoring_sources.id, monitoring_sources.uuid, monitoring_sources.name, monitoring_sources.url, monitoring_sources.source_type, monitoring_sources.frequency_minutes, monitoring_sources.is_active, monitoring_sources.last_run_at, monitoring_sources.last_status, monitoring_sources.next_run_at, monitoring_sources.created_at 
+osint_api       | FROM monitoring_sources 
+osint_api       | WHERE monitoring_sources.is_active = true
+osint_api       | 2026-02-11 22:31:38,162 INFO sqlalchemy.engine.Engine [cached since 301.5s ago] ()
+osint_api       | 2026-02-11 22:31:38,167 INFO sqlalchemy.engine.Engine ROLLBACK

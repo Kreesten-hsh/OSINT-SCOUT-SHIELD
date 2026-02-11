@@ -4,7 +4,7 @@ from app.core.config import settings
 
 # Création de l'engine Asynchrone
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    settings.effective_database_url,
     echo=True, # Log SQL queries pour le dev
     future=True
 )

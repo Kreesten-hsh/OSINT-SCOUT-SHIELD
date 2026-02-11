@@ -1,8 +1,8 @@
-import { useParams, Link } from 'react-router-dom';
+﻿import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { monitoringService, ScrapingRun, MonitoringSource } from '@/services/monitoringService';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, ArrowLeft, Calendar, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { Loader2, ArrowLeft, AlertTriangle } from 'lucide-react';
 
 export default function SourceDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -21,13 +21,13 @@ export default function SourceDetailPage() {
 
     const source = sources?.find((s: MonitoringSource) => s.id === sourceId);
 
-    if (!source && !runsLoading) return <div className="p-6">Source non trouvée</div>;
+    if (!source && !runsLoading) return <div className="p-6">Source non trouvÃ©e</div>;
 
     return (
         <div className="space-y-6">
             <Link to="/monitoring" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors">
                 <ArrowLeft className="w-4 h-4 mr-1" />
-                Retour à la surveillance
+                Retour Ã  la surveillance
             </Link>
 
             <div className="flex flex-col gap-4 border-b border-border pb-6">
@@ -46,7 +46,7 @@ export default function SourceDetailPage() {
                         </a>
                     </div>
                     <div className="text-right">
-                        <div className="text-sm font-medium text-muted-foreground">Fréquence</div>
+                        <div className="text-sm font-medium text-muted-foreground">FrÃ©quence</div>
                         <div className="text-lg font-bold">Every {source?.frequency_minutes} min</div>
                     </div>
                 </div>
@@ -64,7 +64,7 @@ export default function SourceDetailPage() {
             </div>
 
             <div className="space-y-4">
-                <h2 className="text-lg font-semibold">Historique d'exécution</h2>
+                <h2 className="text-lg font-semibold">Historique d'exÃ©cution</h2>
 
                 <div className="border border-border rounded-xl bg-card overflow-hidden shadow-sm">
                     <table className="w-full text-sm text-left">
@@ -72,7 +72,7 @@ export default function SourceDetailPage() {
                             <tr>
                                 <th className="px-6 py-4">Date</th>
                                 <th className="px-6 py-4">Statut</th>
-                                <th className="px-6 py-4">Durée</th>
+                                <th className="px-6 py-4">DurÃ©e</th>
                                 <th className="px-6 py-4">Alertes</th>
                                 <th className="px-6 py-4">Message</th>
                             </tr>
@@ -155,3 +155,4 @@ function ActivityIcon(props: any) {
         </svg>
     )
 }
+

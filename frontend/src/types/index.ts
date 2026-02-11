@@ -1,5 +1,5 @@
 export type UUID = string;
-export type ISOString = string; // e.g., "2023-01-01T12:00:00Z"
+export type ISOString = string;
 
 // --- AUTH TYPES ---
 export interface Token {
@@ -19,7 +19,7 @@ export type EvidenceStatus = 'ACTIVE' | 'SEALED';
 export interface Evidence {
     id: number;
     alert_id: number;
-    type: string; // SCREENSHOT, HTML, etc.
+    type: string;
     status: EvidenceStatus;
     file_path: string;
     file_hash: string;
@@ -38,7 +38,7 @@ export interface AnalysisResult {
 }
 
 // --- ALERT TYPES ---
-export type AlertStatus = 'NEW' | 'INVESTIGATING' | 'CLOSED' | 'FALSE_POSITIVE' | 'CONFIRMED' | 'CLEAN' | 'ANALYZED';
+export type AlertStatus = 'NEW' | 'IN_REVIEW' | 'CONFIRMED' | 'DISMISSED';
 
 export interface Alert {
     id: number;
@@ -46,8 +46,7 @@ export interface Alert {
     url: string;
     source_type: string;
     risk_score: number;
-    status: string;
-    is_confirmed: boolean;
+    status: AlertStatus;
     created_at: ISOString;
     updated_at?: ISOString;
     analysis_note?: string;

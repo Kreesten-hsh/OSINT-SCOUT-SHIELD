@@ -52,6 +52,7 @@ async def read_alert(
     
     if not alert:
         raise HTTPException(status_code=404, detail="Alert not found")
+
     return alert
 
 
@@ -67,12 +68,24 @@ async def update_alert(
     Permet à un analyste de qualifier l'alerte (Confirmer/Fermer).
     """
     # 1. Get
-    query = select(Alert).where(Alert.uuid == alert_uuid)
+    query = select(Alert).where(Alert.uuid == alert_uuid).options(
+        selectinload(Alert.evidences),
+        selectinload(Alert.analysis_results)
+    )
     result = await db.execute(query)
     alert = result.scalars().first()
     
     if not alert:
         raise HTTPException(status_code=404, detail="Alert not found")
+
+    # Business rule: closing decisions require a non-empty analyst note.
+    if alert_update.status in ("CONFIRMED", "DISMISSED"):
+        resulting_note = alert_update.analysis_note if alert_update.analysis_note is not None else alert.analysis_note
+        if not resulting_note or not resulting_note.strip():
+            raise HTTPException(
+                status_code=422,
+                detail=f"analysis_note is required when status is {alert_update.status}"
+            )
     
     # 2. Update
     update_data = alert_update.model_dump(exclude_unset=True)
@@ -82,7 +95,10 @@ async def update_alert(
     # 3. Save
     db.add(alert)
     await db.commit()
-    await db.refresh(alert)
+
+    # Reload with eager relationships to avoid async lazy loading during response serialization
+    refreshed = await db.execute(query)
+    alert = refreshed.scalars().first()
     
     return APIResponse(
         success=True,

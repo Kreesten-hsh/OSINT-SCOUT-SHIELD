@@ -4,7 +4,7 @@ import { apiClient } from '@/api/client';
 import { useParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Shield, FileText, Download, Lock, CheckCircle, Loader2, Fingerprint } from 'lucide-react';
+import { Shield, FileText, Download, Lock, CheckCircle, Loader2, Fingerprint, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
@@ -18,25 +18,10 @@ export default function ReportDetailPage() {
     const { data: alert, isLoading: isLoadingAlert } = useQuery({
         queryKey: ['alert-detail', id], // Renamed to clarify it's an alert
         queryFn: async () => {
-            // We use the same endpoint as before but semantically it's an alert
-            const response = await apiClient.get<any>(`/reports/${id}`);
+            const response = await apiClient.get<any>(`/alerts/${id}`);
             return response.data;
         },
         enabled: !!id
-    });
-
-    // 2. Fetch Existing Reports for this Alert (Static Artifacts)
-    const { data: existingReports, isLoading: isLoadingReports } = useQuery({
-        queryKey: ['reports-for-alert', id],
-        queryFn: async () => {
-            // Pour l'instant on liste tout, idéalement on filtrerait par alert_id côté backend
-            // Simplification: On va assumer que si le backend renvoie une liste, on peut filtrer ici 
-            // OU pour le MVC, on check juste s'il y a un rapport lié à cette alerte via une nouvelle route
-            // MAIS pour rester simple et fiable avec l'API actuelle 'list_reports':
-            // On va ajouter une propriété 'reports' à la réponse de l'alerte plus tard si besoin.
-            // Pour le moment on va implémenter le bouton 'Générer' et voir le résultat.
-            return [];
-        }
     });
 
     const [isGenerating, setIsGenerating] = useState(false);
@@ -57,7 +42,7 @@ export default function ReportDetailPage() {
             setIsGenerating(false);
             queryClient.invalidateQueries({ queryKey: ['reports-list'] });
         },
-        onError: (error) => {
+        onError: () => {
             toast({
                 title: "Erreur de génération",
                 description: "Impossible de créer le rapport.",

@@ -16,21 +16,22 @@ email-validator>=2.1.0
 
 # Workers & Redis
 redis>=5.0.0
-celery>=5.3.0 # Gestionnaire de tâches asynchrones standard
 
 # Traitement & NLP
 spacy>=3.7.0
 beautifulsoup4>=4.12.0
 playwright>=1.42.0
 
-# Tests & Qualité (Dev Dependencies - mais utile en docker pour ci)
+# Tests & Qualité
 pytest>=8.0.0
 pytest-asyncio>=0.23.0
-ruff>=0.3.0 # Linter ultra-rapide
+ruff>=0.3.0
 
 # Auth
 python-jose[cryptography]>=3.3.0
 passlib[bcrypt]>=1.7.4
 python-multipart>=0.0.9
+
+# Reporting
 reportlab>=4.0.0
 pytz>=2024.1

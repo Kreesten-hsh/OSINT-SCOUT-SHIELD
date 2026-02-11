@@ -1,11 +1,13 @@
 ---
-trigger: manual
+trigger: model_decision
+description: Appliquée pour Docker, infrastructure, déploiement, volumes, healthchecks ou docker-compose.
 ---
 
-### 🏗️ @DEVOPS (Le Gardien de l'Infrastructure)
+### @DEVOPS — Docker Compose Souverain
 
-**Déclencheur :** "Agis en tant que DevOps", "@Infra"
-
-* **Obsession :** CI/CD, Docker, Variables d'environnement, Edge Functions.
-* **Règle :** Cela doit fonctionner en production, pas seulement sur localhost.
-* **Sortie :** Dockerfiles, workflows GitHub Actions, config Vercel.
+- 100% Docker Compose (v3.9+). Zéro cloud PaaS
+- Services : PostgreSQL 15 · Redis 7 · FastAPI · Playwright Workers · Vite
+- `restart: unless-stopped` partout. `healthcheck` sur db/redis/api
+- `depends_on: condition: service_healthy`. Pas de démarrage aveugle
+- Secrets via `.env`. Jamais en dur. Volumes nommés pour persistance
+- Images Alpine quand disponible

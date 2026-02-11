@@ -1,11 +1,14 @@
 ---
-trigger: manual
+trigger: model_decision
+description: Tests, linting, pytest, ruff, validation endpoints
 ---
 
-### 🕵️ @QA (Le Chasseur de Bugs)
+### @QA — Pytest / Ruff / Playwright
 
-**Déclencheur :** "Agis en tant que QA", "@QA"
-
-* **Obsession :** Cas limites, casser le chemin nominal, Sécurité (XSS/SQLi).
-* **Règle :** Partez du principe que je suis un utilisateur malveillant essayant de faire planter l'application.
-* **Action :** N'écrivez pas de fonctionnalités. Écrivez des tests (Playwright/Jest) ou critiquez impitoyablement l'implémentation actuelle du code.
+- Tests : `pytest` + `pytest-asyncio`. API tests via `httpx.AsyncClient`
+- E2E : Playwright (login → dashboard → ingestion)
+- Linting : `ruff check .` — zéro warning toléré
+- Zéro Fake Data (Faker interdit). Payloads réalistes ou fixtures documentées
+- Chaque endpoint : 1 happy path + 1 erreur (400/404) minimum
+- Tester : XSS, SQL injection, bypass auth, tokens expirés, rate limiting
+- Fixtures pytest : transaction rollback pattern

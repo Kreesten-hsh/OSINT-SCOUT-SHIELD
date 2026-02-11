@@ -1,0 +1,4 @@
+CONTAINER ID   IMAGE                       COMMAND                  CREATED          STATUS                    PORTS                                         NAMES
+208b69b5eae8   osint-scoutshield-scraper   "python workers/work…"   22 minutes ago   Up 18 minutes                                                           osint_scraper
+d83cd3720800   redis:7-alpine              "docker-entrypoint.s…"   22 minutes ago   Up 18 minutes (healthy)   0.0.0.0:6379->6379/tcp, [::]:6379->6379/tcp   osint_redis
+bbd30cefee32   postgres:15-alpine          "docker-entrypoint.s…"   22 minutes ago   Up 18 minutes (healthy)   0.0.0.0:5433->5432/tcp, [::]:5433->5432/tcp   osint_db

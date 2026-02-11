@@ -1,9 +1,9 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { Evidence } from '@/types';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, FileText, Calendar, Hash, Eye, Terminal, Lock, Unlock, Download, ShieldCheck } from 'lucide-react';
+import { Loader2, Search, FileText, Calendar, Hash, Terminal, Lock, Unlock, Download, ShieldCheck } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function EvidencePage() {
@@ -47,7 +47,7 @@ export default function EvidencePage() {
                         <FileText className="w-6 h-6 text-primary" />
                         Registre des Preuves
                     </h1>
-                    <p className="text-muted-foreground text-sm">Base de données forensique immuable via MinIO.</p>
+                    <p className="text-muted-foreground text-sm">Base de donnÃ©es forensique immuable via MinIO.</p>
                 </div>
 
                 <div className="relative w-full sm:w-64">
@@ -72,7 +72,7 @@ export default function EvidencePage() {
                                     <th className="px-4 py-3">ID</th>
                                     <th className="px-4 py-3">Fichier / Context</th>
                                     <th className="px-4 py-3">Horodatage</th>
-                                    <th className="px-4 py-3">Chaîne de Garde</th>
+                                    <th className="px-4 py-3">ChaÃ®ne de Garde</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
@@ -86,13 +86,13 @@ export default function EvidencePage() {
                                 ) : isError ? (
                                     <tr>
                                         <td colSpan={4} className="px-6 py-12 text-center text-destructive">
-                                            Erreur d'accès au registre.
+                                            Erreur d'accÃ¨s au registre.
                                         </td>
                                     </tr>
                                 ) : evidences?.length === 0 ? (
                                     <tr>
                                         <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
-                                            Aucune preuve archivée.
+                                            Aucune preuve archivÃ©e.
                                         </td>
                                     </tr>
                                 ) : (
@@ -126,7 +126,7 @@ export default function EvidencePage() {
                                                     </Badge>
                                                 ) : (
                                                     <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-200 flex items-center gap-1 w-fit">
-                                                        <Lock className="w-3 h-3" /> SCELLÉ
+                                                        <Lock className="w-3 h-3" /> SCELLÃ‰
                                                     </Badge>
                                                 )}
                                             </td>
@@ -140,7 +140,7 @@ export default function EvidencePage() {
                     <div className="p-4 border-t border-border bg-secondary/10 flex items-center justify-between">
                         <span className="text-xs text-muted-foreground">Registre Page {page}</span>
                         <div className="flex gap-2">
-                            <button onClick={handlePrevPage} disabled={page === 1} className="px-3 py-1 text-xs border rounded hover:bg-background disabled:opacity-50">Préc.</button>
+                            <button onClick={handlePrevPage} disabled={page === 1} className="px-3 py-1 text-xs border rounded hover:bg-background disabled:opacity-50">PrÃ©c.</button>
                             <button onClick={handleNextPage} disabled={evidences && evidences.length < pageSize} className="px-3 py-1 text-xs border rounded hover:bg-background disabled:opacity-50">Suiv.</button>
                         </div>
                     </div>
@@ -155,7 +155,7 @@ export default function EvidencePage() {
                                     <ShieldCheck className="w-4 h-4 text-primary" />
                                     Preuve #{selectedEvidence.id}
                                 </h3>
-                                <Badge variant="outline" className="font-mono text-[10px] bg-background">SHA-256 VALIDÉ</Badge>
+                                <Badge variant="outline" className="font-mono text-[10px] bg-background">SHA-256 VALIDÃ‰</Badge>
                             </div>
 
                             <div className="p-4 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
@@ -168,7 +168,7 @@ export default function EvidencePage() {
                                             className="w-full h-auto object-contain max-h-[300px]"
                                             onError={(e) => {
                                                 (e.target as HTMLImageElement).style.display = 'none';
-                                                (e.target as HTMLImageElement).parentElement!.innerHTML = '<div class="text-xs text-muted-foreground p-4">Aperçu non disponible (Format ou Accès)</div>';
+                                                (e.target as HTMLImageElement).parentElement!.innerHTML = '<div class="text-xs text-muted-foreground p-4">AperÃ§u non disponible (Format ou AccÃ¨s)</div>';
                                             }}
                                         />
                                     </div>
@@ -178,7 +178,7 @@ export default function EvidencePage() {
                                 <div className="space-y-4">
                                     <div className="p-3 bg-secondary/10 rounded-lg border border-border">
                                         <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1 flex items-center gap-1">
-                                            <Hash className="w-3 h-3" /> Hash Scellé
+                                            <Hash className="w-3 h-3" /> Hash ScellÃ©
                                         </h4>
                                         <div className="text-xs break-all font-mono text-primary select-all">
                                             {selectedEvidence.file_hash || "HASH_MISSING"}
@@ -197,7 +197,7 @@ export default function EvidencePage() {
                                         <div>
                                             <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1 flex items-center gap-2">
                                                 <Terminal className="w-3 h-3" />
-                                                Metadonnées Techniques
+                                                MetadonnÃ©es Techniques
                                             </h4>
                                             <pre className="p-3 bg-black/80 rounded-md border border-border text-[10px] text-green-400 font-mono overflow-auto max-h-[150px] custom-scrollbar">
                                                 {JSON.stringify(selectedEvidence.metadata_json, null, 2)}
@@ -213,15 +213,15 @@ export default function EvidencePage() {
                                     className="w-full flex items-center justify-center gap-2 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
                                 >
                                     <Download className="w-4 h-4" />
-                                    Télécharger l'Original
+                                    TÃ©lÃ©charger l'Original
                                 </button>
                             </div>
                         </div>
                     ) : (
                         <div className="h-full border border-dashed border-border rounded-xl flex flex-col items-center justify-center text-muted-foreground p-6 text-center bg-secondary/5">
                             <FileText className="w-12 h-12 mb-3 opacity-20" />
-                            <p className="text-sm font-medium">Sélectionnez une preuve</p>
-                            <p className="text-xs opacity-70 mt-1 max-w-[180px]">Cliquez sur une ligne pour inspecter le scellé numérique.</p>
+                            <p className="text-sm font-medium">SÃ©lectionnez une preuve</p>
+                            <p className="text-xs opacity-70 mt-1 max-w-[180px]">Cliquez sur une ligne pour inspecter le scellÃ© numÃ©rique.</p>
                         </div>
                     )}
                 </div>
@@ -229,3 +229,4 @@ export default function EvidencePage() {
         </div>
     );
 }
+

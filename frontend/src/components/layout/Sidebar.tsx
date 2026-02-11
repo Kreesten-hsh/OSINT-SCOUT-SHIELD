@@ -1,5 +1,5 @@
-import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, AlertTriangle, FileText, Settings, Search, Shield, LogOut, PlusCircle, BrainCircuit, Globe } from 'lucide-react';
+﻿import { NavLink } from 'react-router-dom';
+import { LayoutDashboard, AlertTriangle, FileText, Settings, Shield, LogOut, PlusCircle, BrainCircuit, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -11,7 +11,7 @@ const navItems = [
     { to: '/reports', label: 'Rapports', icon: FileText },
     { to: '/monitoring', label: 'Surveillance Auto', icon: Globe },
     { to: '/ingestion', label: 'Nouveau Ciblage', icon: PlusCircle },
-    { to: '/settings', label: 'Paramètres', icon: Settings },
+    { to: '/settings', label: 'ParamÃ¨tres', icon: Settings },
 ];
 
 export function Sidebar() {
@@ -50,9 +50,10 @@ export function Sidebar() {
                     className="flex items-center w-full px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                 >
                     <LogOut className="w-5 h-5 mr-3" />
-                    Déconnexion
+                    DÃ©connexion
                 </button>
             </div>
         </aside>
     );
 }
+

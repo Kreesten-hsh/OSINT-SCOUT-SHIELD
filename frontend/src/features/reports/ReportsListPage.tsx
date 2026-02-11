@@ -89,13 +89,6 @@ export default function ReportsListPage() {
                             <div
                                 key={report.uuid}
                                 onClick={() => {
-                                    // IMPORTANT: On navigue vers la page de DETAIL de l'ALERT, 
-                                    // mais comme on n'a pas l'UUID de l'Alert facilement accessible dans l'URL de la liste
-                                    // (on a l'ID num de l'alert dans report.alert_id mais pas son UUID stocké plat),
-                                    // IDEALEMENT: Il nous faut l'UUID de l'alerte pour naviguer vers /reports/{alert_uuid}
-                                    // OU BIEN on change la route pour /reports/artifact/{report_uuid}.
-                                    // MAIS pour respecter le flow actuel 'ReportDetailPage' qui prend un ALERT UUID...
-                                    // => On va utiliser l'UUID de l'alerte stocké dans le snapshot !
                                     if (alertSnapshot?.uuid) {
                                         navigate(`/reports/${alertSnapshot.uuid}`);
                                     } else {

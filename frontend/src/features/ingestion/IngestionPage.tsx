@@ -1,10 +1,8 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { useNavigate } from 'react-router-dom';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'; // We might need to mock this if not exists or use basic inputs
-import { Label } from '@/components/ui/label';
-import { ArrowRight, Loader2, Link as LinkIcon, AlertTriangle } from 'lucide-react';
+import { ArrowRight, Loader2, Link as LinkIcon, AlertTriangle, Shield, Globe, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { APIResponse } from '@/api/types';
 import { Alert } from '@/types';
@@ -49,7 +47,7 @@ export default function IngestionPage() {
                     Ingestion de Cible
                 </h1>
                 <p className="text-muted-foreground mt-2 text-lg">
-                    Injectez une nouvelle source dans le moteur de renseignement pour analyse immédiate.
+                    Injectez une nouvelle source dans le moteur de renseignement pour analyse immÃ©diate.
                 </p>
             </div>
 
@@ -77,7 +75,7 @@ export default function IngestionPage() {
                         {/* Using a generic icon representation for social if standard ones missing */}
                         <div className="w-8 h-8 rounded-full border-2 border-current flex items-center justify-center font-bold">@</div>
                     </div>
-                    <span className="font-semibold text-sm">Réseaux Sociaux</span>
+                    <span className="font-semibold text-sm">RÃ©seaux Sociaux</span>
                 </div>
                 <div
                     onClick={() => setSourceType('DARKWEB')}
@@ -112,7 +110,7 @@ export default function IngestionPage() {
                             <div className="absolute inset-0 rounded-md ring-1 ring-primary/20 group-hover:ring-primary/40 pointer-events-none transition-all" />
                         </div>
                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-                            Le système lancera automatiquement les crawlers Playwright.
+                            Le systÃ¨me lancera automatiquement les crawlers Playwright.
                         </p>
                     </div>
 
@@ -121,7 +119,7 @@ export default function IngestionPage() {
                         <textarea
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
-                            placeholder="Contexte initial, hypothèses, vecteurs de menace présumés..."
+                            placeholder="Contexte initial, hypothÃ¨ses, vecteurs de menace prÃ©sumÃ©s..."
                             className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50 resize-y"
                         />
                     </div>
@@ -130,7 +128,7 @@ export default function IngestionPage() {
                         <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-md flex items-center gap-3 text-destructive animate-in slide-in-from-top-2">
                             <AlertTriangle className="w-5 h-5" />
                             <div className="text-sm font-medium">
-                                {(mutation.error as any)?.response?.data?.message || "Échec de l'ingestion : Vérifiez l'URL ou la connexion backend."}
+                                {(mutation.error as any)?.response?.data?.message || "Ã‰chec de l'ingestion : VÃ©rifiez l'URL ou la connexion backend."}
                             </div>
                         </div>
                     )}
@@ -166,20 +164,21 @@ export default function IngestionPage() {
                 <div className="p-4 border border-dashed border-border rounded-lg bg-secondary/10">
                     <h4 className="font-semibold mb-2 text-foreground">Flux de Traitement</h4>
                     <ul className="list-disc pl-4 space-y-1">
-                        <li>Validation de l'URL et vérification DNS.</li>
+                        <li>Validation de l'URL et vÃ©rification DNS.</li>
                         <li>Capture DOM via Playwright (Headless Browser).</li>
-                        <li>Extraction des entités (Noms, Lieux, Crypto).</li>
+                        <li>Extraction des entitÃ©s (Noms, Lieux, Crypto).</li>
                         <li>Archivage de la preuve (Screenshot SHA-256).</li>
                     </ul>
                 </div>
                 <div className="p-4 border border-dashed border-border rounded-lg bg-secondary/10">
-                    <h4 className="font-semibold mb-2 text-foreground">Confidentialité & OpSec</h4>
+                    <h4 className="font-semibold mb-2 text-foreground">ConfidentialitÃ© & OpSec</h4>
                     <p>
-                        L'ingestion utilise une rotation de User-Agents et de proxys (si configuré).
-                        Les métadonnées locale de l'analyste ne sont pas transmises à la cible.
+                        L'ingestion utilise une rotation de User-Agents et de proxys (si configurÃ©).
+                        Les mÃ©tadonnÃ©es locale de l'analyste ne sont pas transmises Ã  la cible.
                     </p>
                 </div>
             </div>
         </div>
     );
 }
+

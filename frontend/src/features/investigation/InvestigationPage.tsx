@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import {
     ArrowLeft, ShieldAlert, Clock, Globe,
     Activity, FileText, CheckCircle, XCircle,
-    AlertTriangle, Send, Loader2, Lock, AlertCircle, FileBarChart
+    Send, Loader2, Lock, AlertCircle, FileBarChart
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
@@ -15,7 +15,7 @@ import { format } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 
 export default function InvestigationPage() {
-    const { id } = useParams<{ id: string }>(); // UUID
+    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const { toast } = useToast();
@@ -37,48 +37,48 @@ export default function InvestigationPage() {
             setNotes(alert.analysis_note);
         }
     }, [alert]);
-
     // 2. Mutation for Alert Update (Status or Notes)
     const updateAlertMutation = useMutation({
-        mutationFn: async (data: { status?: string; analysis_note?: string }) => {
-            // Utilisation du type générique APIResponse<Alert>
+        mutationFn: async (data: { status?: AlertStatus; analysis_note?: string }) => {
             const res = await apiClient.patch<APIResponse<Alert>>(`/alerts/${id}`, data);
             return res.data;
         },
         onSuccess: (response) => {
             if (response.success) {
+                if (response.data) {
+                    queryClient.setQueryData(['alert', id], response.data);
+                }
                 queryClient.invalidateQueries({ queryKey: ['alert', id] });
-                // Message venant du backend
-                toast({ title: "Succès", description: response.message });
+                queryClient.invalidateQueries({ queryKey: ['alerts'] });
+                queryClient.invalidateQueries({ queryKey: ['analysis-stats'] });
+                toast({ title: "Succes", description: response.message });
             } else {
-                toast({ title: "Erreur", description: response.message || "Échec de l'action", variant: "destructive" });
+                toast({ title: "Erreur", description: response.message || "Echec de l'action", variant: "destructive" });
             }
         },
         onError: (err: any) => {
-            // Si le backend renvoie 4xx/5xx avec un body standard
-            const msg = err.response?.data?.message || "Échec de la sauvegarde.";
+            const msg = err.response?.data?.message || "Echec de la sauvegarde.";
             toast({ title: "Erreur", description: msg, variant: "destructive" });
         }
     });
-
     // 3. Mutation for Report Generation
     const generateReportMutation = useMutation({
         mutationFn: async () => {
             if (!alert?.id) throw new Error("Alert ID missing");
-            const res = await apiClient.post<APIResponse<any>>(`/reports/generate/${alert.uuid}`); // Utilisation UUID préférée si possible, sinon ID
+            const res = await apiClient.post<APIResponse<any>>(`/reports/generate/${alert.uuid}`); // Use alert UUID for report generation
             return res.data;
         },
         onSuccess: (response) => {
             if (response.success) {
-                toast({ title: "Rapport Généré", description: response.message });
+                toast({ title: "Rapport genere", description: response.message });
                 navigate('/reports');
             } else {
                 toast({ title: "Erreur", description: response.message, variant: "destructive" });
             }
         },
         onError: (err: any) => {
-            const msg = err.response?.data?.message || "Impossible de générer le rapport.";
-            toast({ title: "Erreur Génération", description: msg, variant: "destructive" });
+            const msg = err.response?.data?.message || "Impossible de generer le rapport.";
+            toast({ title: "Erreur generation", description: msg, variant: "destructive" });
         }
     });
 
@@ -92,7 +92,7 @@ export default function InvestigationPage() {
             toast({ title: "Note requise", description: "Vous devez ajouter une note d'analyse avant de confirmer.", variant: "destructive" });
             return;
         }
-        if (window.confirm("Confirmer cette menace comme RÉELLE ?")) {
+        if (window.confirm("Confirmer cette menace comme REELLE ?")) {
             updateAlertMutation.mutate({ status: 'CONFIRMED', analysis_note: noteValue });
         }
     };
@@ -122,7 +122,7 @@ export default function InvestigationPage() {
             <div className="flex flex-col items-center justify-center h-full min-h-[60vh] text-destructive">
                 <AlertCircle className="w-12 h-12 mb-4" />
                 <h2 className="text-xl font-bold">Erreur de chargement</h2>
-                <p className="mb-6 opacity-80">Impossible de récupérer les détails de l'alerte.</p>
+                <p className="mb-6 opacity-80">Impossible de recuperer les details de l'alerte.</p>
                 <button onClick={() => navigate('/alerts')} className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md">
                     Retour aux alertes
                 </button>
@@ -174,7 +174,7 @@ export default function InvestigationPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    {/* ACTION 1: Prendre en charge (NEW → IN_REVIEW) */}
+                    {/* ACTION 1: Prendre en charge (NEW -> IN_REVIEW) */}
                     {alert.status === 'NEW' && (
                         <button
                             onClick={() => updateAlertMutation.mutate({ status: 'IN_REVIEW' })}
@@ -213,7 +213,7 @@ export default function InvestigationPage() {
                             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium ml-2"
                         >
                             {generateReportMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileBarChart className="w-4 h-4" />}
-                            Générer Rapport
+                            Generer Rapport
                         </button>
                     )}
                 </div>
@@ -333,3 +333,4 @@ export default function InvestigationPage() {
         </div>
     );
 }
+

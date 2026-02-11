@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
-import { ShieldAlert, Activity, Users, AlertTriangle, Zap, Server, BrainCircuit, CheckCircle, ArrowRight } from 'lucide-react';
+import { ShieldAlert, Activity, Users, Server, BrainCircuit, CheckCircle, ArrowRight } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend } from 'recharts';
 import { Alert } from '@/types';
 import { useNavigate } from 'react-router-dom';
@@ -29,22 +29,17 @@ export default function AnalysisPage() {
         }
     });
 
-    // 2. Fetch Alerts to Validate (Status = ANALYZED or INVESTIGATING, High Risk)
+    // 2. Fetch Alerts to Validate (Status = IN_REVIEW)
     const { data: pendingAlerts, isLoading: alertsLoading } = useQuery({
         queryKey: ['alerts', 'pending-validation'],
         queryFn: async () => {
-            // Fetching all (limit 100) and filtering client side for MVP real-time
-            // Ideally backend filter: GET /alerts?status=ANALYZED&min_score=50
-            const response = await apiClient.get<Alert[]>('/alerts?status=ANALYZED&limit=50');
-            // Also include INVESTIGATING?
-            // Prompt says: "Alertes nécessitant validation humaine" (status=ANALYZED)
-            return (response.data as any).items || response.data || [];
+            const response = await apiClient.get<Alert[]>('/alerts?status=IN_REVIEW&limit=50');
+            return response.data || [];
         }
     });
 
     // Filter localy for risk score 50-85 logic (from Prompt)
     const validationQueue = pendingAlerts?.filter(a => a.risk_score >= 50) || [];
-    const highRiskQueue = validationQueue.filter(a => a.risk_score >= 80); // Priority
 
     if (statsLoading || alertsLoading) {
         return (
@@ -114,7 +109,7 @@ export default function AnalysisPage() {
                 </div>
 
                 {/* CARD 3: VALIDATION QUEUE (REPLACES FAKE ENTITIES) */}
-                <div className="p-6 rounded-xl border border-border bg-card shadow-sm hover:border-orange-500/50 transition-colors cursor-pointer group" onClick={() => navigate('/alerts?status=ANALYZED')}>
+                <div className="p-6 rounded-xl border border-border bg-card shadow-sm hover:border-orange-500/50 transition-colors cursor-pointer group" onClick={() => navigate('/alerts?status=IN_REVIEW')}>
                     <div className="flex items-center justify-between mb-4">
                         <span className="text-muted-foreground font-medium text-sm uppercase tracking-wider text-orange-500">À Valider</span>
                         <CheckCircle className="w-5 h-5 text-orange-500" />

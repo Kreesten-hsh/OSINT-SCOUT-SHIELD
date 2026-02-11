@@ -6,6 +6,7 @@ services:
     build: ./backend
     container_name: osint_api
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
     volumes:
       - ./backend:/app
       - ./evidences_store:/app/evidences_store
@@ -18,13 +19,22 @@ services:
       - DATABASE_URL=postgresql+asyncpg://osint_user:osint_password@db:5432/osint_db
       - REDIS_URL=redis://redis:6379/0
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
 
   # --- Service Base de Données (PostgreSQL) ---
   db:
     image: postgres:15-alpine
     container_name: osint_db
+    restart: unless-stopped
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
@@ -33,35 +43,48 @@ services:
       - POSTGRES_DB=osint_db
     ports:
       - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U osint_user -d osint_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   # --- Service Cache / Queue (Redis) ---
   redis:
     image: redis:7-alpine
     container_name: osint_redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # --- Service Scraper (Playwright Workers) ---
   scraper:
     build: ./scrapers
     container_name: osint_scraper
+    restart: unless-stopped
     volumes:
       - ./scrapers:/app
-      - ./evidences_store:/app/evidences_store # Pour récupérer les preuves sur l'hôte
+      - ./evidences_store:/app/evidences_store
     environment:
       - REDIS_URL=redis://redis:6379/0
-    command: python workers/worker.py # Lancement automatique du worker
+    command: python workers/worker.py
     depends_on:
-      - redis
-    #  - api # Décommenter si le scraper doit appeler l'API directement
+      redis:
+        condition: service_healthy
 
-    # --- Service Frontend (React + Vite) ---
-    # Note: En développement, on lance le serveur Vite directement
+  # --- Service Frontend (React + Vite) ---
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
     container_name: osint_frontend
+    restart: unless-stopped
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -70,7 +93,8 @@ services:
     environment:
       - VITE_API_URL=http://localhost:8000/api/v1
     depends_on:
-      - api
+      api:
+        condition: service_started
 
 volumes:
   postgres_data:
