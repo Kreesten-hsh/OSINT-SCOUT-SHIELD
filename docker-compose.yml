@@ -1,23 +1,32 @@
-version: '3.9'
-
 services:
   # --- Service Backend (API) ---
   api:
     build: ./backend
     container_name: osint_api
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
     restart: unless-stopped
+    env_file:
+      - .env
     volumes:
       - ./backend:/app
       - ./evidences_store:/app/evidences_store
     ports:
       - "8000:8000"
     environment:
-      - POSTGRES_USER=osint_user
-      - POSTGRES_PASSWORD=osint_password
-      - POSTGRES_DB=osint_db
-      - DATABASE_URL=postgresql+asyncpg://osint_user:osint_password@db:5432/osint_db
-      - REDIS_URL=redis://redis:6379/0
+      - POSTGRES_USER=${POSTGRES_USER:-osint_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-osint_password}
+      - POSTGRES_DB=${POSTGRES_DB:-osint_db}
+      - DATABASE_URL=${DATABASE_URL:-postgresql+asyncpg://osint_user:osint_password@db:5432/osint_db}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - SECRET_KEY=${SECRET_KEY:-CHANGE_ME_IN_PRODUCTION}
+      - AUTH_ADMIN_EMAIL=${AUTH_ADMIN_EMAIL:-admin@osint.com}
+      - AUTH_ADMIN_PASSWORD=${AUTH_ADMIN_PASSWORD:-CHANGE_ME_ADMIN_PASSWORD}
+      - LOG_JSON=${LOG_JSON:-False}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - SQL_ECHO=${SQL_ECHO:-False}
+      - AUTO_CREATE_TABLES=${AUTO_CREATE_TABLES:-False}
+      - ENABLE_RESULT_CONSUMER=${ENABLE_RESULT_CONSUMER:-True}
+      - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS:-["http://localhost:5173","http://localhost:3000"]}
     depends_on:
       db:
         condition: service_healthy
@@ -35,12 +44,14 @@ services:
     image: postgres:15-alpine
     container_name: osint_db
     restart: unless-stopped
+    env_file:
+      - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_USER=osint_user
-      - POSTGRES_PASSWORD=osint_password
-      - POSTGRES_DB=osint_db
+      - POSTGRES_USER=${POSTGRES_USER:-osint_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-osint_password}
+      - POSTGRES_DB=${POSTGRES_DB:-osint_db}
     ports:
       - "5433:5432"
     healthcheck:
@@ -68,11 +79,13 @@ services:
     build: ./scrapers
     container_name: osint_scraper
     restart: unless-stopped
+    env_file:
+      - .env
     volumes:
       - ./scrapers:/app
       - ./evidences_store:/app/evidences_store
     environment:
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
     command: python workers/worker.py
     depends_on:
       redis:
@@ -82,16 +95,13 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:8000/api/v1}
     container_name: osint_frontend
     restart: unless-stopped
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
     ports:
-      - "5173:5173"
-    environment:
-      - VITE_API_URL=http://localhost:8000/api/v1
+      - "5173:80"
     depends_on:
       api:
         condition: service_started

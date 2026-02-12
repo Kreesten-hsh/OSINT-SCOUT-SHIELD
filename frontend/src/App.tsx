@@ -13,6 +13,7 @@ import ReportDetailPage from '@/features/reports/ReportDetailPage';
 import EvidencePage from '@/features/evidence/EvidencePage';
 import MonitoringPage from '@/features/monitoring/MonitoringPage';
 import SourceDetailPage from '@/features/monitoring/SourceDetailPage';
+import SettingsPage from '@/features/settings/SettingsPage';
 import { useAuthStore } from '@/store/auth-store';
 
 import { Toaster } from '@/components/ui/toaster';
@@ -94,7 +95,6 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
-
             <Route element={<RequireAuth />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/monitoring" element={<MonitoringPage />} />
@@ -106,6 +106,7 @@ function App() {
               <Route path="/alerts" element={<AlertsPage />} />
               <Route path="/alerts/:id" element={<InvestigationPage />} />
               <Route path="/evidence" element={<EvidencePage />} />
+              <Route path="/settings" element={<SettingsPage />} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
             </Route>
           </Routes>

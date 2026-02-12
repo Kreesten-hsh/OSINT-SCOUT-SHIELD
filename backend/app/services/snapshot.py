@@ -48,7 +48,7 @@ async def create_alert_snapshot(alert_id: int, db: AsyncSession) -> dict:
     analysis_data = None
     if alert.analysis_results:
         analysis_data = {
-            "risk_score": alert.analysis_results.risk_score,
+            "risk_score": alert.risk_score or 0,
             "categories": alert.analysis_results.categories,
             "entities": alert.analysis_results.entities,
             "generated_at": datetime.utcnow().isoformat() # Approx, car pas de created_at sur analysis

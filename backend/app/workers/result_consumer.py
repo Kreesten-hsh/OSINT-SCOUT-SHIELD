@@ -1,158 +1,129 @@
 import asyncio
+from datetime import datetime
 import json
 import logging
+import uuid
+
 import redis.asyncio as redis
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
 from app.database import AsyncSessionLocal
-from app.models import Alert, Evidence, AnalysisResult
-from app.models.source import ScrapingRun, MonitoringSource
+from app.models import Alert, AnalysisResult, Evidence
+from app.models.source import ScrapingRun
 
 logger = logging.getLogger(__name__)
 
-async def process_result(result_data: dict):
-    """
-    Traite un résultat de scraping et met à jour la base de données.
-    Gère les modes MANUEL (Mise à jour Alerte) et AUTOMATIQUE (Création Alerte si Menace).
-    """
+
+async def process_result(result_data: dict) -> None:
+    """Consume a scraper result and persist alert/evidence data."""
     task_id = result_data.get("task_id")
     if not task_id:
         logger.error("Result without task_id received")
         return
 
-    logger.info(f"Processing result for Task UUID: {task_id}")
+    try:
+        task_uuid = uuid.UUID(str(task_id))
+    except ValueError:
+        logger.error("Invalid task_id format", extra={"task_id": task_id})
+        return
+
+    is_alert = bool(result_data.get("is_alert", False))
+    risk_score = int(result_data.get("risk_score", 0))
+    source_type = result_data.get("source_type", "AUTOMATIC_SCRAPING")
+    target_url = result_data.get("url", "")
+    details = result_data.get("details", {}) or {}
+    analysis = details.get("analysis", {}) or {}
+    metadata = details.get("evidence_metadata", {}) or {}
 
     async with AsyncSessionLocal() as db:
         try:
-            # 1. Essayer de trouver une Alerte existante (Mode Manuel/Ingestion Directe)
-            stmt_alert = select(Alert).where(Alert.uuid == task_id)
-            res_alert = await db.execute(stmt_alert)
-            alert = res_alert.scalars().first()
+            alert_stmt = select(Alert).where(Alert.uuid == task_uuid)
+            alert = (await db.execute(alert_stmt)).scalars().first()
 
-            # 2. Si pas d'alerte, c'est peut-être un Run Automatique (Scraping Run)
-            scraping_run = None
-            if not alert:
-                stmt_run = select(ScrapingRun).where(ScrapingRun.uuid == task_id)
-                res_run = await db.execute(stmt_run)
-                scraping_run = res_run.scalars().first()
-                
-                if scraping_run:
-                    # Traitement Mode AUTOMATIQUE
-                    # On crée une alerte SEULEMENT si des signaux sont détectés
-                    if result_data.get("is_alert", False):
-                        logger.info(f"Auto-Scraping: Threat detected for Run {task_id}. Creating Alert.")
-                        alert = Alert(
-                            url=result_data.get("url"),
-                            source_type="AUTOMATIC_SCRAPING",
-                            status="AUTO_DETECTED",
-                            risk_score=result_data.get("risk_score", 0),
-                            is_confirmed=False
-                        )
-                    else:
-                        logger.info(f"Auto-Scraping: No threat for Run {task_id}. Creating info Alert for traceability.")
-                        alert = Alert(
-                            url=result_data.get("url"),
-                            source_type="AUTOMATIC_SCRAPING",
-                            status="CLEAN",
-                            risk_score=result_data.get("risk_score", 0),
-                            is_confirmed=True # Clean is verified by robot
-                        )
+            run_stmt = select(ScrapingRun).where(ScrapingRun.uuid == task_uuid)
+            scraping_run = (await db.execute(run_stmt)).scalars().first()
 
-                    db.add(alert)
-                    await db.commit()
-                    await db.refresh(alert)
-                    
-                    # Update Run Stats
-                    if result_data.get("is_alert", False):
-                        scraping_run.alerts_generated_count += 1
-                        scraping_run.log_message = f"Menace détectée sur {result_data.get('url')}"
-                    else:
-                        scraping_run.status = "COMPLETED"
-                        scraping_run.log_message = "RAS - Analyse terminée (Clean)"  
-                        
-                    # Continue to evidence creation...
-
-            if not alert:
-                logger.error(f"Task {task_id} corresponds to neither Alert nor ScrapingRun. Ignored.")
+            if not alert and scraping_run and not is_alert:
+                scraping_run.status = "COMPLETED"
+                scraping_run.completed_at = datetime.utcnow()
+                scraping_run.log_message = "RAS - analyse terminee (clean)"
+                db.add(scraping_run)
+                await db.commit()
                 return
 
-            # --- Reste du flux (Création Preuve & Analyse) ---
-            # S'applique à l'alerte (existante ou fraîchement créée)
+            if not alert:
+                alert = Alert(
+                    uuid=uuid.uuid4(),
+                    url=target_url,
+                    source_type=source_type,
+                    risk_score=risk_score,
+                    status="NEW",
+                )
+                db.add(alert)
+                await db.flush()
+            else:
+                alert.risk_score = risk_score
+                db.add(alert)
 
-            # 3. Créer l'Evidence
-            file_hash = result_data.get("evidence_hash")
-            file_path = f"evidence_{file_hash[:8]}.png" if file_hash else "unknown.png"
-            
-            # Extract summary safely
-            summary = result_data.get("details", {}).get("analysis", {}).get("summary", "") or ""
+            file_hash = result_data.get("evidence_hash") or f"missing-{task_uuid.hex}"
+            file_path = f"evidence_{file_hash[:8]}.png"
+            summary = analysis.get("summary", "") or ""
 
-            new_evidence = Evidence(
-                alert_id=alert.id,
-                file_path=file_path,
-                file_hash=file_hash or "N/A",
-                content_text_preview=summary[:500],
-                metadata_json=result_data.get("details", {}).get("evidence_metadata", {})
+            db.add(
+                Evidence(
+                    alert_id=alert.id,
+                    file_path=file_path,
+                    file_hash=file_hash,
+                    content_text_preview=summary[:500],
+                    metadata_json=metadata,
+                )
             )
-            db.add(new_evidence)
 
-            # 4. Créer AnalysisResult
-            analysis_data = result_data.get("details", {}).get("analysis", {})
-            
-            new_analysis = AnalysisResult(
-                alert_id=alert.id,
-                risk_score=result_data.get("risk_score", 0),
-                categories=analysis_data.get("categories", []),
-                entities=analysis_data.get("entities", []),
-                technical_details=analysis_data
+            db.add(
+                AnalysisResult(
+                    alert_id=alert.id,
+                    categories=analysis.get("categories", []),
+                    entities=analysis.get("entities", []),
+                )
             )
-            db.add(new_analysis)
 
-            # 5. Mettre à jour l'Alerte (Si mode manuel, update score/status)
-            # En mode auto, elle vient d'être créée avec les bons scores, mais ça ne fait pas de mal
-            alert.risk_score = result_data.get("risk_score", 0)
-            if alert.status == "NEW": # Update only if still new (Manual)
-                alert.status = "ANALYZED"
-            
+            if scraping_run:
+                scraping_run.status = "COMPLETED"
+                scraping_run.completed_at = datetime.utcnow()
+                if is_alert:
+                    scraping_run.alerts_generated_count += 1
+                    scraping_run.log_message = f"Menace detectee sur {target_url}"
+                else:
+                    scraping_run.log_message = "RAS - analyse terminee (clean)"
+                db.add(scraping_run)
+
             await db.commit()
-            logger.info(f"Alert {alert.uuid} updated successfully/created with evidence.")
+            logger.info("Result processed", extra={"task_id": str(task_uuid), "alert_id": alert.id})
 
-        except Exception as e:
-            logger.error(f"Error processing result for {task_id}: {e}")
+        except Exception:
             await db.rollback()
+            logger.exception("Error processing result", extra={"task_id": str(task_uuid)})
 
 
-async def start_result_consumer():
-    """
-    Tâche de fond qui écoute Redis pour les résultats.
-    """
-    logger.info("Starting Result Consumer...")
-    r = redis.from_url(settings.REDIS_URL, decode_responses=True)
-    
+async def start_result_consumer() -> None:
+    """Background task listening the Redis result queue."""
+    logger.info("Starting result consumer")
+    redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
+
     try:
         while True:
-            # Bloquant avec timeout pour ne pas bloquer la boucle d'événements indéfiniment
-            # Mais en async, on utilise await, donc ça va.
-            # blpop retourne un tuple (queue, element)
-            item = await r.blpop("osint_results", timeout=1)
-            
+            item = await redis_client.blpop("osint_results", timeout=1)
             if item:
-                _, data_raw = item
+                _, payload = item
                 try:
-                    current_data = json.loads(data_raw)
-                    await process_result(current_data)
+                    await process_result(json.loads(payload))
                 except json.JSONDecodeError:
-                    logger.error(f"Failed to decode JSON: {data_raw}")
-                except Exception as e:
-                    logger.error(f"Error processing item: {e}")
-            
-            # Petit sleep pour rendre la main si boucle vide ou erreur
-            await asyncio.sleep(0.1)
-
+                    logger.error("Invalid JSON payload on osint_results", extra={"payload": payload})
+            await asyncio.sleep(0.05)
     except asyncio.CancelledError:
-        logger.info("Result Consumer cancelled.")
-    except Exception as e:
-        logger.error(f"Result Consumer crashed: {e}")
+        logger.info("Result consumer cancelled")
+    except Exception:
+        logger.exception("Result consumer crashed")
     finally:
-        await r.aclose()
+        await redis_client.aclose()

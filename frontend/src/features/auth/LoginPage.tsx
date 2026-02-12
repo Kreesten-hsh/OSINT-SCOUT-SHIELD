@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { useAuthStore } from '@/store/auth-store';
-import { apiClient } from '@/api/client';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, Lock, Mail, Loader2, AlertCircle } from 'lucide-react';
-import { Token } from '@/types';
+import { AlertCircle, Loader2, Lock, Mail, ShieldCheck } from 'lucide-react';
+
+import { apiClient } from '@/api/client';
+import { useAuthStore } from '@/store/auth-store';
+import type { Token } from '@/types';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -20,45 +22,42 @@ export default function LoginPage() {
         setError(null);
 
         try {
-            // FormData for OAuth2 standard, or JSON depending on backend.
-            // Assuming JSON based on "POST /api/v1/auth/login" usually
-            // But FastAPI OAuth2PasswordRequestForm usually expects form-data.
-            // Sticking to JSON first as per typical "SaaS" prompt, but if it fails I'll switch to form-data.
             const response = await apiClient.post<Token>('/auth/login', { username: email, password });
-
-            // NOTE: If backend is standard FastAPI OAuth2, it returns { access_token, token_type }.
-            // User info might need a separate fetch or be included. 
-            // For now, mocking User object + extracting token.
             const token = response.data;
-            const mockUser = { email, role: 'analyst' as const }; // TODO: Fetch real user info if needed
-
+            const mockUser = { email, role: 'analyst' as const };
             login(token, mockUser);
             navigate('/dashboard');
-        } catch (err: any) {
-            console.error(err);
-            setError(err.response?.data?.detail || 'Échec de la connexion. Vérifiez vos identifiants.');
+        } catch (err: unknown) {
+            if (axios.isAxiosError(err)) {
+                setError(
+                    err.response?.data?.message ||
+                        err.response?.data?.detail ||
+                        'Echec de la connexion. Verifiez vos identifiants.'
+                );
+            } else {
+                setError('Echec de la connexion. Verifiez vos identifiants.');
+            }
         } finally {
             setIsLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-background text-foreground relative overflow-hidden">
-            {/* Background Decor */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/10 rounded-full blur-[100px] -z-10" />
+        <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background text-foreground">
+            <div className="absolute top-0 left-1/2 -z-10 h-[400px] w-[800px] -translate-x-1/2 rounded-full bg-primary/10 blur-[100px]" />
 
-            <div className="w-full max-w-md p-8 bg-card border border-border rounded-xl shadow-2xl backdrop-blur-sm">
-                <div className="flex flex-col items-center mb-8">
-                    <div className="p-3 bg-primary/20 rounded-full mb-4">
-                        <ShieldCheck className="w-10 h-10 text-primary" />
+            <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 shadow-2xl backdrop-blur-sm">
+                <div className="mb-8 flex flex-col items-center">
+                    <div className="mb-4 rounded-full bg-primary/20 p-3">
+                        <ShieldCheck className="h-10 w-10 text-primary" />
                     </div>
                     <h1 className="text-2xl font-bold tracking-tight">OSINT-SCOUT</h1>
-                    <p className="text-muted-foreground text-sm mt-1">Command Center Access</p>
+                    <p className="mt-1 text-sm text-muted-foreground">Command Center Access</p>
                 </div>
 
                 {error && (
-                    <div className="mb-6 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2 text-destructive text-sm">
-                        <AlertCircle className="w-4 h-4" />
+                    <div className="mb-6 flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+                        <AlertCircle className="h-4 w-4" />
                         {error}
                     </div>
                 )}
@@ -67,12 +66,12 @@ export default function LoginPage() {
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-muted-foreground">Email Professionnel</label>
                         <div className="relative">
-                            <Mail className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                            <Mail className="absolute top-3 left-3 h-4 w-4 text-muted-foreground" />
                             <input
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full bg-secondary/50 border border-input rounded-lg py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-ring focus:border-transparent outline-none transition-all text-sm placeholder:text-muted-foreground/50"
+                                className="w-full rounded-lg border border-input bg-secondary/50 py-2.5 pr-4 pl-10 text-sm outline-none transition-all placeholder:text-muted-foreground/50 focus:border-transparent focus:ring-2 focus:ring-ring"
                                 placeholder="analyst@osint-scout.com"
                                 required
                             />
@@ -82,13 +81,13 @@ export default function LoginPage() {
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-muted-foreground">Mot de passe</label>
                         <div className="relative">
-                            <Lock className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                            <Lock className="absolute top-3 left-3 h-4 w-4 text-muted-foreground" />
                             <input
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full bg-secondary/50 border border-input rounded-lg py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-ring focus:border-transparent outline-none transition-all text-sm placeholder:text-muted-foreground/50"
-                                placeholder="••••••••"
+                                className="w-full rounded-lg border border-input bg-secondary/50 py-2.5 pr-4 pl-10 text-sm outline-none transition-all placeholder:text-muted-foreground/50 focus:border-transparent focus:ring-2 focus:ring-ring"
+                                placeholder="********"
                                 required
                             />
                         </div>
@@ -97,11 +96,11 @@ export default function LoginPage() {
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2"
+                        className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-2.5 font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                     >
                         {isLoading ? (
                             <>
-                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <Loader2 className="h-4 w-4 animate-spin" />
                                 Connexion...
                             </>
                         ) : (
@@ -111,8 +110,8 @@ export default function LoginPage() {
                 </form>
 
                 <div className="mt-6 text-center text-xs text-muted-foreground">
-                    <p>Accès sécurisé réservé au personnel autorisé.</p>
-                    <p>Toute tentative d'intrusion sera enregistrée.</p>
+                    <p>Acces reserve au personnel autorise.</p>
+                    <p>Toute tentative d'intrusion sera enregistree.</p>
                 </div>
             </div>
         </div>

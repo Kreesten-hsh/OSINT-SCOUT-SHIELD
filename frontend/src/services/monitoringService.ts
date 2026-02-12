@@ -1,4 +1,5 @@
 import { apiClient as api } from '@/api/client';
+import { APIResponse } from '@/api/types';
 
 export interface MonitoringSource {
     id: number;
@@ -33,32 +34,32 @@ export interface ScrapingRun {
 
 export const monitoringService = {
     getAll: async () => {
-        const response = await api.get<MonitoringSource[]>('/scraping/sources');
-        return response.data;
+        const response = await api.get<APIResponse<MonitoringSource[]>>('/sources/');
+        return response.data.data || [];
     },
 
     create: async (data: MonitoringSourceCreate) => {
-        const response = await api.post<MonitoringSource>('/scraping/sources', data);
-        return response.data;
+        const response = await api.post<APIResponse<MonitoringSource>>('/sources/', data);
+        return response.data.data;
     },
 
     toggle: async (id: number) => {
-        const response = await api.patch<MonitoringSource>(`/scraping/sources/${id}/toggle`);
-        return response.data;
+        const response = await api.patch<APIResponse<MonitoringSource>>(`/sources/${id}/toggle`);
+        return response.data.data;
     },
 
     delete: async (id: number) => {
-        const response = await api.delete<MonitoringSource>(`/scraping/sources/${id}`);
-        return response.data;
+        const response = await api.delete<APIResponse<MonitoringSource>>(`/sources/${id}`);
+        return response.data.data;
     },
 
     update: async (id: number, data: Partial<MonitoringSourceCreate>) => {
-        const response = await api.patch<MonitoringSource>(`/scraping/sources/${id}`, data);
-        return response.data;
+        const response = await api.patch<APIResponse<MonitoringSource>>(`/sources/${id}`, data);
+        return response.data.data;
     },
 
     getRuns: async (id: number) => {
-        const response = await api.get<ScrapingRun[]>(`/scraping/sources/${id}/runs`);
-        return response.data;
+        const response = await api.get<APIResponse<ScrapingRun[]>>(`/sources/${id}/runs`);
+        return response.data.data || [];
     },
 };

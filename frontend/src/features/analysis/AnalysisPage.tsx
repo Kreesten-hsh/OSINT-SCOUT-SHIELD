@@ -23,7 +23,7 @@ export default function AnalysisPage() {
             try {
                 const response = await apiClient.get<AnalysisStats>('/analysis/stats');
                 return response.data;
-            } catch (e) {
+            } catch {
                 return null;
             }
         }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import axios from 'axios';
 import { Loader2, X } from 'lucide-react';
 import { monitoringService, MonitoringSourceCreate } from '@/services/monitoringService';
 
@@ -16,7 +17,7 @@ export default function AddSourceDialog({ isOpen, onClose, onSuccess }: AddSourc
         url: '',
         source_type: 'WEB',
         frequency_minutes: 60,
-        is_active: true
+        is_active: true,
     });
 
     if (!isOpen) return null;
@@ -30,27 +31,35 @@ export default function AddSourceDialog({ isOpen, onClose, onSuccess }: AddSourc
             await monitoringService.create(formData);
             onSuccess();
             onClose();
-        } catch (err: any) { // eslint-disable-line
-            setError(err.response?.data?.detail || "Erreur lors de la création de la source");
+        } catch (err: unknown) {
+            if (axios.isAxiosError(err)) {
+                setError(
+                    err.response?.data?.message ||
+                        err.response?.data?.detail ||
+                        'Erreur lors de la creation de la source'
+                );
+            } else {
+                setError('Erreur lors de la creation de la source');
+            }
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-            <div className="relative w-full max-w-lg bg-card border border-border rounded-xl shadow-lg p-6 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
+            <div className="relative w-full max-w-lg animate-in zoom-in-95 rounded-xl border border-border bg-card p-6 shadow-lg fade-in duration-200">
                 <button
                     onClick={onClose}
-                    className="absolute right-4 top-4 text-muted-foreground hover:text-foreground transition-colors"
+                    className="absolute right-4 top-4 text-muted-foreground transition-colors hover:text-foreground"
                 >
-                    <X className="w-5 h-5" />
+                    <X className="h-5 w-5" />
                 </button>
 
-                <h2 className="text-xl font-bold mb-4">Ajouter une Source</h2>
+                <h2 className="mb-4 text-xl font-bold">Ajouter une source</h2>
 
                 {error && (
-                    <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md mb-4 border border-destructive/20">
+                    <div className="mb-4 rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
                         {error}
                     </div>
                 )}
@@ -62,21 +71,21 @@ export default function AddSourceDialog({ isOpen, onClose, onSuccess }: AddSourc
                             required
                             type="text"
                             placeholder="Ex: Groupe Fb Vente Cotonou"
-                            className="w-full bg-secondary/50 border border-input rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-primary outline-none"
+                            className="w-full rounded-md border border-input bg-secondary/50 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
                             value={formData.name}
-                            onChange={e => setFormData({ ...formData, name: e.target.value })}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">URL Cible</label>
+                        <label className="text-sm font-medium">URL cible</label>
                         <input
                             required
                             type="url"
                             placeholder="https://facebook.com/groups/..."
-                            className="w-full bg-secondary/50 border border-input rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-primary outline-none"
+                            className="w-full rounded-md border border-input bg-secondary/50 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
                             value={formData.url}
-                            onChange={e => setFormData({ ...formData, url: e.target.value })}
+                            onChange={(e) => setFormData({ ...formData, url: e.target.value })}
                         />
                     </div>
 
@@ -84,22 +93,22 @@ export default function AddSourceDialog({ isOpen, onClose, onSuccess }: AddSourc
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Type</label>
                             <select
-                                className="w-full bg-secondary/50 border border-input rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-primary outline-none"
+                                className="w-full rounded-md border border-input bg-secondary/50 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
                                 value={formData.source_type}
-                                onChange={e => setFormData({ ...formData, source_type: e.target.value })}
+                                onChange={(e) => setFormData({ ...formData, source_type: e.target.value })}
                             >
-                                <option value="WEB">Site Web</option>
-                                <option value="SOCIAL">Réseau Social</option>
+                                <option value="WEB">Site web</option>
+                                <option value="SOCIAL">Reseau social</option>
                                 <option value="MARKETPLACE">Marketplace</option>
                             </select>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Fréquence (min)</label>
+                            <label className="text-sm font-medium">Frequence (min)</label>
                             <select
-                                className="w-full bg-secondary/50 border border-input rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-primary outline-none"
+                                className="w-full rounded-md border border-input bg-secondary/50 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
                                 value={formData.frequency_minutes}
-                                onChange={e => setFormData({ ...formData, frequency_minutes: Number(e.target.value) })}
+                                onChange={(e) => setFormData({ ...formData, frequency_minutes: Number(e.target.value) })}
                             >
                                 <option value={15}>15 minutes</option>
                                 <option value={30}>30 minutes</option>
@@ -114,12 +123,12 @@ export default function AddSourceDialog({ isOpen, onClose, onSuccess }: AddSourc
                         <input
                             type="checkbox"
                             id="active"
-                            className="w-4 h-4 rounded border-input bg-secondary text-primary focus:ring-primary"
+                            className="h-4 w-4 rounded border-input bg-secondary text-primary focus:ring-primary"
                             checked={formData.is_active}
-                            onChange={e => setFormData({ ...formData, is_active: e.target.checked })}
+                            onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                         />
-                        <label htmlFor="active" className="text-sm text-muted-foreground select-none">
-                            Activer la surveillance immédiatement
+                        <label htmlFor="active" className="select-none text-sm text-muted-foreground">
+                            Activer la surveillance immediatement
                         </label>
                     </div>
 
@@ -127,17 +136,17 @@ export default function AddSourceDialog({ isOpen, onClose, onSuccess }: AddSourc
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 text-sm font-medium hover:bg-secondary rounded-md transition-colors"
+                            className="rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
                         >
                             Annuler
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors flex items-center gap-2 disabled:opacity-50"
+                            className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
                         >
-                            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                            Créer la source
+                            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                            Creer la source
                         </button>
                     </div>
                 </form>

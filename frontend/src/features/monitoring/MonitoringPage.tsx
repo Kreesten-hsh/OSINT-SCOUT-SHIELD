@@ -31,7 +31,7 @@ export default function MonitoringPage() {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">Surveillance Automatique</h1>
-                    <p className="text-muted-foreground text-sm">GÃ©rez les robots de collecte et les frÃ©quences d'analyse.</p>
+                    <p className="text-muted-foreground text-sm">Gérez les robots de collecte et les fréquences d'analyse.</p>
                 </div>
                 <button
                     onClick={() => setIsAddOpen(true)}
@@ -48,10 +48,10 @@ export default function MonitoringPage() {
                         <thead className="bg-secondary/50 text-muted-foreground uppercase text-xs font-semibold">
                             <tr>
                                 <th className="px-6 py-4">Nom / URL</th>
-                                <th className="px-6 py-4">FrÃ©quence</th>
+                                <th className="px-6 py-4">Fréquence</th>
                                 <th className="px-6 py-4">Dernier Scan</th>
                                 <th className="px-6 py-4">Dernier Statut</th>
-                                <th className="px-6 py-4">Ã‰tat</th>
+                                <th className="px-6 py-4">État</th>
                                 <th className="px-6 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
@@ -68,13 +68,13 @@ export default function MonitoringPage() {
                             ) : isError ? (
                                 <tr>
                                     <td colSpan={6} className="px-6 py-12 text-center text-destructive">
-                                        Impossible de charger les sources. VÃ©rifiez la connexion API.
+                                        Impossible de charger les sources. Vérifiez la connexion API.
                                     </td>
                                 </tr>
                             ) : sources?.length === 0 ? (
                                 <tr>
                                     <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
-                                        Aucune source configurÃ©e. Ajoutez-en une pour dÃ©marrer la surveillance.
+                                        Aucune source configurée. Ajoutez-en une pour démarrer la surveillance.
                                     </td>
                                 </tr>
                             ) : (

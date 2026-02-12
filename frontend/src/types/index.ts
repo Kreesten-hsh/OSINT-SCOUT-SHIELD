@@ -24,7 +24,7 @@ export interface Evidence {
     file_path: string;
     file_hash: string;
     content_text_preview?: string;
-    metadata_json?: Record<string, any>;
+    metadata_json?: Record<string, unknown>;
     captured_at?: ISOString;
     sealed_at?: ISOString;
 }
@@ -33,8 +33,8 @@ export interface Evidence {
 export interface AnalysisResult {
     id: number;
     alert_id: number;
-    categories: any[];
-    entities: any[];
+    categories: unknown[];
+    entities: unknown[];
 }
 
 // --- ALERT TYPES ---

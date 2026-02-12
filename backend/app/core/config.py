@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = "osint_db"
     POSTGRES_HOST: str = "db"
     POSTGRES_PORT: str = "5432"
-    DATABASE_URL: str | None = None  # Override via env if needed
+    DATABASE_URL: str | None = None
 
     # Redis
     REDIS_URL: str = "redis://redis:6379/0"
@@ -25,10 +25,22 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "CHANGE_ME_IN_PRODUCTION"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    AUTH_ADMIN_EMAIL: str = "admin@osint.com"
+    AUTH_ADMIN_PASSWORD: str = "CHANGE_ME_ADMIN_PASSWORD"
+
+    # Security
+    BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000"]
+    LOG_JSON: bool = False
+    LOG_LEVEL: str = "INFO"
+    SQL_ECHO: bool = False
+    AUTO_CREATE_TABLES: bool = False
+    ENABLE_RESULT_CONSUMER: bool = True
+
+    # Observability
+    SENTRY_DSN: str | None = None
 
     @property
     def effective_database_url(self) -> str:
-        """Prefer explicit DATABASE_URL env var, fallback to constructed URL."""
         if self.DATABASE_URL:
             return self.DATABASE_URL
         return (

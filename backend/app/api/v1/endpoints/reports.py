@@ -12,8 +12,10 @@ from app.services.pdf_generator import generate_forensic_pdf
 from sqlalchemy.sql import func
 import uuid
 import os
+import logging
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 @router.get("/")
 async def list_reports(
@@ -61,14 +63,14 @@ async def generate_report(
     
     # 4. Générer le PDF
     filename = f"report_{report_hash[:8]}.pdf"
-    output_dir = "/app/evidences_store/reports" # Dans le volume partagé
+    output_dir = "/app/evidences_store/reports"
     os.makedirs(output_dir, exist_ok=True)
     pdf_path = os.path.join(output_dir, filename)
     
     try:
         generate_forensic_pdf(snapshot, pdf_path, report_hash)
     except Exception as e:
-        print(f"PDF Gen Error: {e}")
+        logger.exception("PDF generation failed", extra={"alert_uuid": str(alert_uuid)})
         raise HTTPException(status_code=500, detail=f"PDF Generation failed: {e}")
     
     # 5b. Sauvegarder en Base
@@ -100,6 +102,9 @@ async def generate_report(
     report_data = {
         "id": new_report.id,
         "uuid": new_report.uuid,
+        "report_hash": new_report.report_hash,
+        "snapshot_hash_sha256": new_report.snapshot_hash_sha256,
+        "snapshot_version": new_report.snapshot_version,
         "generated_at": new_report.generated_at,
         "pdf_path": new_report.pdf_path
     }
