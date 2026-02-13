@@ -1,99 +1,106 @@
-# CONTEXTE GLOBAL DU PROJET : OSINT-SCOUT & SHIELD
+﻿# GEMINI_CONTEXT — OSINT-SCOUT & SHIELD
 
-> **Dernière mise à jour :** 10 Février 2026
-> **Statut :** LOT 4 TERMINÉ (Backend/Scraping Validé) → Prochain : LOT 5 (UI/Settings/Rapports).
-> **Philosophie :** "Mode Absolu" - Rigueur Ingénieur & Innovation Contextuelle.
-> **Alignement :** Zéro Fake Data / 100% Rule-Based / 0% IA Décisionnelle.
+Dernière mise à jour : 13 février 2026
+Statut global : Stabilisation, durcissement sécurité et préparation production
 
-## 1. VISION & OBJECTIF RÉEL (CONFIRMÉ)
+Ce fichier est la source de vérité opérationnelle pour les agents IA collaborant sur le projet.
 
-Le projet est une **Infrastructure de Renseignement & Preuve** souveraine pour le Bénin.
-Il ne vise pas à "hacker" ou "arrêter", mais à **documenter techniquement** pour permettre l'action judiciaire.
+## 1) Mission produit
 
-- **Le Besoin :** Transformer une plainte orale ("On m'a volé") en dossier technique ("Voici la preuve hachée").
-- **Les Cibles :** Arnaques Mobile Money, Faux profils Institutionnels (Douanes, Banques), Usurpation d'Identité.
-- **L'Approche :** Détection automatique (Radar) + Validation Humaine (Expert) + Scellement (Preuve).
+OSINT-SCOUT & SHIELD est une plateforme SaaS de renseignement opérationnel orientée investigation.
+Objectif : transformer des signaux web bruts en alertes exploitables, preuves traçables et rapports structurés.
 
-## 2. ARCHITECTURE FONCTIONNELLE (LOT 4 VALIDÉ)
+## 2) Principes non négociables
 
-Le pipeline de données est désormais complet et opérationnel :
+- Zéro secret dans le dépôt Git (`.env`, clés, tokens)
+- Décisions de risque basées sur des règles explicables
+- Intégrité de preuve (horodatage, hash, traçabilité)
+- Routes métier protégées par authentification JWT
+- Aucun faux jeu de données en environnement de production
 
-1.  **DÉTECTION (Radar Automatique) :**
-    - Surveillance de sources configurées (URL + Fréquence).
-    - Moteur : `Playwright` 1.58.0 (Dockerisé).
-    - Mode : "Discovery" (Scan récurrent).
+## 3) Référentiel technique actuel
 
-2.  **ANALYSE (Cerveau Local) :**
-    - Moteur : `FraudAnalyzer` (Python/Spacy).
-    - Logique : 100% Déterministe (Mots-clés + Regex + Règles Locales).
-    - **Zéro IA Boîte Noire.**
+- Backend : FastAPI, SQLAlchemy Async, Pydantic Settings
+- Frontend : React 19, TypeScript, TanStack Query
+- Queue : Redis (`osint_to_scan`, `osint_results`)
+- Worker : Playwright scraper
+- Stockage : PostgreSQL + `evidences_store`
+- Observabilité : `/health`, `/metrics`, Sentry optionnel
 
-3.  **SCELLEMENT (Preuve Forensique) :**
-    - Capture d'écran intégrale (Full Page).
-    - Hashing SHA-256 immédiat.
-    - Timestamp UTC irrévocable.
+## 4) Flux métier de référence
 
-4.  **INGESTION MANUELLE (Besoin PME) :**
-    - Soumission directe d'URLs par l'analyste.
-    - Traitement identique au mode automatique (Même rigueur de preuve).
+1. Ingestion (monitoring automatique ou saisie manuelle URL)
+2. Publication du job vers `osint_to_scan`
+3. Scraping et collecte de preuves
+4. Retour résultat vers `osint_results`
+5. Consumer backend vers base PostgreSQL
+6. Traitement analyste : note, transition d’état, génération rapport
 
-## 3. STACK TECHNIQUE & INFRASTRUCTURE
+## 5) Contrat d’API (à respecter)
 
-- **Backend :** Python 3.12 (FastAPI) + Pydantic v2 (`SettingsConfigDict`) + SQLAlchemy 2.0 (Async).
-- **Database :** PostgreSQL 15 (Données) + Redis 7 (Queue `osint_to_scan`).
-- **Workers :** Orchestration par files `Redis` natives (Architecture découplée). Pas de Celery.
-- **Frontend :** React 19 + TypeScript 5.9 + Vite 7.
-  - **UI :** Tailwind CSS v3 (Thème "Deep Void Enterprise") + Shadcn/ui + Lucide React.
-  - **Data :** TanStack Query (server state) + Zustand (UI state).
-  - **Tables :** TanStack Table. **Charts :** Recharts.
-- **Déploiement :** 100% Docker Compose (Souveraineté Locale) avec healthchecks et restart policies.
+- Préfixe API : `/api/v1`
+- Auth : `/api/v1/auth/login`
+- Sources : `/api/v1/sources`
+- Alertes : `/api/v1/alerts`
+- Rapports : `/api/v1/reports`
+- Dashboard : `/api/v1/dashboard/*`
+- Santé/metrics : `/health`, `/metrics`
 
-## 4. ÉTAT D'AVANCEMENT DÉTAILLÉ
+Règle : toute évolution backend doit vérifier le contrat côté frontend avant merge.
 
-### ✅ LOT 1, 2, 3 (Socle & Interface de Base)
+## 6) Standards d’ingénierie attendus
 
-- [x] Architecture Micro-services simulés.
-- [x] Authentification (JWT).
-- [x] Dashboard Analyste (Layout, Charts).
-- [x] Gestion des Alertes (Table, Filtres).
+### Backend
 
-### ✅ LOT 4 (Moteur de Scraping Automatique) - TERMINÉ
+- Pas de valeurs sensibles hardcodées
+- Migrations Alembic obligatoires pour tout changement de schéma
+- Gestion d’erreurs explicite avec messages API cohérents
+- Logs structurés exploitables en production
 
-- [x] **Pipeline Complet :** Scheduler -> Worker -> DB.
-- [x] **Mise à jour Critique :** Playwright 1.58.0.
-- [x] **Validation :** Scripts `verify_pipeline.py` et `test_auto_scraping.py` (Succès).
-- [x] **Conformité :** Nettoyage des fausses données. Seules les vraies données entrent.
+### Frontend
 
-### 🔄 LOT 5 (Finalisation & Polissage) - PROCHAINE ÉTAPE
+- Typage strict TypeScript
+- États UI synchronisés avec mutations API (sans rechargement manuel)
+- Gestion d’erreur utilisateur claire (toasts, fallback)
+- Pages critiques : Dashboard, Alertes, Investigation, Rapports
 
-- [ ] **Page Sources/Settings :** Interface pour configurer le Scraping Automatique (Ajouter/Supprimer URL).
-- [ ] **Génération Rapport :** PDF final pour les autorités.
-- [ ] **Enrichissement Règles :** Peupler `rules.json` avec le vrai argot béninois.
+### DevOps
 
-## 5. AGENT RULES & WORKFLOWS
+- Déploiement reproductible via Docker Compose
+- Healthchecks services obligatoires
+- Variables prod via `.env` hors dépôt
+- Sauvegardes DB et evidences documentées
 
-### Rules (`.agent/rules/`)
+### Sécurité
 
-9 règles spécialisées, toutes `trigger: always`, alignées sur la stack réelle :
-`back.md` · `front.md` · `design.md` · `devops.md` · `qa.md` · `legal.md` · `product.md` · `security.md` · `data-integrity.md`
+- Rotation périodique des secrets
+- CORS strict selon domaines autorisés
+- Ports DB/Redis non exposés publiquement en prod
+- Trafic HTTP protégé par TLS côté proxy
 
-### Workflows (`.gemini/antigravity/global_workflows/`)
+## 7) Priorités projet (ordre d’exécution)
 
-5 workflows exécutables avec support `// turbo-all` :
+- P0 : pipeline CI (lint, typecheck, tests, smoke)
+- P0 : stratégie migration-first et contrôle drift schéma
+- P1 : hardening réseau + reverse proxy TLS
+- P1 : supervision incident + politique de backup/restore
+- P2 : couverture E2E des parcours premium
 
-- `/osint-scout-feature` — Pipeline complet feature delivery
-- `/osint-scout-scraper-update` — Mise à jour règles & pipeline evidence
-- `/build-feature` — Construction feature générique
-- `/docker-ops` — Lifecycle Docker Compose
-- `/debug-pipeline` — Diagnostic scraper pipeline
+## 8) Protocole de collaboration IA (Codex + Agent Antigravity)
 
-## 6. RÈGLES D'OR (NE JAMAIS ENFREINDRE)
+- Partager une source unique de vérité (ce fichier + docs déploiement)
+- Vérifier les impacts croisés front/back avant toute correction
+- Documenter chaque changement structurel dans `DEPLOYMENT.md` et `README.md`
+- Exécuter les vérifications locales avant déclaration “ready”
+- Ne pas modifier les fichiers de politique/consignes sans demande explicite utilisateur
 
-1.  **Zéro Fake Data :** Interdiction d'utiliser Faker/Seeds. On teste avec du réel ou rien.
-2.  **Visual Excellence :** Le Frontend doit être "Premium" (Wow Effect).
-3.  **Souveraineté :** Pas d'appel API vers des services tiers opaques (OpenAI, Google Vision). Tout est local.
-4.  **Rigueur :** Typage strict, Code propre, Architecture explicable.
+## 9) Critères “Release Ready”
 
----
+Une release est considérée prête uniquement si :
 
-**Fichier de référence unique pour l'IA.**
+- aucune régression fonctionnelle sur les parcours critiques
+- build frontend valide
+- API saine (`/health`) avec DB + Redis à `ok`
+- authentification et autorisations testées
+- génération et consultation de rapports validées
+- documentation projet à jour
