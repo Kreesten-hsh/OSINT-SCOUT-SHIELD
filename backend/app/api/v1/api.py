@@ -1,9 +1,22 @@
 from fastapi import APIRouter, Depends
-from app.api.v1.endpoints import auth, alerts, evidence, ingestion, analysis, reports, sources, dashboard
+from app.api.v1.endpoints import (
+    auth,
+    alerts,
+    evidence,
+    ingestion,
+    analysis,
+    reports,
+    sources,
+    dashboard,
+    signals,
+    incidents,
+)
 from app.core.security import get_current_subject
 
 api_router = APIRouter()
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
+api_router.include_router(signals.router, prefix="/signals", tags=["signals"])
+api_router.include_router(incidents.router, prefix="/incidents", tags=["incidents"])
 api_router.include_router(
     alerts.router,
     prefix="/alerts",

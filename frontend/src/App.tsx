@@ -14,6 +14,7 @@ import EvidencePage from '@/features/evidence/EvidencePage';
 import MonitoringPage from '@/features/monitoring/MonitoringPage';
 import SourceDetailPage from '@/features/monitoring/SourceDetailPage';
 import SettingsPage from '@/features/settings/SettingsPage';
+import VerifyPage from '@/features/verify/VerifyPage';
 import { useAuthStore } from '@/store/auth-store';
 
 import { Toaster } from '@/components/ui/toaster';
@@ -94,6 +95,7 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Routes>
+            <Route path="/verify" element={<VerifyPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route element={<RequireAuth />}>
               <Route path="/dashboard" element={<DashboardPage />} />
