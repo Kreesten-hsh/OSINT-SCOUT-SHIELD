@@ -10,6 +10,7 @@ import uuid
 
 router = APIRouter()
 
+@router.get("", response_model=List[AlertResponse], include_in_schema=False)
 @router.get("/", response_model=List[AlertResponse])
 async def read_alerts(
     db: AsyncSession = Depends(get_db),

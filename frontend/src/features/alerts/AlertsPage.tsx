@@ -10,6 +10,28 @@ interface AlertsPageProps {
     title?: string;
 }
 
+function getSeverity(score: number): 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' {
+    if (score >= 90) return 'CRITICAL';
+    if (score >= 70) return 'HIGH';
+    if (score >= 40) return 'MEDIUM';
+    return 'LOW';
+}
+
+function isCitizenSource(sourceType: string): boolean {
+    return sourceType.startsWith('CITIZEN_');
+}
+
+function sourceLabel(sourceType: string): string {
+    if (sourceType === 'CITIZEN_MOBILE_APP') return 'CITOYEN MOBILE';
+    if (sourceType === 'CITIZEN_WEB_PORTAL') return 'CITOYEN WEB';
+    return sourceType;
+}
+
+function displayTarget(url: string): string {
+    if (url.startsWith('citizen://')) return 'Signal textuel (sans URL)';
+    return url;
+}
+
 export default function AlertsPage({ title = 'Gestion des Alertes' }: AlertsPageProps) {
     const [searchParams, setSearchParams] = useSearchParams();
     const [page, setPage] = useState(1);
@@ -117,20 +139,38 @@ export default function AlertsPage({ title = 'Gestion des Alertes' }: AlertsPage
                                     </td>
                                 </tr>
                             ) : (
-                                data?.map((alert: Alert) => (
+                                data?.map((alert: Alert) => {
+                                    const severity = alert.severity ?? getSeverity(alert.risk_score);
+                                    return (
                                     <tr key={alert.id} className="hover:bg-secondary/30 transition-colors group">
                                         <td className="px-6 py-4">
-                                            <Badge variant={
-                                                alert.severity === 'CRITICAL' ? 'destructive' :
-                                                    alert.severity === 'HIGH' ? 'warning' : 'secondary'
-                                            }>
-                                                {alert.severity}
+                                            <Badge
+                                                variant={
+                                                    severity === 'CRITICAL'
+                                                        ? 'destructive'
+                                                        : severity === 'HIGH'
+                                                            ? 'warning'
+                                                            : severity === 'MEDIUM'
+                                                                ? 'secondary'
+                                                                : 'outline'
+                                                }
+                                            >
+                                                {severity}
                                             </Badge>
                                         </td>
                                         <td className="px-6 py-4 max-w-[300px]">
                                             <div className="flex flex-col">
-                                                <span className="font-medium text-foreground truncate " title={alert.url}>{alert.url}</span>
-                                                <span className="text-xs text-muted-foreground">{alert.source_type}</span>
+                                                <span className="font-medium text-foreground truncate " title={alert.url}>
+                                                    {displayTarget(alert.url)}
+                                                </span>
+                                                <div className="mt-1 flex items-center gap-2">
+                                                    <span className="text-xs text-muted-foreground">{alert.source_type}</span>
+                                                    {isCitizenSource(alert.source_type) && (
+                                                        <Badge variant="outline" className="text-[10px] tracking-wide">
+                                                            {sourceLabel(alert.source_type)}
+                                                        </Badge>
+                                                    )}
+                                                </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
@@ -154,7 +194,8 @@ export default function AlertsPage({ title = 'Gestion des Alertes' }: AlertsPage
                                             </Link>
                                         </td>
                                     </tr>
-                                ))
+                                    );
+                                })
                             )}
                         </tbody>
                     </table>

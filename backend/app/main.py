@@ -39,8 +39,6 @@ async def lifespan(app: FastAPI):
             await conn.run_sync(Base.metadata.create_all)
         logger.warning("AUTO_CREATE_TABLES is enabled; use Alembic migrations in production")
 
-    Instrumentator().instrument(app).expose(app, include_in_schema=False)
-
     background_tasks: list[asyncio.Task] = []
     if settings.ENABLE_RESULT_CONSUMER:
         background_tasks.append(asyncio.create_task(start_result_consumer(), name="result_consumer"))
@@ -106,6 +104,7 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+Instrumentator().instrument(app).expose(app, include_in_schema=False)
 
 
 @app.get("/health")

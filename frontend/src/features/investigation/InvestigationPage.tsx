@@ -38,6 +38,30 @@ interface GeneratedReport {
     pdf_path: string;
 }
 
+function sourceLabel(sourceType: string): string {
+    if (sourceType === 'CITIZEN_MOBILE_APP') return 'CITOYEN MOBILE';
+    if (sourceType === 'CITIZEN_WEB_PORTAL') return 'CITOYEN WEB';
+    return sourceType;
+}
+
+function isHttpTarget(url: string): boolean {
+    return url.startsWith('http://') || url.startsWith('https://');
+}
+
+function targetDisplay(url: string): string {
+    if (url.startsWith('citizen://')) return 'Signal textuel (sans URL crawlable)';
+    return url;
+}
+
+function targetHost(url: string): string {
+    if (!isHttpTarget(url)) return 'Signal citoyen';
+    try {
+        return new URL(url).hostname;
+    } catch {
+        return 'Cible invalide';
+    }
+}
+
 export default function InvestigationPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -269,9 +293,9 @@ export default function InvestigationPage() {
                                 Source
                             </div>
                             <div className="truncate text-lg font-medium text-foreground" title={alert.url}>
-                                {new URL(alert.url).hostname}
+                                {targetHost(alert.url)}
                             </div>
-                            <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">{alert.source_type}</div>
+                            <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">{sourceLabel(alert.source_type)}</div>
                         </div>
                     </div>
 
@@ -285,9 +309,15 @@ export default function InvestigationPage() {
                         <div className="space-y-4 p-6">
                             <div>
                                 <h4 className="mb-1 text-sm font-medium text-muted-foreground">URL</h4>
-                                <a href={alert.url} target="_blank" rel="noreferrer" className="block break-all rounded bg-primary/5 p-2 font-mono text-sm text-primary hover:underline">
-                                    {alert.url}
-                                </a>
+                                {isHttpTarget(alert.url) ? (
+                                    <a href={alert.url} target="_blank" rel="noreferrer" className="block break-all rounded bg-primary/5 p-2 font-mono text-sm text-primary hover:underline">
+                                        {alert.url}
+                                    </a>
+                                ) : (
+                                    <div className="block break-all rounded bg-secondary/20 p-2 font-mono text-sm text-muted-foreground">
+                                        {targetDisplay(alert.url)}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

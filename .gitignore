@@ -23,6 +23,7 @@ compose_*.log
 
 # Generated evidences / reports
 evidences_store/reports/*.pdf
+scrapers/preuves_temp/
 
 # Local scratch folders
 backend/tests/

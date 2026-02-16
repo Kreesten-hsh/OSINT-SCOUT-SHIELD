@@ -114,7 +114,7 @@ Priorite: P0
 Estimation: 2 jours
 
 Description:
-- Ajouter une page `/pwa/verify` (mobile/web responsive) avec formulaire:
+- Ajouter une page `/verify` (mobile/web responsive) avec formulaire:
   - message suspect
   - url optionnelle
   - numero optionnel
@@ -200,7 +200,7 @@ Definition of Done:
 
 1. T2 Detection Service  
 2. T1 API Verify  
-3. T3 Verify -> Incident  
+3. T3 Incident Report Endpoint  
 4. T6 Pipeline stabilization  
 5. T4 PWA page  
 6. T5 Dashboard readiness  
@@ -221,7 +221,7 @@ Le sprint est termine si:
 - Test creation incident via report
 - Test queue processing (job present -> result consume)
 - Test UI PWA verify: affichage score/explication
-- Test generation PDF sur incident issu de verify
+- Test generation PDF sur incident issu de report
 
 ## 9. Risks Sprint 1
 

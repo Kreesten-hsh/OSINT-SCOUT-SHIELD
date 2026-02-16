@@ -211,7 +211,6 @@ Non necessaire:
 
 ## 14. Demo Script (Mandatory)
 
-1. Soumettre message suspect dans PWA.
 1. Soumettre message suspect via app mobile ou web.
 2. Afficher score IA + explication.
 3. Signaler incident.
@@ -229,7 +228,7 @@ Non necessaire:
 - structure repo, conventions, seeds demo
 
 ### M2 - PWA + API verify/report (Semaine 2-3)
-- verification et signalement operationnels sur 3 canaux
+- verification et signalement operationnels sur 2 canaux (mobile + web)
 
 ### M3 - SCOUT + preuves + PDF (Semaine 4-5)
 - pipeline queue complet
@@ -254,7 +253,7 @@ Non necessaire:
 
 Le MVP est termine si:
 - endpoints critiques implementes et testes
-- 3 canaux citoyens et dashboard couvrent le flux demo
+- 2 canaux citoyens (mobile + web) et dashboard couvrent le flux demo
 - preuve et rapport fonctionnent
 - SHIELD simule fonctionne avec callback
 - demo complete executee sans intervention manuelle cachée

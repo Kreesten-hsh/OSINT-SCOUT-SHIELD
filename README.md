@@ -9,7 +9,7 @@
 ![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=for-the-badge&logo=redis&logoColor=white)
 ![Playwright](https://img.shields.io/badge/Playwright-Worker-2EAD33?style=for-the-badge&logo=playwright&logoColor=white)
 
-Plateforme SaaS premium de détection OSINT, investigation analyste et génération de preuves exploitables.
+Prototype L3 de plateforme intelligente de détection, investigation OSINT et réponse simulée contre les cyber-arnaques mobiles.
 
 ## 1) Vision produit
 
@@ -26,6 +26,10 @@ Le produit est conçu pour des environnements exigeants : fiabilité opérationn
 
 ## 2) Fonctionnalités clés
 
+- Canal citoyen public (mobile PWA + interface web) via `/verify`
+- Contrat API citoyen séparé :
+  - `POST /api/v1/signals/verify` (analyse seule)
+  - `POST /api/v1/incidents/report` (création incident)
 - Cycle d’alerte complet : `NEW -> IN_REVIEW -> CONFIRMED | DISMISSED`
 - Notes analyste et transitions d’état synchronisées en temps réel UI/API
 - Gestion des sources de monitoring (`/api/v1/sources`)
@@ -101,7 +105,8 @@ curl http://localhost:8000/metrics
 
 ### 5.4 Accéder aux interfaces
 
-- Frontend : `http://localhost:5173`
+- Vérification citoyenne (mobile/web) : `http://localhost:5173/verify`
+- Dashboard analyste (auth) : `http://localhost:5173/login`
 - API Docs : `http://localhost:8000/docs`
 
 ## 6) Variables d’environnement critiques
@@ -121,6 +126,8 @@ Règle stricte : ne jamais committer `.env`.
 ## 7) Surface API principale
 
 - `POST /api/v1/auth/login`
+- `POST /api/v1/signals/verify`
+- `POST /api/v1/incidents/report`
 - `GET /api/v1/dashboard/stats/*`
 - `GET|PATCH /api/v1/alerts/*`
 - `POST /api/v1/ingestion/manual`
@@ -130,7 +137,18 @@ Règle stricte : ne jamais committer `.env`.
 - `GET /health`
 - `GET /metrics`
 
-## 8) Qualité et standards de livraison
+## 8) Démo Sprint 1 (flux E2E rapide)
+
+1. Ouvrir `http://localhost:5173/verify`.
+2. Coller un message suspect et cliquer `Vérifier`.
+3. Vérifier le score + l’explication.
+4. Cliquer `Signaler cet incident`.
+5. Noter l’UUID incident affiché.
+6. Se connecter sur `http://localhost:5173/login`.
+7. Vérifier l’incident dans la liste alertes.
+8. Générer un rapport depuis le dashboard (si requis pour la soutenance).
+
+## 9) Qualité et standards de livraison
 
 Checklist avant release :
 
@@ -141,7 +159,7 @@ Checklist avant release :
 - parcours critiques testés : login, alertes, transitions, rapport
 - documentation mise à jour
 
-## 9) Sécurité et conformité opérationnelle
+## 10) Sécurité et conformité opérationnelle
 
 - Authentification JWT pour routes métier
 - Gestion des secrets via variables d’environnement
@@ -150,7 +168,7 @@ Checklist avant release :
 - Sentry possible pour traçage incident
 - Politique de backup DB + evidences obligatoire
 
-## 10) Arborescence du dépôt
+## 11) Arborescence du dépôt
 
 ```text
 backend/          API, modèles, logique métier, workers backend
@@ -159,13 +177,13 @@ scrapers/         Worker Playwright
 evidences_store/  Preuves et rapports générés
 ```
 
-## 11) Déploiement et exploitation
+## 12) Déploiement et exploitation
 
 Le guide opérationnel complet est disponible dans :
 
 - `DEPLOYMENT.md`
 
-## 12) Collaboration IA
+## 13) Collaboration IA
 
 Le contexte projet et les règles de collaboration agents sont maintenus dans :
 
