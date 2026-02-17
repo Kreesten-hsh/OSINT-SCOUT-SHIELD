@@ -166,6 +166,22 @@ Fichiers cibles:
 - `scrapers/workers/worker.py`
 - `backend/app/workers/result_consumer.py`
 
+Implementation Sprint 1B (realise):
+- Worker:
+  - validation stricte du payload (`id` UUID + URL `http(s)`),
+  - rapports standardises `COMPLETED` / `FAILED` avec `error_code`,
+  - gestion defensives des JSON invalides et reconnexion Redis.
+- Scraper engine:
+  - persistance des captures dans `evidences_store/screenshots`,
+  - transmission de `evidence_file_path` au consumer.
+- Result consumer:
+  - mise a jour incident meme en echec (`analysis_note` explicite),
+  - marquage run `FAILED` / `COMPLETED`,
+  - protection anti crash sur doublon de hash preuve.
+
+Limite connue:
+- `evidences.file_hash` est unique globalement. Si le hash existe deja, l evidence est sautee et une note est ajoutee a l alerte.
+
 ## T7 - E2E Demo Test Pack
 Type: QA  
 Priorite: P0  

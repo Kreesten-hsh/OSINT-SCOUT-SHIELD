@@ -52,6 +52,20 @@ Objectif: verifier le flux E2E citoyen -> incident -> investigation -> rapport
 - Payload invalide:
   - API retourne `422` coherent
 
+## 4bis. Cas robustesse pipeline (Sprint 1B)
+
+- Ingestion avec URL invalide (`notaurl`):
+  - worker ne crash pas
+  - alert conservee
+  - `analysis_note` enrichie avec `OSINT FAILED: INVALID_URL`
+- Message JSON invalide pousse dans `osint_to_scan`:
+  - worker log `Invalid JSON payload dropped`
+  - traitement des taches suivantes reste operationnel
+- Tache valide apres erreur:
+  - rapport `COMPLETED` consomme
+  - alerte mise a jour
+  - preuve disponible (si hash non duplique)
+
 ## 5. Critere "demo ready"
 
 - Flux complet execute en moins de 5 minutes

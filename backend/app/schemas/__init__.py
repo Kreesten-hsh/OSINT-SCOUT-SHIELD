@@ -6,3 +6,11 @@ from .signal import (
     IncidentReportData,
     VerificationSnapshot,
 )
+from .shield import (
+    IncidentDecisionRequest,
+    IncidentDecisionData,
+    ShieldDispatchRequest,
+    ShieldDispatchData,
+    OperatorActionStatusRequest,
+    OperatorActionStatusData,
+)

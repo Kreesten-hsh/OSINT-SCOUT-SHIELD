@@ -9,6 +9,7 @@
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+.pycache_tmp/
 
 # Node / frontend artifacts
 frontend/node_modules/
@@ -23,10 +24,10 @@ compose_*.log
 
 # Generated evidences / reports
 evidences_store/reports/*.pdf
+evidences_store/screenshots/
 scrapers/preuves_temp/
 
 # Local scratch folders
-backend/tests/
 tools/
 
 # Editors / OS

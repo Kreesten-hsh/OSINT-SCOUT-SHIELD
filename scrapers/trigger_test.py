@@ -3,6 +3,7 @@ import os
 import json
 import redis.asyncio as redis
 import sys
+import uuid
 
 # Configuration
 REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
@@ -22,7 +23,7 @@ async def trigger_scan():
     # On utilise example.com pour le test technique, 
     # mais on peut mettre une vraie URL si vous voulez tester le "Stealth".
     task = {
-        "id": "test_manual_001",
+        "id": str(uuid.uuid4()),
         "url": "https://example.com", 
         "priority": "high"
     }

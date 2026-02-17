@@ -1,12 +1,16 @@
 import sys
-# Force flush
+
+# Force immediate flush in Docker logs.
 sys.stdout.reconfigure(line_buffering=True)
 
 import asyncio
+from datetime import datetime, timezone
 import json
 import os
+from urllib.parse import urlparse
+import uuid
 
-# Ajout du dossier parent au path pour les imports si nécessaire
+# Allow imports when launched as python workers/worker.py.
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 print("[Worker] STARTING...", flush=True)
@@ -14,125 +18,233 @@ print("[Worker] STARTING...", flush=True)
 try:
     print("[Worker] Importing Redis...", flush=True)
     import redis.asyncio as redis
+
     print("[Worker] Importing Scraper Engine...", flush=True)
     from runners.engine import OsintScout
+
     print("[Worker] Importing Fraud Analyzer...", flush=True)
     from analysis.processor import FraudAnalyzer
+
     print("[Worker] Imports OK.", flush=True)
-except Exception as e:
-    print(f"[Worker] ❌ Import Error: {e}", flush=True)
+except Exception as exc:
+    print(f"[Worker] Import error: {exc}", flush=True)
     sys.exit(1)
 
-# Configuration
+
 REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
 QUEUE_TASKS = "osint_to_scan"
 QUEUE_RESULTS = "osint_results"
+SCRAPE_TIMEOUT_SECONDS = int(os.getenv("SCRAPE_TIMEOUT_SECONDS", "45"))
+RECONNECT_DELAY_SECONDS = float(os.getenv("WORKER_RECONNECT_DELAY_SECONDS", "2"))
 
-async def process_task(scout, analyzer, task_data):
-    target_url = task_data.get("url")
-    print(f"\n[Worker] 🛠️  Nouvelle tâche reçue : {target_url}", flush=True)
-    
-    # 1. ÉTAPE COLLECTE (Scraper)
-    print(f"[Worker] 🕷️  Lancement collecte Playwright...", flush=True)
+
+def utc_now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def is_valid_http_url(value: str) -> bool:
     try:
-        evidence = await scout.scrape_target(target_url)
-    except Exception as e:
-        print(f"[Worker] ❌ Erreur critique scraper : {e}", flush=True)
-        return None
+        parsed = urlparse(value)
+        return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
+    except Exception:
+        return False
+
+
+def validate_task_payload(task_data: dict) -> tuple[bool, str, str]:
+    if not isinstance(task_data, dict):
+        return False, "Payload must be an object", "INVALID_PAYLOAD"
+
+    task_id = task_data.get("id")
+    if not task_id:
+        return False, "Missing id", "MISSING_TASK_ID"
+
+    try:
+        uuid.UUID(str(task_id))
+    except ValueError:
+        return False, "id must be a valid UUID", "INVALID_TASK_ID"
+
+    raw_url = str(task_data.get("url", "")).strip()
+    if not raw_url:
+        return False, "Missing url", "MISSING_URL"
+
+    if not is_valid_http_url(raw_url):
+        return False, "url must be a valid http(s) URL", "INVALID_URL"
+
+    return True, "", ""
+
+
+def build_failed_report(
+    task_data: dict,
+    error: str,
+    error_code: str,
+    evidence: dict | None = None,
+) -> dict:
+    report = {
+        "task_id": str(task_data.get("id", "")),
+        "url": str(task_data.get("url", "")),
+        "source_type": str(task_data.get("source_type", "AUTOMATIC_SCRAPING")),
+        "timestamp": utc_now_iso(),
+        "status": "FAILED",
+        "risk_score": 0,
+        "is_alert": False,
+        "error": error,
+        "error_code": error_code,
+        "details": {
+            "analysis": {},
+            "evidence_metadata": {},
+        },
+    }
+
+    if evidence:
+        report["timestamp"] = evidence.get("timestamp_utc") or report["timestamp"]
+        report["evidence_hash"] = evidence.get("proof_sha256")
+        report["evidence_file_path"] = evidence.get("proof_file_path")
+        report["details"]["evidence_metadata"] = evidence.get("metadata", {})
+
+    return report
+
+
+async def process_task(scout: OsintScout, analyzer: FraudAnalyzer, task_data: dict) -> dict:
+    is_valid, error_msg, error_code = validate_task_payload(task_data)
+    if not is_valid:
+        print(f"[Worker] Invalid task payload: {error_msg}", flush=True)
+        return build_failed_report(task_data, error_msg, error_code)
+
+    target_url = str(task_data.get("url", "")).strip()
+    print(f"[Worker] Processing task: {target_url}", flush=True)
+
+    try:
+        evidence = await asyncio.wait_for(
+            scout.scrape_target(target_url),
+            timeout=SCRAPE_TIMEOUT_SECONDS,
+        )
+    except asyncio.TimeoutError:
+        print(f"[Worker] Scrape timeout for: {target_url}", flush=True)
+        return build_failed_report(
+            task_data,
+            f"Scrape timed out after {SCRAPE_TIMEOUT_SECONDS}s",
+            "SCRAPE_TIMEOUT",
+        )
+    except Exception as exc:
+        print(f"[Worker] Scraper runtime failure: {exc}", flush=True)
+        return build_failed_report(task_data, str(exc), "SCRAPER_EXCEPTION")
 
     if evidence.get("status") == "ERROR":
-        print(f"[Worker] ⚠️  Échec collecte : {evidence.get('error')}", flush=True)
-        return {
-            "task_id": task_data.get("id"),
-            "status": "FAILED",
-            "error": evidence.get("error")
-        }
+        return build_failed_report(
+            task_data,
+            str(evidence.get("error", "Unknown scrape failure")),
+            str(evidence.get("error_code", "SCRAPE_ERROR")),
+            evidence=evidence,
+        )
 
-    # 2. ÉTAPE ANALYSE (AUTOMATISÉE)
-    print(f"[Worker] 🧠  Analyse Automatisée (Règles) en cours...", flush=True)
-    content_text = evidence.get("content_text", "")
-    analysis_result = analyzer.analyze_text(content_text)
-    
-    score = analysis_result["risk_score"]
-    is_alert = analysis_result["is_alert"]
-    
-    print(f"[Worker] 📊  Résultat Analyse : Score {score}/100 | Alerte: {is_alert}", flush=True)
-    if is_alert:
-        print(f"[Worker] 🚨  MENACE DÉTECTÉE ! Catégories : {[cat['name'] for cat in analysis_result['categories']]}", flush=True)
+    content_text = str(evidence.get("content_text", ""))
+    try:
+        analysis_result = analyzer.analyze_text(content_text)
+    except Exception as exc:
+        print(f"[Worker] Analyzer failure: {exc}", flush=True)
+        return build_failed_report(
+            task_data,
+            f"Analysis failed: {exc}",
+            "ANALYSIS_EXCEPTION",
+            evidence=evidence,
+        )
 
-    # 3. AGGRÉGATION & RAPPORT
-    final_report = {
-        "task_id": task_data.get("id"),
+    score = int(analysis_result.get("risk_score", 0))
+    is_alert = bool(analysis_result.get("is_alert", False))
+
+    print(f"[Worker] Analysis result: score={score}/100 alert={is_alert}", flush=True)
+
+    return {
+        "task_id": str(task_data.get("id")),
         "url": target_url,
-        "timestamp": evidence["timestamp_utc"],
-        "evidence_hash": evidence["proof_sha256"],
-        "risk_score": score,
+        "source_type": str(task_data.get("source_type", "AUTOMATIC_SCRAPING")),
+        "timestamp": evidence.get("timestamp_utc"),
+        "status": "COMPLETED",
+        "evidence_hash": evidence.get("proof_sha256"),
+        "evidence_file_path": evidence.get("proof_file_path"),
+        "risk_score": max(0, min(score, 100)),
         "is_alert": is_alert,
         "details": {
-            "evidence_metadata": evidence["metadata"],
-            "analysis": analysis_result
-        }
+            "evidence_metadata": evidence.get("metadata", {}),
+            "analysis": analysis_result,
+        },
     }
-    
-    return final_report
 
-async def run_worker():
-    print("[Worker] 🚀 Démarrage du Worker d'Orchestration OSINT...", flush=True)
-    
-    # Init Connexions
-    try:
-        r = redis.from_url(REDIS_URL, decode_responses=True)
-        await r.ping()
-        print(f"[Worker] ✅ Connecté à Redis ({REDIS_URL})", flush=True)
-    except Exception as e:
-        print(f"[Worker] ❌ Impossible de se connecter à Redis : {e}", flush=True)
-        return
 
-    # Init Moteurs
-    print("[Worker] 🔧 Initialisation Scraper & NLP...", flush=True)
+async def run_worker() -> None:
+    print("[Worker] Starting OSINT orchestration worker...", flush=True)
+
+    redis_client = None
     scout = OsintScout(headless=True)
-    # Le chemin est relatif à la racine /app dans Docker
+
+    print("[Worker] Initializing analyzer...", flush=True)
     try:
         analyzer = FraudAnalyzer(rules_path="config/rules.json")
-    except Exception as e:
-        print(f"[Worker] ❌ Erreur Init Analyzer : {e}", flush=True)
+    except Exception as exc:
+        print(f"[Worker] Analyzer init failure: {exc}", flush=True)
         return
-    
-    print(f"[Worker] 👂 En attente de tâches sur la file '{QUEUE_TASKS}'...", flush=True)
-    
+
+    print(f"[Worker] Waiting for tasks on '{QUEUE_TASKS}'...", flush=True)
+
     try:
         while True:
-            # Récupération bloquante (timeout 1s pour permettre le CTRL+C)
-            item = await r.blpop(QUEUE_TASKS, timeout=1)
-            
-            if not item:
-                continue
-                
-            # blpop retourne (nom_queue, valeur)
-            _, data_raw = item
-            
             try:
-                task_data = json.loads(data_raw)
+                if redis_client is None:
+                    redis_client = redis.from_url(REDIS_URL, decode_responses=True)
+                    await redis_client.ping()
+                    print(f"[Worker] Connected to Redis ({REDIS_URL})", flush=True)
+
+                item = await redis_client.blpop(QUEUE_TASKS, timeout=1)
+                if not item:
+                    continue
+
+                _, data_raw = item
+                try:
+                    task_data = json.loads(data_raw)
+                except json.JSONDecodeError:
+                    print(f"[Worker] Invalid JSON payload dropped: {data_raw}", flush=True)
+                    continue
+
                 report = await process_task(scout, analyzer, task_data)
-                
-                if report:
-                    # Envoi du résultat dans la file correspondante
-                    # Dans un système réel, l'API consommerait cette file
-                    await r.rpush(QUEUE_RESULTS, json.dumps(report))
-                    print(f"[Worker] 📤 Rapport envoyé vers '{QUEUE_RESULTS}'", flush=True)
-                    
-            except json.JSONDecodeError:
-                print(f"[Worker] ❌ Erreur décodage JSON : {data_raw}", flush=True)
-            except Exception as e:
-                print(f"[Worker] ❌ Erreur Inattendue : {e}", flush=True)
+
+                if report.get("task_id"):
+                    await redis_client.rpush(QUEUE_RESULTS, json.dumps(report))
+                    print(
+                        f"[Worker] Report queued: status={report.get('status')} task_id={report.get('task_id')}",
+                        flush=True,
+                    )
+                else:
+                    print("[Worker] Report dropped: missing task_id", flush=True)
+
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:
+                print(f"[Worker] Loop error (will reconnect): {exc}", flush=True)
+                if redis_client is not None:
+                    try:
+                        await redis_client.aclose()
+                    except Exception:
+                        pass
+                    redis_client = None
+                await asyncio.sleep(RECONNECT_DELAY_SECONDS)
 
     except asyncio.CancelledError:
-        print("[Worker] Arrêt demandé...", flush=True)
+        print("[Worker] Shutdown requested...", flush=True)
     finally:
-        print("[Worker] Nettoyage ressources...", flush=True)
-        await scout.stop()
-        await r.aclose()
-        print("[Worker] 👋 Arrêt complet.", flush=True)
+        print("[Worker] Cleaning up resources...", flush=True)
+        try:
+            await scout.stop()
+        except Exception as exc:
+            print(f"[Worker] Error while stopping scout: {exc}", flush=True)
+
+        if redis_client is not None:
+            try:
+                await redis_client.aclose()
+            except Exception:
+                pass
+
+        print("[Worker] Worker stopped.", flush=True)
+
 
 if __name__ == "__main__":
     try:

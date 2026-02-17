@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     # Observability
     SENTRY_DSN: str | None = None
 
+    # SHIELD simulation
+    SHIELD_OPERATOR_SHARED_SECRET: str = "dev-operator-secret"
+    SHIELD_ACTION_TTL_SECONDS: int = 86400
+
     @property
     def effective_database_url(self) -> str:
         if self.DATABASE_URL:

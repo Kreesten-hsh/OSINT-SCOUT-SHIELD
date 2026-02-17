@@ -30,7 +30,11 @@ Le produit est conçu pour des environnements exigeants : fiabilité opérationn
 - Contrat API citoyen séparé :
   - `POST /api/v1/signals/verify` (analyse seule)
   - `POST /api/v1/incidents/report` (création incident)
-- Cycle d’alerte complet : `NEW -> IN_REVIEW -> CONFIRMED | DISMISSED`
+- Orchestration SHIELD simulée :
+  - `PATCH /api/v1/incidents/{id}/decision`
+  - `POST /api/v1/shield/actions/dispatch`
+  - `POST /api/v1/operators/callbacks/action-status`
+- Cycle d’alerte complet : `NEW -> IN_REVIEW -> CONFIRMED | DISMISSED | BLOCKED_SIMULATED`
 - Notes analyste et transitions d’état synchronisées en temps réel UI/API
 - Gestion des sources de monitoring (`/api/v1/sources`)
 - Pipeline asynchrone Redis + Worker Playwright
@@ -116,6 +120,7 @@ Avant toute exposition non locale, renseigner impérativement :
 - `SECRET_KEY`
 - `AUTH_ADMIN_EMAIL`
 - `AUTH_ADMIN_PASSWORD`
+- `SHIELD_OPERATOR_SHARED_SECRET` (callback operateur simule)
 - `POSTGRES_PASSWORD`
 - `BACKEND_CORS_ORIGINS`
 - `VITE_API_URL`
@@ -128,6 +133,9 @@ Règle stricte : ne jamais committer `.env`.
 - `POST /api/v1/auth/login`
 - `POST /api/v1/signals/verify`
 - `POST /api/v1/incidents/report`
+- `PATCH /api/v1/incidents/{id}/decision`
+- `POST /api/v1/shield/actions/dispatch`
+- `POST /api/v1/operators/callbacks/action-status`
 - `GET /api/v1/dashboard/stats/*`
 - `GET|PATCH /api/v1/alerts/*`
 - `POST /api/v1/ingestion/manual`

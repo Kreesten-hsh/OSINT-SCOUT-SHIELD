@@ -38,7 +38,7 @@ export interface AnalysisResult {
 }
 
 // --- ALERT TYPES ---
-export type AlertStatus = 'NEW' | 'IN_REVIEW' | 'CONFIRMED' | 'DISMISSED';
+export type AlertStatus = 'NEW' | 'IN_REVIEW' | 'CONFIRMED' | 'DISMISSED' | 'BLOCKED_SIMULATED';
 
 export interface Alert {
     id: number;

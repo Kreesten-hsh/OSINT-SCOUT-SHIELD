@@ -36,10 +36,10 @@ class AlertBase(BaseModel):
     url: str
     source_type: str
     risk_score: int
-    status: Literal["NEW", "IN_REVIEW", "CONFIRMED", "DISMISSED"]
+    status: Literal["NEW", "IN_REVIEW", "CONFIRMED", "DISMISSED", "BLOCKED_SIMULATED"]
 
 class AlertUpdate(BaseModel):
-    status: Optional[Literal["NEW", "IN_REVIEW", "CONFIRMED", "DISMISSED"]] = None
+    status: Optional[Literal["NEW", "IN_REVIEW", "CONFIRMED", "DISMISSED", "BLOCKED_SIMULATED"]] = None
     analysis_note: Optional[str] = None
 
 class AlertResponse(BaseModel):
@@ -48,7 +48,7 @@ class AlertResponse(BaseModel):
     url: str
     source_type: str
     risk_score: int
-    status: Literal["NEW", "IN_REVIEW", "CONFIRMED", "DISMISSED"]
+    status: Literal["NEW", "IN_REVIEW", "CONFIRMED", "DISMISSED", "BLOCKED_SIMULATED"]
     created_at: datetime
     updated_at: Optional[datetime] = None
     analysis_note: Optional[str] = None

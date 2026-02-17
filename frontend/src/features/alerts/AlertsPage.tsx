@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/api/client';
 import { Alert } from '@/types';
@@ -96,9 +96,10 @@ export default function AlertsPage({ title = 'Gestion des Alertes' }: AlertsPage
                     >
                         <option value="">Tous les statuts</option>
                         <option value="NEW">Nouveau</option>
-                        <option value="IN_REVIEW">En révision</option>
-                        <option value="CONFIRMED">Confirmé</option>
-                        <option value="DISMISSED">Classé sans suite</option>
+                        <option value="IN_REVIEW">En revision</option>
+                        <option value="CONFIRMED">Confirme</option>
+                        <option value="DISMISSED">Classe sans suite</option>
+                        <option value="BLOCKED_SIMULATED">Bloque (simule)</option>
                     </select>
                 </div>
             </div>
@@ -108,11 +109,11 @@ export default function AlertsPage({ title = 'Gestion des Alertes' }: AlertsPage
                     <table className="w-full text-sm text-left">
                         <thead className="bg-secondary/50 text-muted-foreground uppercase text-xs font-semibold">
                             <tr>
-                                <th className="px-6 py-4">Sévérité</th>
+                                <th className="px-6 py-4">Severite</th>
                                 <th className="px-6 py-4">Source / URL</th>
                                 <th className="px-6 py-4">Statut</th>
                                 <th className="px-6 py-4">Score</th>
-                                <th className="px-6 py-4">Détecté le</th>
+                                <th className="px-6 py-4">Detecte le</th>
                                 <th className="px-6 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
@@ -129,13 +130,13 @@ export default function AlertsPage({ title = 'Gestion des Alertes' }: AlertsPage
                             ) : isError ? (
                                 <tr>
                                     <td colSpan={6} className="px-6 py-12 text-center text-destructive">
-                                        Erreur de chargement des données.
+                                        Erreur de chargement des donnees.
                                     </td>
                                 </tr>
                             ) : data?.length === 0 ? (
                                 <tr>
                                     <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
-                                        Aucune alerte trouvée.
+                                        Aucune alerte trouvee.
                                     </td>
                                 </tr>
                             ) : (
@@ -177,9 +178,14 @@ export default function AlertsPage({ title = 'Gestion des Alertes' }: AlertsPage
                                             <Badge variant={
                                                 alert.status === 'NEW' ? 'outline' :
                                                     alert.status === 'IN_REVIEW' ? 'default' :
-                                                        alert.status === 'CONFIRMED' ? 'destructive' : 'secondary'
+                                                        alert.status === 'CONFIRMED' ? 'destructive' :
+                                                            alert.status === 'BLOCKED_SIMULATED' ? 'success' : 'secondary'
                                             }>
-                                                {alert.status === 'IN_REVIEW' ? 'EN RÉVISION' : alert.status}
+                                                {alert.status === 'IN_REVIEW'
+                                                    ? 'EN REVISION'
+                                                    : alert.status === 'BLOCKED_SIMULATED'
+                                                        ? 'BLOQUE_SIMULE'
+                                                        : alert.status}
                                             </Badge>
                                         </td>
                                         <td className="px-6 py-4 font-mono text-muted-foreground">
@@ -225,3 +231,5 @@ export default function AlertsPage({ title = 'Gestion des Alertes' }: AlertsPage
         </div>
     );
 }
+
+
