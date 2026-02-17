@@ -14,9 +14,12 @@ class Alert(Base):
     
     url = Column(String, index=True)
     source_type = Column(String) # WEB, SOCIAL, DARKWEB
+    phone_number = Column(String, index=True, nullable=True)
+    reported_message = Column(Text, nullable=True)
+    citizen_channel = Column(String, index=True, nullable=True)
     
     risk_score = Column(Integer, index=True) # Index pour tri/filtre performant
-    status = Column(String, default="NEW", index=True) # NEW, IN_REVIEW, CONFIRMED, DISMISSED
+    status = Column(String, default="NEW", index=True) # NEW, IN_REVIEW, CONFIRMED, DISMISSED, BLOCKED_SIMULATED
     
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True) # Index pour chronologie
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

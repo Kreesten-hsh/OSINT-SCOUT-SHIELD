@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/auth-store';
 const navItems = [
     { to: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
     { to: '/alerts', label: 'Gestion des Alertes', icon: AlertTriangle },
+    { to: '/incidents-signales', label: 'Incidents signales', icon: Shield },
     { to: '/analyse', label: "Centre d'Analyse", icon: BrainCircuit },
     { to: '/evidence', label: 'Preuves & Archives', icon: Shield },
     { to: '/reports', label: 'Rapports', icon: FileText },
@@ -21,7 +22,7 @@ export function Sidebar() {
         <aside className="w-64 bg-card border-r border-border h-screen flex flex-col fixed left-0 top-0 z-40 transition-transform">
             <div className="h-16 flex items-center px-6 border-b border-border bg-card/50 backdrop-blur-xl">
                 <Shield className="w-6 h-6 text-primary mr-3" />
-                <span className="font-bold text-lg tracking-tight">OSINT-SCOUT</span>
+                <span className="font-bold text-lg tracking-tight">SOC Console</span>
             </div>
 
             <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">

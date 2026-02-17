@@ -60,3 +60,19 @@ class OperatorActionStatusData(BaseModel):
     alert_status: str
     operator_status: OperatorExecutionStatus
     updated_at: str
+
+
+class ShieldActionTimelineItem(BaseModel):
+    dispatch_id: UUID4
+    incident_id: UUID4
+    action_type: PlaybookActionType
+    decision_status: DecisionStatus
+    operator_status: Literal["SENT", "RECEIVED", "EXECUTED", "FAILED"]
+    created_at: str
+    updated_at: str | None = None
+
+
+class ShieldIncidentTimelineData(BaseModel):
+    incident_id: UUID4
+    total_actions: int
+    actions: list[ShieldActionTimelineItem]

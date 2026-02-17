@@ -38,22 +38,6 @@ interface GeneratedReport {
     pdf_path: string;
 }
 
-type PlaybookActionType =
-    | 'BLOCK_NUMBER'
-    | 'SUSPEND_WALLET'
-    | 'ENFORCE_MFA'
-    | 'BLACKLIST_ADD'
-    | 'USER_NOTIFY';
-
-interface ShieldDispatchData {
-    dispatch_id: string;
-    incident_id: string;
-    action_type: PlaybookActionType;
-    decision_status: 'PENDING' | 'VALIDATED' | 'REJECTED' | 'ESCALATED' | 'EXECUTED';
-    operator_status: 'SENT' | 'RECEIVED' | 'EXECUTED' | 'FAILED';
-    callback_required: boolean;
-}
-
 interface IncidentDecisionData {
     incident_id: string;
     alert_status: string;
@@ -91,7 +75,6 @@ export default function InvestigationPage() {
     const queryClient = useQueryClient();
     const { toast } = useToast();
     const [notesDraft, setNotesDraft] = useState<string | null>(null);
-    const [playbookAction, setPlaybookAction] = useState<PlaybookActionType>('BLOCK_NUMBER');
 
     const { data: alert, isLoading, isError } = useQuery({
         queryKey: ['alert', id],
@@ -167,7 +150,7 @@ export default function InvestigationPage() {
         },
         onSuccess: (response) => {
             if (!response.success) {
-                toast({ title: 'Erreur', description: response.message || "Echec de la decision", variant: 'destructive' });
+                toast({ title: 'Erreur', description: response.message || 'Echec de la decision', variant: 'destructive' });
                 return;
             }
             queryClient.invalidateQueries({ queryKey: ['alert', id] });
@@ -177,40 +160,6 @@ export default function InvestigationPage() {
         onError: (err) => {
             const msg = err.response?.data?.message || err.response?.data?.detail || 'Echec de la decision SOC.';
             toast({ title: 'Erreur decision', description: msg, variant: 'destructive' });
-        },
-    });
-
-    const dispatchShieldMutation = useMutation<
-        APIResponse<ShieldDispatchData>,
-        AxiosError<ApiErrorPayload>,
-        void
-    >({
-        mutationFn: async () => {
-            if (!alert?.uuid) throw new Error('Alert UUID missing');
-            const res = await apiClient.post<APIResponse<ShieldDispatchData>>('/shield/actions/dispatch', {
-                incident_id: alert.uuid,
-                action_type: playbookAction,
-                reason: (notesDraft ?? alert.analysis_note ?? '').trim() || null,
-                auto_callback: true,
-            });
-            return res.data;
-        },
-        onSuccess: (response) => {
-            if (!response.success || !response.data) {
-                toast({ title: 'Erreur SHIELD', description: response.message || 'Dispatch echoue', variant: 'destructive' });
-                return;
-            }
-
-            queryClient.invalidateQueries({ queryKey: ['alert', id] });
-            queryClient.invalidateQueries({ queryKey: ['alerts'] });
-            toast({
-                title: 'Action SHIELD envoyee',
-                description: `Dispatch ${response.data.dispatch_id.slice(0, 8)} - statut operateur: ${response.data.operator_status}`,
-            });
-        },
-        onError: (err) => {
-            const msg = err.response?.data?.message || err.response?.data?.detail || 'Impossible de declencher SHIELD.';
-            toast({ title: 'Erreur SHIELD', description: msg, variant: 'destructive' });
         },
     });
 
@@ -433,39 +382,6 @@ export default function InvestigationPage() {
                             </div>
                         </div>
                     </div>
-
-                    {(alert.status === 'CONFIRMED' || alert.status === 'BLOCKED_SIMULATED') && (
-                        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-                            <h3 className="mb-2 flex items-center gap-2 font-semibold">
-                                <ShieldAlert className="h-4 w-4 text-primary" />
-                                SHIELD (simule)
-                            </h3>
-                            <p className="mb-4 text-xs text-muted-foreground">
-                                Declenche une action operateur simulee pour cet incident confirme.
-                            </p>
-                            <div className="space-y-3">
-                                <select
-                                    value={playbookAction}
-                                    onChange={(e) => setPlaybookAction(e.target.value as PlaybookActionType)}
-                                    className="w-full rounded-md border border-input bg-secondary/20 p-2 text-sm outline-none focus:ring-1 focus:ring-primary"
-                                >
-                                    <option value="BLOCK_NUMBER">BLOCK_NUMBER</option>
-                                    <option value="SUSPEND_WALLET">SUSPEND_WALLET</option>
-                                    <option value="ENFORCE_MFA">ENFORCE_MFA</option>
-                                    <option value="BLACKLIST_ADD">BLACKLIST_ADD</option>
-                                    <option value="USER_NOTIFY">USER_NOTIFY</option>
-                                </select>
-                                <button
-                                    onClick={() => dispatchShieldMutation.mutate()}
-                                    disabled={dispatchShieldMutation.isPending}
-                                    className="flex w-full items-center justify-center gap-2 rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-60"
-                                >
-                                    {dispatchShieldMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                                    Declencher SHIELD
-                                </button>
-                            </div>
-                        </div>
-                    )}
 
                     <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
                         <h3 className="mb-2 flex items-center gap-2 font-semibold">

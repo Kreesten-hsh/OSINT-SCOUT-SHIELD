@@ -28,7 +28,7 @@ export function Topbar() {
                 <div className="flex items-center gap-3">
                     <div className="text-right hidden md:block">
                         <p className="text-sm font-medium leading-none">{user?.email || 'Analyste'}</p>
-                        <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider">{user?.role || 'SOC LEVEL 1'}</p>
+                        <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider">{user?.role || 'SOC_ANALYST'}</p>
                     </div>
                     <div className="h-9 w-9 bg-primary/20 rounded-full flex items-center justify-center text-primary font-semibold ring-2 ring-background border border-primary/30">
                         {user?.email?.[0].toUpperCase() || <User className="w-5 h-5" />}

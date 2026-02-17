@@ -21,6 +21,7 @@ compose_api_front.log
 docker_debug.log
 docker_cmd_out.txt
 compose_*.log
+backend/tmp_debug_alerts.py
 
 # Generated evidences / reports
 evidences_store/reports/*.pdf

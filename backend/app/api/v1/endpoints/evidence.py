@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import List
 from fastapi import APIRouter, HTTPException, Depends, Query
 from fastapi.responses import FileResponse
@@ -46,3 +47,27 @@ async def get_evidence_file(file_name: str):
         raise HTTPException(status_code=404, detail="Evidence file not found")
             
     return FileResponse(file_path)
+
+
+@router.get("/view/{evidence_id}")
+async def view_evidence_by_id(
+    evidence_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = select(Evidence).where(Evidence.id == evidence_id)
+    evidence = (await db.execute(stmt)).scalars().first()
+    if not evidence:
+        raise HTTPException(status_code=404, detail="Evidence not found")
+
+    relative = str(evidence.file_path or "").strip()
+    if not relative:
+        raise HTTPException(status_code=404, detail="Evidence file path missing")
+
+    base_dir = Path(EVIDENCE_DIR).resolve()
+    target = (base_dir / relative).resolve()
+    if base_dir not in target.parents and target != base_dir:
+        raise HTTPException(status_code=400, detail="Invalid evidence path")
+    if not target.exists():
+        raise HTTPException(status_code=404, detail="Evidence file not found")
+
+    return FileResponse(target)

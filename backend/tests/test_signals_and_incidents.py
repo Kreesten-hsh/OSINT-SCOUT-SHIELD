@@ -11,8 +11,11 @@ from app.core.security import get_current_subject
 from app.schemas.shield import (
     IncidentDecisionData,
     OperatorActionStatusData,
+    ShieldActionTimelineItem,
     ShieldDispatchData,
+    ShieldIncidentTimelineData,
 )
+from app.schemas.citizen_incident import CitizenIncidentDetailData, CitizenIncidentListData
 
 
 class FakeSession:
@@ -55,6 +58,7 @@ def test_verify_valid_returns_score_and_no_alert_created() -> None:
             "message": "Urgent confirme ton code OTP pour activer ton compte",
             "channel": "WEB_PORTAL",
             "url": "https://example.com",
+            "phone": "+22990000001",
         },
     )
 
@@ -117,6 +121,7 @@ def test_report_valid_with_http_url_creates_alert_and_queued(monkeypatch) -> Non
             "message": "Urgent clique ce lien et confirme ton code",
             "channel": "WEB_PORTAL",
             "url": "https://example.com/phishing",
+            "phone": "+22990000002",
         },
     )
 
@@ -135,7 +140,7 @@ def test_report_invalid_payload_returns_422() -> None:
 
     response = client.post(
         "/api/v1/incidents/report",
-        json={"message": "abc", "channel": "WEB_PORTAL"},
+        json={"message": "abc", "channel": "WEB_PORTAL", "phone": "+22990000000"},
     )
 
     assert response.status_code == 422
@@ -147,11 +152,11 @@ def test_public_endpoints_accessible_without_jwt() -> None:
 
     verify_response = client.post(
         "/api/v1/signals/verify",
-        json={"message": "simple message de test", "channel": "WEB_PORTAL"},
+        json={"message": "simple message de test", "channel": "WEB_PORTAL", "phone": "+22990000003"},
     )
     report_response = client.post(
         "/api/v1/incidents/report",
-        json={"message": "simple message de test", "channel": "WEB_PORTAL"},
+        json={"message": "simple message de test", "channel": "WEB_PORTAL", "phone": "+22990000004"},
     )
 
     assert verify_response.status_code == 200
@@ -307,3 +312,146 @@ def test_operator_callback_valid_secret_returns_contract(monkeypatch) -> None:
     payload = response.json()
     assert payload["success"] is True
     assert payload["data"]["alert_status"] == "BLOCKED_SIMULATED"
+
+
+def test_shield_timeline_requires_jwt() -> None:
+    fake_session = FakeSession()
+    client = build_client(fake_session, authenticated=False)
+
+    response = client.get(f"/api/v1/shield/incidents/{uuid.uuid4()}/actions")
+
+    assert response.status_code == 401
+
+
+def test_shield_timeline_authenticated_returns_contract(monkeypatch) -> None:
+    fake_session = FakeSession()
+    client = build_client(fake_session, authenticated=True)
+    incident_id = uuid.uuid4()
+    dispatch_id = uuid.uuid4()
+
+    async def _fake_timeline(*_args, **_kwargs):
+        return ShieldIncidentTimelineData(
+            incident_id=incident_id,
+            total_actions=1,
+            actions=[
+                ShieldActionTimelineItem(
+                    dispatch_id=dispatch_id,
+                    incident_id=incident_id,
+                    action_type="BLOCK_NUMBER",
+                    decision_status="EXECUTED",
+                    operator_status="EXECUTED",
+                    created_at="2026-02-17T00:00:00Z",
+                    updated_at="2026-02-17T00:01:00Z",
+                )
+            ],
+        )
+
+    monkeypatch.setattr(
+        "app.api.v1.endpoints.shield.get_incident_shield_timeline",
+        _fake_timeline,
+    )
+
+    response = client.get(f"/api/v1/shield/incidents/{incident_id}/actions")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["data"]["incident_id"] == str(incident_id)
+    assert payload["data"]["total_actions"] == 1
+    assert payload["data"]["actions"][0]["dispatch_id"] == str(dispatch_id)
+
+
+def test_report_with_media_accepts_form_without_jwt(monkeypatch) -> None:
+    fake_session = FakeSession()
+    client = build_client(fake_session, authenticated=False)
+    incident_id = uuid.uuid4()
+
+    async def _fake_report(*_args, **_kwargs):
+        return {
+            "alert_uuid": incident_id,
+            "status": "NEW",
+            "risk_score_initial": 85,
+            "queued_for_osint": False,
+        }
+
+    monkeypatch.setattr("app.api.v1.endpoints.incidents.report_signal_to_incident", _fake_report)
+
+    response = client.post(
+        "/api/v1/incidents/report-with-media",
+        data={
+            "message": "Signalement citoyen test",
+            "phone": "+22990000005",
+            "channel": "WEB_PORTAL",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+
+
+def test_citizen_incidents_list_requires_jwt() -> None:
+    fake_session = FakeSession()
+    client = build_client(fake_session, authenticated=False)
+
+    response = client.get("/api/v1/incidents/citizen")
+
+    assert response.status_code == 401
+
+
+def test_citizen_incidents_list_authenticated_contract(monkeypatch) -> None:
+    fake_session = FakeSession()
+    client = build_client(fake_session, authenticated=True)
+
+    async def _fake_list(*_args, **_kwargs):
+        return CitizenIncidentListData(
+            items=[],
+            total=0,
+            skip=0,
+            limit=50,
+        )
+
+    monkeypatch.setattr("app.api.v1.endpoints.incidents.list_citizen_incidents", _fake_list)
+
+    response = client.get("/api/v1/incidents/citizen")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["data"]["total"] == 0
+
+
+def test_citizen_incident_detail_authenticated_contract(monkeypatch) -> None:
+    fake_session = FakeSession()
+    client = build_client(fake_session, authenticated=True)
+    incident_id = uuid.uuid4()
+
+    async def _fake_detail(*_args, **_kwargs):
+        return CitizenIncidentDetailData(
+            alert_uuid=incident_id,
+            phone_number="+22990000005",
+            channel="WEB_PORTAL",
+            message="Detail message",
+            url="citizen://text-signal",
+            risk_score=70,
+            status="NEW",
+            analysis_note=None,
+            created_at="2026-02-17T00:00:00Z",
+            attachments=[],
+            stats={
+                "reports_for_phone": 1,
+                "open_reports_for_phone": 1,
+                "confirmed_reports_for_phone": 0,
+                "blocked_reports_for_phone": 0,
+            },
+            related_incidents=[],
+        )
+
+    monkeypatch.setattr("app.api.v1.endpoints.incidents.get_citizen_incident_detail", _fake_detail)
+
+    response = client.get(f"/api/v1/incidents/citizen/{incident_id}")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["data"]["alert_uuid"] == str(incident_id)

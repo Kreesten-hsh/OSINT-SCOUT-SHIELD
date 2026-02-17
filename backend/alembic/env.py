@@ -16,8 +16,8 @@ from app.models import * # Importation des modèles pour que Base.metadata les v
 # access to the values within the .ini file in use.
 config = context.config
 
-# Overwrite sqlalchemy.url with environment variable
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# Overwrite sqlalchemy.url with effective environment value
+config.set_main_option("sqlalchemy.url", settings.effective_database_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

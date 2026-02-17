@@ -195,7 +195,10 @@ export default function AlertsPage({ title = 'Gestion des Alertes' }: AlertsPage
                                             {new Date(alert.created_at).toLocaleDateString()} <span className="text-xs opacity-50">{new Date(alert.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <Link to={`/alerts/${alert.uuid}`} className="inline-flex items-center justify-center p-2 rounded-md hover:bg-primary/20 hover:text-primary transition-colors">
+                                            <Link
+                                                to={isCitizenSource(alert.source_type) ? `/incidents-signales/${alert.uuid}` : `/alerts/${alert.uuid}`}
+                                                className="inline-flex items-center justify-center p-2 rounded-md hover:bg-primary/20 hover:text-primary transition-colors"
+                                            >
                                                 <Eye className="w-4 h-4" />
                                             </Link>
                                         </td>

@@ -28,11 +28,16 @@ Le produit est conçu pour des environnements exigeants : fiabilité opérationn
 
 - Canal citoyen public (mobile PWA + interface web) via `/verify`
 - Contrat API citoyen séparé :
-  - `POST /api/v1/signals/verify` (analyse seule)
+  - `POST /api/v1/signals/verify` (analyse seule, numero obligatoire)
   - `POST /api/v1/incidents/report` (création incident)
+  - `POST /api/v1/incidents/report-with-media` (création incident + captures)
+- Espace SOC "Incidents signalés" :
+  - `GET /api/v1/incidents/citizen`
+  - `GET /api/v1/incidents/citizen/{id}`
 - Orchestration SHIELD simulée :
   - `PATCH /api/v1/incidents/{id}/decision`
   - `POST /api/v1/shield/actions/dispatch`
+  - `GET /api/v1/shield/incidents/{id}/actions`
   - `POST /api/v1/operators/callbacks/action-status`
 - Cycle d’alerte complet : `NEW -> IN_REVIEW -> CONFIRMED | DISMISSED | BLOCKED_SIMULATED`
 - Notes analyste et transitions d’état synchronisées en temps réel UI/API
@@ -107,7 +112,13 @@ curl http://localhost:8000/health
 curl http://localhost:8000/metrics
 ```
 
-### 5.4 Accéder aux interfaces
+### 5.4 Appliquer les migrations DB
+
+```bash
+docker compose exec api alembic upgrade head
+```
+
+### 5.5 Accéder aux interfaces
 
 - Vérification citoyenne (mobile/web) : `http://localhost:5173/verify`
 - Dashboard analyste (auth) : `http://localhost:5173/login`
@@ -133,8 +144,12 @@ Règle stricte : ne jamais committer `.env`.
 - `POST /api/v1/auth/login`
 - `POST /api/v1/signals/verify`
 - `POST /api/v1/incidents/report`
+- `POST /api/v1/incidents/report-with-media`
+- `GET /api/v1/incidents/citizen`
+- `GET /api/v1/incidents/citizen/{id}`
 - `PATCH /api/v1/incidents/{id}/decision`
 - `POST /api/v1/shield/actions/dispatch`
+- `GET /api/v1/shield/incidents/{id}/actions`
 - `POST /api/v1/operators/callbacks/action-status`
 - `GET /api/v1/dashboard/stats/*`
 - `GET|PATCH /api/v1/alerts/*`

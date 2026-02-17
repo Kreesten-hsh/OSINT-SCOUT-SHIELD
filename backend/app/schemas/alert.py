@@ -35,6 +35,9 @@ class AnalysisResultResponse(AnalysisResultBase):
 class AlertBase(BaseModel):
     url: str
     source_type: str
+    phone_number: Optional[str] = None
+    reported_message: Optional[str] = None
+    citizen_channel: Optional[str] = None
     risk_score: int
     status: Literal["NEW", "IN_REVIEW", "CONFIRMED", "DISMISSED", "BLOCKED_SIMULATED"]
 
@@ -47,6 +50,9 @@ class AlertResponse(BaseModel):
     uuid: UUID4
     url: str
     source_type: str
+    phone_number: Optional[str] = None
+    reported_message: Optional[str] = None
+    citizen_channel: Optional[str] = None
     risk_score: int
     status: Literal["NEW", "IN_REVIEW", "CONFIRMED", "DISMISSED", "BLOCKED_SIMULATED"]
     created_at: datetime

@@ -52,7 +52,7 @@ export default function LoginPage() {
                         <ShieldCheck className="h-10 w-10 text-primary" />
                     </div>
                     <h1 className="text-2xl font-bold tracking-tight">OSINT-SCOUT</h1>
-                    <p className="mt-1 text-sm text-muted-foreground">Command Center Access</p>
+                    <p className="mt-1 text-sm text-muted-foreground">Acces Dashboard SOC (Analyste/Admin)</p>
                 </div>
 
                 {error && (

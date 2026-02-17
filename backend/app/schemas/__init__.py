@@ -13,4 +13,14 @@ from .shield import (
     ShieldDispatchData,
     OperatorActionStatusRequest,
     OperatorActionStatusData,
+    ShieldActionTimelineItem,
+    ShieldIncidentTimelineData,
+)
+from .citizen_incident import (
+    CitizenIncidentListItem,
+    CitizenIncidentListData,
+    CitizenIncidentAttachment,
+    CitizenIncidentStats,
+    RelatedCitizenIncident,
+    CitizenIncidentDetailData,
 )

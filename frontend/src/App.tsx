@@ -6,6 +6,8 @@ import DashboardLayout from '@/layouts/DashboardLayout';
 import DashboardPage from '@/features/dashboard/DashboardPage';
 import AlertsPage from '@/features/alerts/AlertsPage';
 import InvestigationPage from '@/features/investigation/InvestigationPage';
+import CitizenIncidentsPage from '@/features/citizen-incidents/CitizenIncidentsPage';
+import CitizenIncidentDetailPage from '@/features/citizen-incidents/CitizenIncidentDetailPage';
 import IngestionPage from '@/features/ingestion/IngestionPage';
 import AnalysisPage from '@/features/analysis/AnalysisPage';
 import ReportsListPage from '@/features/reports/ReportsListPage';
@@ -107,6 +109,8 @@ function App() {
               <Route path="/reports/:id" element={<ReportDetailPage />} />
               <Route path="/alerts" element={<AlertsPage />} />
               <Route path="/alerts/:id" element={<InvestigationPage />} />
+              <Route path="/incidents-signales" element={<CitizenIncidentsPage />} />
+              <Route path="/incidents-signales/:id" element={<CitizenIncidentDetailPage />} />
               <Route path="/evidence" element={<EvidencePage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />

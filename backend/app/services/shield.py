@@ -14,7 +14,9 @@ from app.schemas.shield import (
     IncidentDecisionRequest,
     OperatorActionStatusData,
     OperatorActionStatusRequest,
+    ShieldActionTimelineItem,
     ShieldDispatchData,
+    ShieldIncidentTimelineData,
     ShieldDispatchRequest,
 )
 
@@ -82,6 +84,72 @@ async def _read_dispatch_from_redis(dispatch_id: uuid.UUID) -> dict | None:
         return json.loads(raw)
     finally:
         await client.aclose()
+
+
+async def _append_dispatch_to_incident_index(incident_id: uuid.UUID, dispatch_id: uuid.UUID) -> None:
+    client = redis.from_url(settings.REDIS_URL, decode_responses=True)
+    try:
+        key = f"shield_incident_dispatches:{incident_id}"
+        await client.lpush(key, str(dispatch_id))
+        await client.ltrim(key, 0, 99)
+        await client.expire(key, settings.SHIELD_ACTION_TTL_SECONDS)
+    finally:
+        await client.aclose()
+
+
+async def _read_incident_dispatch_ids(incident_id: uuid.UUID) -> list[str]:
+    client = redis.from_url(settings.REDIS_URL, decode_responses=True)
+    try:
+        key = f"shield_incident_dispatches:{incident_id}"
+        return await client.lrange(key, 0, -1)
+    finally:
+        await client.aclose()
+
+
+async def get_incident_shield_timeline(
+    incident_id: uuid.UUID,
+    db: AsyncSession,
+) -> ShieldIncidentTimelineData:
+    await _get_alert_by_uuid(incident_id, db)
+    dispatch_ids = await _read_incident_dispatch_ids(incident_id)
+
+    timeline_actions: list[ShieldActionTimelineItem] = []
+    for dispatch_id_raw in dispatch_ids:
+        try:
+            dispatch_id = uuid.UUID(dispatch_id_raw)
+        except ValueError:
+            continue
+
+        payload = await _read_dispatch_from_redis(dispatch_id)
+        if not payload:
+            continue
+        if payload.get("incident_id") != str(incident_id):
+            continue
+
+        action_type = payload.get("action_type")
+        decision_status = payload.get("decision_status")
+        operator_status = payload.get("operator_status")
+        created_at = payload.get("created_at")
+        if not all([action_type, decision_status, operator_status, created_at]):
+            continue
+
+        timeline_actions.append(
+            ShieldActionTimelineItem(
+                dispatch_id=dispatch_id,
+                incident_id=incident_id,
+                action_type=action_type,
+                decision_status=decision_status,
+                operator_status=operator_status,
+                created_at=created_at,
+                updated_at=payload.get("updated_at"),
+            )
+        )
+
+    return ShieldIncidentTimelineData(
+        incident_id=incident_id,
+        total_actions=len(timeline_actions),
+        actions=timeline_actions,
+    )
 
 
 async def _write_dispatch_to_redis(dispatch_id: uuid.UUID, payload: dict) -> None:
@@ -173,6 +241,7 @@ async def dispatch_shield_action(
         "created_at": _utc_now_iso(),
     }
     await _write_dispatch_to_redis(dispatch_id, dispatch_payload)
+    await _append_dispatch_to_incident_index(uuid.UUID(str(request.incident_id)), dispatch_id)
 
     requested_by = (request.requested_by or "SOC_ANALYST").strip()
     dispatch_note = f"[SHIELD_DISPATCH] action={request.action_type} by {requested_by} dispatch={dispatch_id}"

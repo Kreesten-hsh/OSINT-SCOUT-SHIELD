@@ -118,7 +118,9 @@ Description:
   - message suspect
   - url optionnelle
   - numero optionnel
-  - canal (`MOBILE_APP` ou `WEB_PORTAL`)
+- canal detecte automatiquement (pas de selection manuelle):
+  - `WEB_PORTAL` si usage via interface web
+  - `MOBILE_APP` si usage via app mobile PWA (mode standalone)
 - Afficher resultat score + explication + bouton "Signaler".
 
 Definition of Done:
@@ -267,3 +269,10 @@ Le sprint est termine si:
 
 Note scope:
 - WhatsApp est explicitement hors Sprint 1A
+
+## 12. Clarifications Produit Integrees (Mise a jour)
+
+- Le formulaire citoyen `/verify` impose maintenant `numero suspect` obligatoire.
+- Le signalement citoyen accepte des captures d ecran (upload images) via `report-with-media`.
+- Le dashboard SOC dispose d un onglet dedie `Incidents signales` (liste + detail mini dashboard).
+- Les simulations operateur SHIELD sont retirees de `/alerts/{id}` et deplacees dans le detail des incidents signales.

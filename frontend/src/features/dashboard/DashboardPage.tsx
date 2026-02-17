@@ -119,10 +119,10 @@ export default function DashboardPage() {
         <div className="animate-in space-y-8 fade-in duration-500">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Dashboard SOC</h1>
                     <p className="mt-1 text-muted-foreground">
                         Bienvenue, <span className="font-semibold text-foreground">{user?.full_name || user?.email}</span>.
-                        Voici la situation forensique actuelle.
+                        Voici la situation forensique actuelle (espace analyste/admin).
                     </p>
                 </div>
                 <div className="flex animate-pulse items-center space-x-2 rounded-full border bg-card px-3 py-1.5 text-xs font-medium">
