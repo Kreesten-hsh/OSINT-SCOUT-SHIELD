@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+ï»¿import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -6,6 +6,7 @@ import {
     ArrowLeft,
     CheckCircle2,
     Clock3,
+    FileText,
     Loader2,
     RefreshCcw,
     Send,
@@ -55,6 +56,10 @@ interface IncidentDecisionData {
     alert_status: string;
     decision_status: 'PENDING' | 'VALIDATED' | 'REJECTED' | 'ESCALATED' | 'EXECUTED';
     comment?: string | null;
+}
+
+interface GeneratedReportData {
+    uuid: string;
 }
 
 const ACTION_LABELS: Record<PlaybookActionType, string> = {
@@ -219,7 +224,30 @@ export default function CitizenIncidentDetailPage() {
         },
     });
 
+    const reportMutation = useMutation<APIResponse<GeneratedReportData>, AxiosError<ApiErrorPayload>, void>({
+        mutationFn: async () => {
+            const response = await apiClient.post<APIResponse<GeneratedReportData>>(`/reports/generate/${id}`);
+            return response.data;
+        },
+        onSuccess: (payload) => {
+            if (!payload.success || !payload.data) {
+                toast({ title: 'Erreur generation rapport', description: payload.message, variant: 'destructive' });
+                return;
+            }
+            queryClient.invalidateQueries({ queryKey: ['reports-list'] });
+            toast({
+                title: 'Rapport genere',
+                description: 'Le rapport est maintenant visible dans la section Rapports.',
+            });
+        },
+        onError: (err) => {
+            const msg = err.response?.data?.message || err.response?.data?.detail || 'Erreur generation rapport';
+            toast({ title: 'Erreur', description: msg, variant: 'destructive' });
+        },
+    });
+
     const canDispatchShield = incident?.status === 'CONFIRMED' || incident?.status === 'BLOCKED_SIMULATED';
+    const canGenerateReport = incident?.status === 'CONFIRMED' || incident?.status === 'BLOCKED_SIMULATED';
 
     const riskProgress = useMemo(() => Math.min(100, Math.max(0, incident?.risk_score ?? 0)), [incident?.risk_score]);
 
@@ -252,7 +280,7 @@ export default function CitizenIncidentDetailPage() {
                             <p className="text-xs uppercase tracking-[0.22em] text-primary/90">Dossier signalement</p>
                             <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Incident #{incident.alert_uuid.slice(0, 8)}</h1>
                             <p className="mt-1 text-sm text-muted-foreground">
-                                {incident.phone_number} · {incident.channel === 'MOBILE_APP' ? 'Canal mobile' : 'Canal web'} ·
+                                {incident.phone_number} Â· {incident.channel === 'MOBILE_APP' ? 'Canal mobile' : 'Canal web'} Â·
                                 {` ${formatDate(incident.created_at)}`}
                             </p>
                         </div>
@@ -270,6 +298,37 @@ export default function CitizenIncidentDetailPage() {
                             className={`h-full rounded-full ${incident.risk_score >= 80 ? 'bg-red-500' : incident.risk_score >= 50 ? 'bg-amber-500' : 'bg-emerald-500'}`}
                             style={{ width: `${riskProgress}%` }}
                         />
+                    </div>
+                </div>
+            </section>
+
+            <section className="rounded-2xl border border-border bg-card p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Actions rapides</h2>
+                        <p className="text-xs text-muted-foreground">
+                            Genere le rapport forensique une fois l incident confirme.
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => reportMutation.mutate()}
+                            disabled={reportMutation.isPending || !canGenerateReport}
+                            className="inline-flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/15 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/25 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            {reportMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <FileText className="h-4 w-4" />
+                            )}
+                            Generer rapport
+                        </button>
+                        <Link
+                            to="/reports"
+                            className="inline-flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
+                        >
+                            Voir Rapports
+                        </Link>
                     </div>
                 </div>
             </section>

@@ -112,7 +112,11 @@ curl http://localhost:8000/health
 curl http://localhost:8000/metrics
 ```
 
-### 5.4 Appliquer les migrations DB
+### 5.4 Migrations DB
+
+Le service `api` applique automatiquement `alembic upgrade head` au demarrage.
+
+Commande de secours (si besoin uniquement) :
 
 ```bash
 docker compose exec api alembic upgrade head
@@ -160,16 +164,31 @@ Règle stricte : ne jamais committer `.env`.
 - `GET /health`
 - `GET /metrics`
 
-## 8) Démo Sprint 1 (flux E2E rapide)
+## 8) Démo Sprint 1 (flux E2E)
+
+### 8.1 Smoke API semi-auto (T7)
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/demo_sprint1_smoke.ps1
+```
+
+Le script valide:
+- `POST /api/v1/signals/verify` (analyse seule)
+- `POST /api/v1/incidents/report` sans URL (`queued_for_osint=false`)
+- `POST /api/v1/incidents/report` avec URL (`queued_for_osint=true`)
+- login + lecture incidents citoyens + generation rapport (si credentials disponibles)
+
+### 8.2 Parcours UI soutenance (manuel)
 
 1. Ouvrir `http://localhost:5173/verify`.
-2. Coller un message suspect et cliquer `Vérifier`.
-3. Vérifier le score + l’explication.
-4. Cliquer `Signaler cet incident`.
-5. Noter l’UUID incident affiché.
-6. Se connecter sur `http://localhost:5173/login`.
-7. Vérifier l’incident dans la liste alertes.
-8. Générer un rapport depuis le dashboard (si requis pour la soutenance).
+2. Saisir message suspect + numero suspect (obligatoire), ajouter URL/capture si besoin.
+3. Cliquer `Verifier`, puis `Signaler cet incident`.
+4. Noter l'UUID incident retourne.
+5. Se connecter sur `http://localhost:5173/login`.
+6. Ouvrir `http://localhost:5173/incidents-signales`.
+7. Ouvrir le detail incident et appliquer une decision SOC.
+8. Generer le rapport depuis `Incidents signales` ou le detail incident.
+9. Verifier le rapport dans `http://localhost:5173/reports`.
 
 ## 9) Qualité et standards de livraison
 

@@ -1,82 +1,107 @@
 # Demo Checklist - Sprint 1 (L3)
 
-Date: 2026-02-16  
-Objectif: verifier le flux E2E citoyen -> incident -> investigation -> rapport
+Version: v1.1  
+Date: 2026-02-17  
+Objectif: valider un flux E2E demonstrable, repetable et sans ambiguite entre `verify` (analyse) et `report` (creation incident).
 
 ## 1. Prerequis environnement
 
-- `docker compose up -d --build` lance sans erreur critique
-- API accessible: `http://localhost:8000/health`
-- Front accessible: `http://localhost:5173`
-- Login analyste valide sur `/login`
+- Stack lancee: `docker compose up -d --build`
+- API OK: `http://localhost:8000/health`
+- Front OK: `http://localhost:5173/verify`
+- Auth analyste validee sur `http://localhost:5173/login`
+- Base saine (recommande avant demo): `docker compose down -v` puis `docker compose up -d --build`
 
-## 2. Jeu de donnees de demo (minimal)
+Note operationnelle:
+- Le service `api` applique deja `alembic upgrade head` au demarrage.
+- En cas de drift local: `docker compose exec api alembic upgrade head`.
 
-- Message phishing fort:
-  - "URGENT: confirme ton code OTP pour debloquer ton compte MTN Money"
-- URL suspecte (optionnelle):
-  - `https://example.com/phishing`
-- Canal:
-  - `WEB_PORTAL` ou `MOBILE_APP`
+## 2. Pack T7 semi-auto (API smoke)
 
-## 3. Scenario E2E principal
+Script fourni:
+- `scripts/demo_sprint1_smoke.ps1`
+
+Execution:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/demo_sprint1_smoke.ps1
+```
+
+Resultats attendus:
+- `POST /signals/verify` retourne un score exploitable
+- `POST /incidents/report` sans URL retourne `queued_for_osint=false`
+- `POST /incidents/report` avec URL HTTP(S) retourne `queued_for_osint=true`
+- login analyste + lecture `GET /incidents/citizen` OK (si identifiants fournis)
+- generation `POST /reports/generate/{alert_uuid}` OK (si identifiants fournis)
+
+## 3. Scenario E2E UI principal (soutenance)
 
 1. Ouvrir `http://localhost:5173/verify`.
-2. Saisir message suspect + canal + URL.
-3. Cliquer `Verifier`.
-4. Confirmer affichage:
+2. Saisir message suspect + numero suspect (obligatoire) + URL optionnelle.
+3. Ajouter au moins une capture ecran (optionnel mais recommande pour la demo).
+4. Cliquer `Verifier` et controler:
    - `risk_score`
    - `risk_level`
    - `explanation`
 5. Cliquer `Signaler cet incident`.
-6. Confirmer affichage:
+6. Controler le retour:
    - `alert_uuid`
    - `status=NEW`
-   - statut OSINT (`envoye en file` ou `sans URL crawlable`)
-7. Se connecter en analyste.
-8. Ouvrir `/alerts` et verifier presence de l incident citoyen.
-9. Ouvrir detail `/alerts/{uuid}`.
-10. Verifier:
-    - source citoyenne lisible
-    - affichage cible robuste (pas de crash si `citizen://`)
-11. Passer en `IN_REVIEW`, ajouter note, confirmer `CONFIRMED`.
-12. Generer un rapport PDF depuis la page investigation.
-13. Ouvrir `/reports` et verifier le rapport genere.
+   - etat OSINT (`envoye en file` ou `sans URL crawlable`)
+7. Se connecter analyste sur `http://localhost:5173/login`.
+8. Ouvrir `http://localhost:5173/incidents-signales`.
+9. Verifier la presence du signalement citoyen et ouvrir le detail `/incidents-signales/{id}`.
+10. Controler le mini-dashboard incident:
+    - stats numero (`reports_for_phone`, etc.)
+    - captures associees
+    - incidents lies
+11. Appliquer une decision SOC (`CONFIRM`, `REJECT` ou `ESCALATE`).
+12. Generer un rapport depuis:
+    - soit la liste `incidents-signales`
+    - soit le detail incident
+13. Ouvrir `http://localhost:5173/reports` et verifier le rapport cree.
+14. Ouvrir le detail rapport et tester le telechargement PDF.
 
 ## 4. Cas de validation rapide
 
-- Verify sans URL:
-  - incident cree, `queued_for_osint=false`
-- Verify + report avec URL HTTP(S):
-  - incident cree, `queued_for_osint=true`
-- Payload invalide:
-  - API retourne `422` coherent
+- Verify seul:
+  - reponse 200
+  - aucun effet de bord visible sur incidents sans action report
+- Report sans URL:
+  - incident cree
+  - `queued_for_osint=false`
+- Report avec URL HTTP(S):
+  - incident cree
+  - `queued_for_osint=true`
+- Payload invalide (message trop court, numero absent):
+  - reponse `422` coherente
+- Endpoints citoyens publics:
+  - `signals/verify`, `incidents/report`, `incidents/report-with-media` accessibles sans JWT
 
-## 4bis. Cas robustesse pipeline (Sprint 1B)
+## 5. Cas robustesse pipeline (Sprint 1B)
 
-- Ingestion avec URL invalide (`notaurl`):
+- URL invalide (`notaurl`) en queue:
   - worker ne crash pas
-  - alert conservee
-  - `analysis_note` enrichie avec `OSINT FAILED: INVALID_URL`
-- Message JSON invalide pousse dans `osint_to_scan`:
-  - worker log `Invalid JSON payload dropped`
-  - traitement des taches suivantes reste operationnel
+  - incident conserve
+  - note explicite `OSINT FAILED: INVALID_URL`
+- JSON invalide dans `osint_to_scan`:
+  - log `Invalid JSON payload dropped`
+  - traitement des taches suivantes maintenu
 - Tache valide apres erreur:
-  - rapport `COMPLETED` consomme
+  - retour `COMPLETED` ou `FAILED` consomme
   - alerte mise a jour
-  - preuve disponible (si hash non duplique)
+  - preuve stockee si hash non duplique
 
-## 5. Critere "demo ready"
+## 6. Critere "demo ready"
 
 - Flux complet execute en moins de 5 minutes
-- Aucune erreur bloquante UI/API
-- Rapport PDF genere et telechargeable
+- Aucun blocage UI/API durant le parcours
 - Incident citoyen visible en liste + detail
+- Rapport genere et disponible dans `/reports`
+- Scenario rejouable 2 fois de suite sans correction manuelle
 
-## 6. Plan B (si scraping externe instable)
+## 7. Plan B (si scraping externe instable)
 
-- Rejouer le scenario avec message sans URL
-- Continuer la demo jusqu au rapport pour prouver:
-  - contrat API
-  - workflow analyste
-  - generation probatoire
+- Refaire la demo avec signalement sans URL
+- Continuer jusqu a la decision SOC + generation rapport
+- Expliquer que l objectif Sprint 1 est de prouver le contrat fonctionnel et la chaine probatoire, pas la qualite d une source web externe

@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+﻿import { useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import type { AxiosError } from 'axios';
 import {
     AlertTriangle,
-    ArrowRight,
     Clock3,
+    FileText,
     Globe,
     Image as ImageIcon,
     Loader2,
@@ -16,11 +17,17 @@ import {
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/components/ui/use-toast';
 import type { CitizenIncidentListData, CitizenIncidentListItem } from '@/types';
 
 const PAGE_SIZE = 10;
 
 type IncidentStatus = CitizenIncidentListItem['status'];
+type ApiErrorPayload = { message?: string; detail?: string };
+
+interface GeneratedReportData {
+    uuid: string;
+}
 
 const STATUS_LABEL: Record<IncidentStatus, string> = {
     NEW: 'Nouveau',
@@ -56,11 +63,15 @@ function riskBar(score: number): string {
 }
 
 export default function CitizenIncidentsPage() {
+    const queryClient = useQueryClient();
+    const { toast } = useToast();
+
     const [search, setSearch] = useState('');
     const [status, setStatus] = useState('');
     const [page, setPage] = useState(1);
+    const [generatingFor, setGeneratingFor] = useState<string | null>(null);
 
-    const { data, isLoading, isError } = useQuery({
+    const { data, isLoading, isError, refetch } = useQuery({
         queryKey: ['citizen-incidents', page, search, status],
         queryFn: async () => {
             const params = new URLSearchParams({
@@ -77,6 +88,40 @@ export default function CitizenIncidentsPage() {
                 throw new Error(response.data.message || 'Erreur chargement incidents citoyens');
             }
             return response.data.data;
+        },
+    });
+
+    const generateReportMutation = useMutation<
+        APIResponse<GeneratedReportData>,
+        AxiosError<ApiErrorPayload>,
+        { alertUuid: string }
+    >({
+        mutationFn: async ({ alertUuid }) => {
+            const response = await apiClient.post<APIResponse<GeneratedReportData>>(`/reports/generate/${alertUuid}`);
+            return response.data;
+        },
+        onSuccess: (payload) => {
+            if (!payload.success || !payload.data) {
+                toast({
+                    title: 'Erreur generation rapport',
+                    description: payload.message || 'Impossible de generer le rapport.',
+                    variant: 'destructive',
+                });
+                return;
+            }
+
+            queryClient.invalidateQueries({ queryKey: ['reports-list'] });
+            toast({
+                title: 'Rapport genere',
+                description: 'Le rapport est disponible dans la section Rapports.',
+            });
+        },
+        onError: (err) => {
+            const msg = err.response?.data?.message || err.response?.data?.detail || 'Impossible de generer le rapport.';
+            toast({ title: 'Erreur generation rapport', description: msg, variant: 'destructive' });
+        },
+        onSettled: () => {
+            setGeneratingFor(null);
         },
     });
 
@@ -112,8 +157,7 @@ export default function CitizenIncidentsPage() {
                             <p className="text-xs uppercase tracking-[0.24em] text-primary/90">BENIN CYBER SHIELD</p>
                             <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Incidents signales</h1>
                             <p className="max-w-2xl text-sm text-muted-foreground">
-                                Vue consolidee des signalements citoyens (web + mobile) avec priorisation rapide et acces au
-                                detail operateur simule.
+                                Liste operationnelle des signalements citoyens avec action rapide de generation de rapport.
                             </p>
                         </div>
                         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -174,6 +218,7 @@ export default function CitizenIncidentsPage() {
                                 setSearch('');
                                 setStatus('');
                                 setPage(1);
+                                refetch();
                             }}
                             className="rounded-xl border border-input px-3 py-2.5 text-sm text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
                         >
@@ -202,71 +247,99 @@ export default function CitizenIncidentsPage() {
                     </div>
                 )}
 
-                {data?.items.map((item) => (
-                    <Link
-                        key={item.alert_uuid}
-                        to={`/incidents-signales/${item.alert_uuid}`}
-                        className="group block overflow-hidden rounded-2xl border border-border bg-card/90 transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_10px_32px_-16px_rgba(13,147,242,0.5)]"
-                    >
-                        <div className="space-y-4 p-5">
-                            <div className="flex flex-wrap items-start justify-between gap-3">
-                                <div className="space-y-1">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <span className="font-mono text-sm text-foreground/90">{item.phone_number}</span>
-                                        <Badge variant="outline" className="gap-1">
-                                            {item.channel === 'MOBILE_APP' ? (
-                                                <Smartphone className="h-3.5 w-3.5" />
-                                            ) : (
-                                                <Globe className="h-3.5 w-3.5" />
-                                            )}
-                                            {CHANNEL_LABEL[item.channel]}
-                                        </Badge>
-                                        <Badge variant={statusBadgeVariant(item.status)}>{STATUS_LABEL[item.status]}</Badge>
+                {data?.items.map((item) => {
+                    const canGenerate = item.status === 'CONFIRMED' || item.status === 'BLOCKED_SIMULATED';
+
+                    return (
+                        <article
+                            key={item.alert_uuid}
+                            className="overflow-hidden rounded-2xl border border-border bg-card/90 p-5 transition duration-200 hover:border-primary/40 hover:shadow-[0_10px_32px_-16px_rgba(13,147,242,0.5)]"
+                        >
+                            <div className="space-y-4">
+                                <div className="flex flex-wrap items-start justify-between gap-3">
+                                    <div className="space-y-1">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <span className="font-mono text-sm text-foreground/90">{item.phone_number}</span>
+                                            <Badge variant="outline" className="gap-1">
+                                                {item.channel === 'MOBILE_APP' ? (
+                                                    <Smartphone className="h-3.5 w-3.5" />
+                                                ) : (
+                                                    <Globe className="h-3.5 w-3.5" />
+                                                )}
+                                                {CHANNEL_LABEL[item.channel]}
+                                            </Badge>
+                                            <Badge variant={statusBadgeVariant(item.status)}>{STATUS_LABEL[item.status]}</Badge>
+                                        </div>
+                                        <p className="max-w-3xl text-sm text-muted-foreground">
+                                            {item.message_preview || 'Message non fourni'}
+                                        </p>
                                     </div>
-                                    <p className="max-w-3xl text-sm text-muted-foreground">
-                                        {item.message_preview || 'Message non fourni'}
+
+                                    <div className="text-right">
+                                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Risque</p>
+                                        <p className={`text-xl font-semibold ${riskTone(item.risk_score)}`}>{item.risk_score}</p>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div className="h-1.5 overflow-hidden rounded-full bg-secondary/70">
+                                        <div
+                                            className={`h-full rounded-full ${riskBar(item.risk_score)}`}
+                                            style={{ width: `${Math.min(100, Math.max(0, item.risk_score))}%` }}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-2 text-xs text-muted-foreground sm:grid-cols-3">
+                                    <div className="flex items-center gap-2 rounded-lg border border-border/70 bg-secondary/20 px-3 py-2">
+                                        <TrendingUp className="h-3.5 w-3.5" />
+                                        Rapports numero: <span className="font-semibold text-foreground">{item.reports_for_phone}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 rounded-lg border border-border/70 bg-secondary/20 px-3 py-2">
+                                        <ImageIcon className="h-3.5 w-3.5" />
+                                        Captures: <span className="font-semibold text-foreground">{item.attachments_count}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 rounded-lg border border-border/70 bg-secondary/20 px-3 py-2">
+                                        <Clock3 className="h-3.5 w-3.5" />
+                                        Incident: <span className="font-mono text-foreground">#{item.alert_uuid.slice(0, 8)}</span>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-3">
+                                    <p className="text-xs text-muted-foreground">
+                                        {canGenerate
+                                            ? 'Incident confirme: generation de rapport disponible.'
+                                            : 'Confirme d abord l incident pour activer la generation de rapport.'}
                                     </p>
-                                </div>
-
-                                <div className="text-right">
-                                    <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Risque</p>
-                                    <p className={`text-xl font-semibold ${riskTone(item.risk_score)}`}>{item.risk_score}</p>
-                                </div>
-                            </div>
-
-                            <div>
-                                <div className="h-1.5 overflow-hidden rounded-full bg-secondary/70">
-                                    <div
-                                        className={`h-full rounded-full ${riskBar(item.risk_score)}`}
-                                        style={{ width: `${Math.min(100, Math.max(0, item.risk_score))}%` }}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-2 text-xs text-muted-foreground sm:grid-cols-4">
-                                <div className="flex items-center gap-2 rounded-lg border border-border/70 bg-secondary/20 px-3 py-2">
-                                    <TrendingUp className="h-3.5 w-3.5" />
-                                    Rapports numero: <span className="font-semibold text-foreground">{item.reports_for_phone}</span>
-                                </div>
-                                <div className="flex items-center gap-2 rounded-lg border border-border/70 bg-secondary/20 px-3 py-2">
-                                    <ImageIcon className="h-3.5 w-3.5" />
-                                    Captures: <span className="font-semibold text-foreground">{item.attachments_count}</span>
-                                </div>
-                                <div className="flex items-center gap-2 rounded-lg border border-border/70 bg-secondary/20 px-3 py-2">
-                                    <Clock3 className="h-3.5 w-3.5" />
-                                    Incident: <span className="font-mono text-foreground">#{item.alert_uuid.slice(0, 8)}</span>
-                                </div>
-                                <div className="flex items-center justify-between rounded-lg border border-border/70 bg-secondary/20 px-3 py-2">
-                                    <span className="inline-flex items-center gap-1">
-                                        <AlertTriangle className="h-3.5 w-3.5" />
-                                        Voir detail
-                                    </span>
-                                    <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
+                                    <div className="flex items-center gap-2">
+                                        <Link
+                                            to={`/incidents-signales/${item.alert_uuid}`}
+                                            className="inline-flex items-center gap-2 rounded-lg border border-input bg-background px-3 py-2 text-xs font-medium text-foreground transition hover:bg-secondary/40"
+                                        >
+                                            <AlertTriangle className="h-3.5 w-3.5" /> Voir detail
+                                        </Link>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setGeneratingFor(item.alert_uuid);
+                                                generateReportMutation.mutate({ alertUuid: item.alert_uuid });
+                                            }}
+                                            disabled={!canGenerate || generateReportMutation.isPending}
+                                            className="inline-flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/15 px-3 py-2 text-xs font-semibold text-primary transition hover:bg-primary/25 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            {generateReportMutation.isPending && generatingFor === item.alert_uuid ? (
+                                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                            ) : (
+                                                <FileText className="h-3.5 w-3.5" />
+                                            )}
+                                            Generer rapport
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </Link>
-                ))}
+                        </article>
+                    );
+                })}
             </section>
 
             <section className="flex flex-col items-center justify-between gap-3 rounded-xl border border-border bg-card/70 px-4 py-3 text-xs text-muted-foreground sm:flex-row">

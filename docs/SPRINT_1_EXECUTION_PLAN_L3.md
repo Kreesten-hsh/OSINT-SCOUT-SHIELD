@@ -201,6 +201,15 @@ Fichiers cibles:
 - `docs/DEMO_CHECKLIST_SPRINT1.md` (nouveau)
 - tests backend minimaux si possible
 
+Implementation Sprint 1C (realise):
+- Checklist demo reecrite et alignee avec les flux actuels:
+  - `/verify` (analyse + report)
+  - `/incidents-signales` (liste/detail incidents citoyens)
+  - generation de rapport depuis incidents citoyens puis verification `/reports`.
+- Ajout d un script semi-auto versionne:
+  - `scripts/demo_sprint1_smoke.ps1`
+  - valide les contrats `verify/report` et les checks JWT de base si credentials disponibles.
+
 ## T8 - Documentation Update
 Type: Documentation  
 Priorite: P1  
@@ -213,6 +222,12 @@ Description:
 Definition of Done:
 - README coherent avec implementation.
 - Commandes de lancement testees localement.
+
+Implementation Sprint 1C (realise):
+- README mis a jour sur:
+  - procedure de demarrage (migrations auto + commande de secours),
+  - section demo Sprint 1 (smoke script + parcours UI complet),
+  - coherence routes citoyennes et SOC (`/verify`, `/incidents-signales`, `/reports`).
 
 ## 6. Ordre D Implementation Recommande
 
