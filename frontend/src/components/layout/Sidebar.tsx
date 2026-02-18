@@ -1,60 +1,111 @@
-﻿import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, AlertTriangle, FileText, Settings, Shield, LogOut, PlusCircle, BrainCircuit, Globe } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
+import {
+    AlertTriangle,
+    FileText,
+    Gauge,
+    Globe,
+    LineChart,
+    LogOut,
+    NotebookTabs,
+    PlusCircle,
+    Settings,
+    ShieldCheck,
+    ShieldEllipsis,
+    X,
+} from 'lucide-react';
+
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
 
+interface SidebarProps {
+    mobileOpen: boolean;
+    onClose: () => void;
+}
+
 const navItems = [
-    { to: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
-    { to: '/alerts', label: 'Gestion des Alertes', icon: AlertTriangle },
-    { to: '/incidents-signales', label: 'Incidents signales', icon: Shield },
-    { to: '/analyse', label: "Centre d'Analyse", icon: BrainCircuit },
-    { to: '/evidence', label: 'Preuves & Archives', icon: Shield },
-    { to: '/reports', label: 'Rapports', icon: FileText },
-    { to: '/monitoring', label: 'Surveillance Auto', icon: Globe },
-    { to: '/ingestion', label: 'Nouveau Ciblage', icon: PlusCircle },
-    { to: '/settings', label: 'Paramètres', icon: Settings },
+    { to: '/dashboard', label: 'Pilotage SOC', icon: Gauge },
+    { to: '/incidents-signales', label: 'Incidents signales', icon: ShieldEllipsis },
+    { to: '/alerts', label: 'Alertes techniques', icon: AlertTriangle },
+    { to: '/reports', label: 'Rapports forensiques', icon: FileText },
+    { to: '/evidence', label: 'Preuves', icon: NotebookTabs },
+    { to: '/analyse', label: 'Analyse', icon: LineChart },
+    { to: '/monitoring', label: 'Surveillance', icon: Globe },
+    { to: '/ingestion', label: 'Ingestion', icon: PlusCircle },
+    { to: '/settings', label: 'Parametres', icon: Settings },
 ];
 
-export function Sidebar() {
+export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
     const logout = useAuthStore((state) => state.logout);
 
     return (
-        <aside className="w-64 bg-card border-r border-border h-screen flex flex-col fixed left-0 top-0 z-40 transition-transform">
-            <div className="h-16 flex items-center px-6 border-b border-border bg-card/50 backdrop-blur-xl">
-                <Shield className="w-6 h-6 text-primary mr-3" />
-                <span className="font-bold text-lg tracking-tight">SOC Console</span>
-            </div>
-
-            <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
-                {navItems.map((item) => (
-                    <NavLink
-                        key={item.to}
-                        to={item.to}
-                        className={({ isActive }) =>
-                            cn(
-                                "flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                                isActive
-                                    ? "bg-primary/10 text-primary border border-primary/20"
-                                    : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
-                            )
-                        }
-                    >
-                        <item.icon className="w-5 h-5 mr-3" />
-                        {item.label}
-                    </NavLink>
-                ))}
-            </nav>
-
-            <div className="p-4 border-t border-border">
+        <>
+            {mobileOpen && (
                 <button
-                    onClick={logout}
-                    className="flex items-center w-full px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                >
-                    <LogOut className="w-5 h-5 mr-3" />
-                    Déconnexion
-                </button>
-            </div>
-        </aside>
+                    type="button"
+                    aria-label="Fermer le menu"
+                    className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+                    onClick={onClose}
+                />
+            )}
+            <aside
+                className={cn(
+                    'fixed left-0 top-0 z-50 flex h-screen w-72 flex-col border-r border-border/80 bg-card/95 backdrop-blur-xl transition-transform duration-300',
+                    mobileOpen ? 'translate-x-0' : '-translate-x-full',
+                    'md:translate-x-0'
+                )}
+            >
+                <div className="flex h-16 items-center justify-between border-b border-border/70 px-5">
+                    <div className="flex items-center gap-3">
+                        <div className="rounded-xl border border-primary/30 bg-primary/15 p-2 text-primary">
+                            <ShieldCheck className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <p className="font-display text-sm font-semibold uppercase tracking-wide text-primary/90">
+                                BENIN CYBER SHIELD
+                            </p>
+                            <p className="text-xs text-muted-foreground">SOC Analyst Console</p>
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="inline-flex rounded-md p-1 text-muted-foreground hover:bg-secondary/50 hover:text-foreground md:hidden"
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
+                </div>
+
+                <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-5">
+                    {navItems.map((item) => (
+                        <NavLink
+                            key={item.to}
+                            to={item.to}
+                            onClick={onClose}
+                            className={({ isActive }) =>
+                                cn(
+                                    'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all',
+                                    isActive
+                                        ? 'border border-primary/30 bg-primary/15 text-primary'
+                                        : 'text-muted-foreground hover:bg-secondary/40 hover:text-foreground'
+                                )
+                            }
+                        >
+                            <item.icon className="h-4 w-4" />
+                            {item.label}
+                        </NavLink>
+                    ))}
+                </nav>
+
+                <div className="border-t border-border/70 p-3">
+                    <button
+                        onClick={logout}
+                        className="inline-flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/15 hover:text-destructive"
+                    >
+                        <LogOut className="h-4 w-4" />
+                        Deconnexion
+                    </button>
+                </div>
+            </aside>
+        </>
     );
 }
-

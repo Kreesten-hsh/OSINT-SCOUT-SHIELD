@@ -1,10 +1,11 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
+import { Globe, List, Loader2, Plus, Power, PowerOff, RefreshCw } from 'lucide-react';
+
 import { monitoringService, MonitoringSource } from '@/services/monitoringService';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Plus, Globe, RefreshCw, Power, PowerOff, List } from 'lucide-react';
 import AddSourceDialog from './AddSourceDialog';
-import { Link } from 'react-router-dom';
 
 export default function MonitoringPage() {
     const queryClient = useQueryClient();
@@ -12,14 +13,14 @@ export default function MonitoringPage() {
 
     const { data: sources, isLoading, isError } = useQuery({
         queryKey: ['sources'],
-        queryFn: monitoringService.getAll
+        queryFn: monitoringService.getAll,
     });
 
     const toggleMutation = useMutation({
         mutationFn: monitoringService.toggle,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['sources'] });
-        }
+        },
     });
 
     const handleToggle = (id: number) => {
@@ -27,117 +28,118 @@ export default function MonitoringPage() {
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Surveillance Automatique</h1>
-                    <p className="text-muted-foreground text-sm">Gérez les robots de collecte et les fréquences d'analyse.</p>
+        <div className="space-y-5">
+            <section className="panel p-5">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                        <h2 className="font-display text-2xl font-semibold tracking-tight">Surveillance automatique</h2>
+                        <p className="text-sm text-muted-foreground">Gestion des sources monitor�es et de la cadence de collecte.</p>
+                    </div>
+                    <button
+                        onClick={() => setIsAddOpen(true)}
+                        className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+                    >
+                        <Plus className="h-4 w-4" /> Ajouter une source
+                    </button>
                 </div>
-                <button
-                    onClick={() => setIsAddOpen(true)}
-                    className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 transition-colors gap-2"
-                >
-                    <Plus className="w-4 h-4" />
-                    Ajouter une source
-                </button>
-            </div>
+            </section>
 
-            <div className="border border-border rounded-xl bg-card overflow-hidden shadow-sm">
+            <section className="panel overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead className="bg-secondary/50 text-muted-foreground uppercase text-xs font-semibold">
+                    <table className="w-full min-w-[920px] text-left text-sm">
+                        <thead className="bg-secondary/35 text-xs uppercase tracking-wide text-muted-foreground">
                             <tr>
-                                <th className="px-6 py-4">Nom / URL</th>
-                                <th className="px-6 py-4">Fréquence</th>
-                                <th className="px-6 py-4">Dernier Scan</th>
-                                <th className="px-6 py-4">Dernier Statut</th>
-                                <th className="px-6 py-4">État</th>
-                                <th className="px-6 py-4 text-right">Actions</th>
+                                <th className="px-4 py-3">Source</th>
+                                <th className="px-4 py-3">Frequence</th>
+                                <th className="px-4 py-3">Dernier run</th>
+                                <th className="px-4 py-3">Statut run</th>
+                                <th className="px-4 py-3">Etat</th>
+                                <th className="px-4 py-3 text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-border">
+                        <tbody className="divide-y divide-border/70">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
-                                        <div className="flex items-center justify-center gap-2">
-                                            <Loader2 className="w-5 h-5 animate-spin" />
-                                            Chargement des sources...
-                                        </div>
+                                    <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
+                                        <Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin" />
+                                        Chargement des sources...
                                     </td>
                                 </tr>
                             ) : isError ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-destructive">
-                                        Impossible de charger les sources. Vérifiez la connexion API.
+                                    <td colSpan={6} className="px-4 py-12 text-center text-destructive">
+                                        Impossible de charger les sources.
                                     </td>
                                 </tr>
                             ) : sources?.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
-                                        Aucune source configurée. Ajoutez-en une pour démarrer la surveillance.
+                                    <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
+                                        Aucune source configuree.
                                     </td>
                                 </tr>
                             ) : (
                                 sources?.map((source: MonitoringSource) => (
-                                    <tr key={source.id} className={`hover:bg-secondary/30 transition-colors ${!source.is_active ? 'opacity-60 bg-secondary/10' : ''}`}>
-                                        <td className="px-6 py-4">
+                                    <tr key={source.id} className="bg-card/70 transition hover:bg-secondary/20">
+                                        <td className="px-4 py-3">
                                             <div className="flex items-center gap-3">
-                                                <div className="p-2 rounded-full bg-secondary text-primary">
-                                                    <Globe className="w-4 h-4" />
+                                                <div className="rounded-lg border border-border/70 bg-background/60 p-2 text-primary">
+                                                    <Globe className="h-4 w-4" />
                                                 </div>
-                                                <div className="flex flex-col">
-                                                    <span className="font-medium text-foreground">{source.name}</span>
-                                                    <span className="text-xs text-muted-foreground truncate max-w-[200px]" title={source.url}>{source.url}</span>
+                                                <div>
+                                                    <p className="font-medium">{source.name}</p>
+                                                    <p className="max-w-[280px] truncate text-xs text-muted-foreground" title={source.url}>
+                                                        {source.url}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-muted-foreground">
-                                            <div className="flex items-center gap-2">
-                                                <RefreshCw className="w-3 h-3" />
+                                        <td className="px-4 py-3 text-xs text-muted-foreground">
+                                            <span className="inline-flex items-center gap-1">
+                                                <RefreshCw className="h-3.5 w-3.5" />
                                                 {source.frequency_minutes >= 60
-                                                    ? `${source.frequency_minutes / 60}h`
-                                                    : `${source.frequency_minutes}min`}
-                                            </div>
+                                                    ? `Toutes les ${source.frequency_minutes / 60}h`
+                                                    : `Toutes les ${source.frequency_minutes} min`}
+                                            </span>
                                         </td>
-                                        <td className="px-6 py-4 text-muted-foreground whitespace-nowrap">
-                                            {source.last_run_at ? (
-                                                <div className="flex flex-col">
-                                                    <span>{new Date(source.last_run_at).toLocaleDateString()}</span>
-                                                    <span className="text-xs opacity-70">{new Date(source.last_run_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                                </div>
-                                            ) : (
-                                                <span className="text-xs italic">Jamais</span>
-                                            )}
+                                        <td className="px-4 py-3 text-xs text-muted-foreground">
+                                            {source.last_run_at ? new Date(source.last_run_at).toLocaleString() : 'Jamais'}
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <Badge variant={
-                                                source.last_status === 'ALERT' ? 'destructive' :
-                                                    source.last_status === 'CLEAN' ? 'success' :
-                                                        source.last_status === 'ERROR' ? 'destructive' : 'secondary'
-                                            }>
+                                        <td className="px-4 py-3">
+                                            <Badge
+                                                variant={
+                                                    source.last_status === 'ALERT'
+                                                        ? 'destructive'
+                                                        : source.last_status === 'CLEAN'
+                                                          ? 'success'
+                                                          : source.last_status === 'ERROR'
+                                                            ? 'destructive'
+                                                            : 'secondary'
+                                                }
+                                            >
                                                 {source.last_status || 'PENDING'}
                                             </Badge>
                                         </td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-4 py-3">
                                             <button
                                                 onClick={() => handleToggle(source.id)}
                                                 disabled={toggleMutation.isPending}
-                                                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${source.is_active
-                                                        ? 'bg-emerald-500/15 text-emerald-500 hover:bg-emerald-500/25'
+                                                className={`inline-flex min-h-[36px] items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition ${
+                                                    source.is_active
+                                                        ? 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25'
                                                         : 'bg-muted text-muted-foreground hover:bg-secondary'
-                                                    }`}
+                                                }`}
                                             >
-                                                {source.is_active ? <Power className="w-3 h-3" /> : <PowerOff className="w-3 h-3" />}
+                                                {source.is_active ? <Power className="h-3.5 w-3.5" /> : <PowerOff className="h-3.5 w-3.5" />}
                                                 {source.is_active ? 'Actif' : 'Inactif'}
                                             </button>
                                         </td>
-                                        <td className="px-6 py-4 text-right">
+                                        <td className="px-4 py-3 text-right">
                                             <Link
                                                 to={`/monitoring/${source.id}`}
-                                                className="inline-flex items-center justify-center p-2 rounded-md hover:bg-primary/20 hover:text-primary transition-colors text-muted-foreground"
+                                                className="inline-flex rounded-lg border border-input bg-background/50 p-2 text-muted-foreground transition hover:border-primary/40 hover:text-primary"
                                                 title="Voir historique"
                                             >
-                                                <List className="w-4 h-4" />
+                                                <List className="h-4 w-4" />
                                             </Link>
                                         </td>
                                     </tr>
@@ -146,7 +148,7 @@ export default function MonitoringPage() {
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </section>
 
             <AddSourceDialog
                 isOpen={isAddOpen}
@@ -158,4 +160,3 @@ export default function MonitoringPage() {
         </div>
     );
 }
-

@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -23,9 +23,17 @@ import type { APIResponse } from '@/api/types';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import type { CitizenIncidentAttachment, CitizenIncidentDetailData } from '@/types';
+import {
+    alertStatusLabel,
+    alertStatusVariant,
+    channelLabel,
+    playbookActionEntries,
+    playbookActionLabel,
+    type PlaybookActionType,
+} from '@/lib/presentation';
+import { parseAnalystNotes } from '@/lib/analyst-notes';
 
 type ApiErrorPayload = { message?: string; detail?: string };
-type PlaybookActionType = 'BLOCK_NUMBER' | 'SUSPEND_WALLET' | 'ENFORCE_MFA' | 'BLACKLIST_ADD' | 'USER_NOTIFY';
 
 interface ShieldDispatchData {
     dispatch_id: string;
@@ -63,14 +71,6 @@ interface GeneratedReportData {
     uuid: string;
 }
 
-const ACTION_LABELS: Record<PlaybookActionType, string> = {
-    BLOCK_NUMBER: 'Bloquer numero',
-    SUSPEND_WALLET: 'Suspendre wallet',
-    ENFORCE_MFA: 'Forcer MFA',
-    BLACKLIST_ADD: 'Ajouter blacklist',
-    USER_NOTIFY: 'Notifier utilisateur',
-};
-
 function formatDate(value: string): string {
     try {
         return format(new Date(value), 'dd MMM yyyy HH:mm');
@@ -79,26 +79,16 @@ function formatDate(value: string): string {
     }
 }
 
-function statusBadgeVariant(status: CitizenIncidentDetailData['status']): 'default' | 'warning' | 'destructive' | 'success' | 'outline' {
-    if (status === 'BLOCKED_SIMULATED') return 'success';
-    if (status === 'CONFIRMED') return 'destructive';
-    if (status === 'IN_REVIEW') return 'warning';
-    if (status === 'DISMISSED') return 'outline';
-    return 'default';
-}
-
-function statusLabel(status: CitizenIncidentDetailData['status']): string {
-    if (status === 'NEW') return 'Nouveau';
-    if (status === 'IN_REVIEW') return 'En revision';
-    if (status === 'CONFIRMED') return 'Confirme';
-    if (status === 'DISMISSED') return 'Classe sans suite';
-    return 'Bloque simule';
-}
-
 function riskTone(score: number): string {
     if (score >= 80) return 'text-red-400';
     if (score >= 50) return 'text-amber-300';
     return 'text-emerald-300';
+}
+
+function toneClass(tone: 'neutral' | 'success' | 'warning'): string {
+    if (tone === 'success') return 'border-emerald-500/20 bg-emerald-500/8';
+    if (tone === 'warning') return 'border-amber-500/20 bg-amber-500/8';
+    return 'border-border/70 bg-secondary/20';
 }
 
 function AttachmentPreview({ attachment }: { attachment: CitizenIncidentAttachment }) {
@@ -120,14 +110,8 @@ function AttachmentPreview({ attachment }: { attachment: CitizenIncidentAttachme
     return (
         <article className="overflow-hidden rounded-xl border border-border bg-card">
             <div className="aspect-video bg-secondary/20">
-                {isLoading && (
-                    <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
-                        Chargement image...
-                    </div>
-                )}
-                {isError && (
-                    <div className="flex h-full items-center justify-center text-xs text-destructive">Preview indisponible</div>
-                )}
+                {isLoading && <div className="flex h-full items-center justify-center text-xs text-muted-foreground">Chargement...</div>}
+                {isError && <div className="flex h-full items-center justify-center text-xs text-destructive">Preview indisponible</div>}
                 {data && <img src={data} alt={attachment.file_path} className="h-full w-full object-cover" />}
             </div>
             <div className="space-y-1 p-3 text-[11px] text-muted-foreground">
@@ -204,9 +188,7 @@ export default function CitizenIncidentDetailPage() {
         void
     >({
         mutationFn: async () => {
-            if (!id) {
-                throw new Error('Incident id manquant');
-            }
+            if (!id) throw new Error('Incident id manquant');
 
             const comment = decisionComment.trim() || null;
             const decisionResponse = await apiClient.patch<APIResponse<IncidentDecisionData>>(`/incidents/${id}/decision`, {
@@ -229,10 +211,7 @@ export default function CitizenIncidentDetailPage() {
                 throw new Error(dispatchResponse.data.message || 'Echec action SHIELD');
             }
 
-            return {
-                decision: decisionResponse.data,
-                dispatch: dispatchResponse.data,
-            };
+            return { decision: decisionResponse.data, dispatch: dispatchResponse.data };
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['citizen-incident', id] });
@@ -240,8 +219,8 @@ export default function CitizenIncidentDetailPage() {
             queryClient.invalidateQueries({ queryKey: ['shield-actions', id] });
             queryClient.invalidateQueries({ queryKey: ['reports-list'] });
             toast({
-                title: 'Workflow automatique execute',
-                description: 'Incident confirme et blocage simule declenche avec succes.',
+                title: 'Workflow execute',
+                description: 'Incident confirme et blocage simule declenche.',
             });
         },
         onError: (err) => {
@@ -305,6 +284,7 @@ export default function CitizenIncidentDetailPage() {
     const canQuickConfirmAndBlock = incident?.status !== 'BLOCKED_SIMULATED';
 
     const riskProgress = useMemo(() => Math.min(100, Math.max(0, incident?.risk_score ?? 0)), [incident?.risk_score]);
+    const noteEntries = useMemo(() => parseAnalystNotes(incident?.analysis_note), [incident?.analysis_note]);
 
     if (isLoading) {
         return (
@@ -319,9 +299,9 @@ export default function CitizenIncidentDetailPage() {
     }
 
     return (
-        <div className="space-y-6">
-            <section className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-card via-card to-primary/10 p-6">
-                <div className="pointer-events-none absolute -right-24 -top-16 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
+        <div className="space-y-5">
+            <section className="panel soft-grid relative overflow-hidden p-6">
+                <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-primary/20 blur-3xl" />
                 <div className="relative z-10 space-y-4">
                     <button
                         onClick={() => navigate('/incidents-signales')}
@@ -333,14 +313,13 @@ export default function CitizenIncidentDetailPage() {
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                         <div>
                             <p className="text-xs uppercase tracking-[0.22em] text-primary/90">Dossier signalement</p>
-                            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Incident #{incident.alert_uuid.slice(0, 8)}</h1>
+                            <h1 className="font-display text-2xl font-bold tracking-tight md:text-3xl">Incident #{incident.alert_uuid.slice(0, 8)}</h1>
                             <p className="mt-1 text-sm text-muted-foreground">
-                                {incident.phone_number} · {incident.channel === 'MOBILE_APP' ? 'Canal mobile' : 'Canal web'} ·
-                                {` ${formatDate(incident.created_at)}`}
+                                {incident.phone_number} - {channelLabel(incident.channel)} - {formatDate(incident.created_at)}
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Badge variant={statusBadgeVariant(incident.status)}>{statusLabel(incident.status)}</Badge>
+                            <Badge variant={alertStatusVariant(incident.status)}>{alertStatusLabel(incident.status)}</Badge>
                             <div className="rounded-xl border border-border bg-background/50 px-4 py-2 text-right backdrop-blur">
                                 <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Risk score</p>
                                 <p className={`text-xl font-semibold ${riskTone(incident.risk_score)}`}>{incident.risk_score}</p>
@@ -357,30 +336,34 @@ export default function CitizenIncidentDetailPage() {
                 </div>
             </section>
 
-            <section className="rounded-2xl border border-border bg-card p-4">
+            <section className="panel p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Actions rapides</h2>
-                        <p className="text-xs text-muted-foreground">
-                            Genere le rapport forensique une fois l incident confirme.
-                        </p>
+                        <p className="text-xs text-muted-foreground">Generation probatoire activee apres confirmation du dossier.</p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <button
+                            onClick={() => confirmAndBlockMutation.mutate()}
+                            disabled={confirmAndBlockMutation.isPending || !canQuickConfirmAndBlock}
+                            className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-500/25 disabled:opacity-50"
+                        >
+                            {confirmAndBlockMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                            Confirmer + Bloquer (auto)
+                        </button>
+
                         <button
                             onClick={() => reportMutation.mutate()}
                             disabled={reportMutation.isPending || !canGenerateReport}
-                            className="inline-flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/15 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/25 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-primary/30 bg-primary/15 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/25 disabled:opacity-50"
                         >
-                            {reportMutation.isPending ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                                <FileText className="h-4 w-4" />
-                            )}
+                            {reportMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
                             Generer rapport
                         </button>
+
                         <Link
                             to="/reports"
-                            className="inline-flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
+                            className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-input px-3 py-2 text-sm text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
                         >
                             Voir Rapports
                         </Link>
@@ -388,223 +371,209 @@ export default function CitizenIncidentDetailPage() {
                 </div>
             </section>
 
-            <section className="grid grid-cols-1 gap-4 md:grid-cols-4">
-                <article className="rounded-xl border border-border bg-card p-4">
-                    <p className="text-xs text-muted-foreground">Rapports sur ce numero</p>
-                    <p className="text-2xl font-semibold">{incident.stats.reports_for_phone}</p>
+            <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                <article className="panel p-4 lg:col-span-2">
+                    <h2 className="mb-4 font-display text-lg font-semibold">Dossier incident</h2>
+                    <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                        <div className="rounded-lg border border-border/70 bg-secondary/20 p-3">
+                            <dt className="text-xs text-muted-foreground">Numero suspect</dt>
+                            <dd className="font-mono text-xs sm:text-sm">{incident.phone_number}</dd>
+                        </div>
+                        <div className="rounded-lg border border-border/70 bg-secondary/20 p-3">
+                            <dt className="text-xs text-muted-foreground">Canal</dt>
+                            <dd className="font-medium">{channelLabel(incident.channel)}</dd>
+                        </div>
+                        <div className="rounded-lg border border-border/70 bg-secondary/20 p-3 sm:col-span-2">
+                            <dt className="text-xs text-muted-foreground">URL signalee</dt>
+                            <dd className="break-all text-xs sm:text-sm">{incident.url || '-'}</dd>
+                        </div>
+                        <div className="rounded-lg border border-border/70 bg-secondary/20 p-3 sm:col-span-2">
+                            <dt className="text-xs text-muted-foreground">Message transmis</dt>
+                            <dd className="whitespace-pre-wrap text-sm">{incident.message || '-'}</dd>
+                        </div>
+                    </dl>
                 </article>
-                <article className="rounded-xl border border-border bg-card p-4">
-                    <p className="text-xs text-muted-foreground">Dossiers ouverts</p>
-                    <p className="text-2xl font-semibold text-amber-300">{incident.stats.open_reports_for_phone}</p>
-                </article>
-                <article className="rounded-xl border border-border bg-card p-4">
-                    <p className="text-xs text-muted-foreground">Incidents confirmes</p>
-                    <p className="text-2xl font-semibold text-red-300">{incident.stats.confirmed_reports_for_phone}</p>
-                </article>
-                <article className="rounded-xl border border-border bg-card p-4">
-                    <p className="text-xs text-muted-foreground">Blocages simules</p>
-                    <p className="text-2xl font-semibold text-emerald-300">{incident.stats.blocked_reports_for_phone}</p>
+
+                <article className="panel p-4">
+                    <h2 className="mb-3 font-display text-base font-semibold">Statistiques numero</h2>
+                    <div className="space-y-2 text-sm">
+                        <div className="metric flex items-center justify-between"><span>Signalements</span><span className="font-semibold">{incident.stats.reports_for_phone}</span></div>
+                        <div className="metric flex items-center justify-between"><span>Ouverts</span><span className="font-semibold">{incident.stats.open_reports_for_phone}</span></div>
+                        <div className="metric flex items-center justify-between"><span>Confirmes</span><span className="font-semibold">{incident.stats.confirmed_reports_for_phone}</span></div>
+                        <div className="metric flex items-center justify-between"><span>Bloques (simules)</span><span className="font-semibold">{incident.stats.blocked_reports_for_phone}</span></div>
+                    </div>
                 </article>
             </section>
 
-            <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-                <div className="space-y-6 xl:col-span-2">
-                    <article className="rounded-2xl border border-border bg-card p-5">
-                        <h2 className="mb-4 text-base font-semibold">Dossier incident</h2>
-                        <dl className="grid gap-3 text-sm sm:grid-cols-2">
-                            <div className="rounded-lg border border-border/70 bg-secondary/20 p-3">
-                                <dt className="text-xs text-muted-foreground">Canal</dt>
-                                <dd className="font-medium">{incident.channel === 'MOBILE_APP' ? 'Application mobile' : 'Interface web'}</dd>
-                            </div>
-                            <div className="rounded-lg border border-border/70 bg-secondary/20 p-3">
-                                <dt className="text-xs text-muted-foreground">Date</dt>
-                                <dd className="font-medium">{formatDate(incident.created_at)}</dd>
-                            </div>
-                            <div className="rounded-lg border border-border/70 bg-secondary/20 p-3 sm:col-span-2">
-                                <dt className="text-xs text-muted-foreground">Numero suspect</dt>
-                                <dd className="font-mono text-xs sm:text-sm">{incident.phone_number}</dd>
-                            </div>
-                            <div className="rounded-lg border border-border/70 bg-secondary/20 p-3 sm:col-span-2">
-                                <dt className="text-xs text-muted-foreground">URL signalee</dt>
-                                <dd className="break-all text-xs sm:text-sm">{incident.url || '-'}</dd>
-                            </div>
-                            <div className="rounded-lg border border-border/70 bg-secondary/20 p-3 sm:col-span-2">
-                                <dt className="text-xs text-muted-foreground">Message transmis</dt>
-                                <dd className="whitespace-pre-wrap text-sm">{incident.message || '-'}</dd>
-                            </div>
-                            <div className="rounded-lg border border-border/70 bg-secondary/20 p-3 sm:col-span-2">
-                                <dt className="text-xs text-muted-foreground">Note analyste</dt>
-                                <dd className="text-sm">{incident.analysis_note || 'Aucune note pour le moment.'}</dd>
-                            </div>
-                        </dl>
-                    </article>
-
-                    <article className="rounded-2xl border border-border bg-card p-5">
-                        <div className="mb-4 flex items-center justify-between">
-                            <h2 className="text-base font-semibold">Captures citoyen</h2>
-                            <span className="text-xs text-muted-foreground">{incident.attachments.length} fichier(s)</span>
-                        </div>
-                        {incident.attachments.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">Aucune capture associee a ce signalement.</p>
-                        ) : (
-                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                {incident.attachments.map((attachment) => (
-                                    <AttachmentPreview key={attachment.evidence_id} attachment={attachment} />
-                                ))}
-                            </div>
-                        )}
-                    </article>
-
-                    <article className="rounded-2xl border border-border bg-card p-5">
-                        <h2 className="mb-4 text-base font-semibold">Incidents lies (meme numero)</h2>
-                        {incident.related_incidents.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">Aucun autre incident lie.</p>
-                        ) : (
-                            <div className="space-y-2">
-                                {incident.related_incidents.map((related) => (
-                                    <Link
-                                        key={related.alert_uuid}
-                                        to={`/incidents-signales/${related.alert_uuid}`}
-                                        className="flex items-center justify-between rounded-lg border border-border bg-secondary/15 px-3 py-2 text-xs transition hover:border-primary/40 hover:bg-secondary/30"
-                                    >
-                                        <span className="font-mono">#{related.alert_uuid.slice(0, 8)}</span>
-                                        <span className="text-muted-foreground">{formatDate(related.created_at)}</span>
-                                        <Badge variant={statusBadgeVariant(related.status)}>{statusLabel(related.status)}</Badge>
-                                        <span className="font-medium">Score {related.risk_score}</span>
-                                    </Link>
-                                ))}
-                            </div>
-                        )}
-                    </article>
-                </div>
-
-                <aside className="space-y-6 xl:sticky xl:top-20 xl:h-fit">
-                    <article className="rounded-2xl border border-border bg-card p-5">
-                        <h2 className="mb-2 flex items-center gap-2 text-base font-semibold">
-                            <ShieldAlert className="h-4 w-4 text-primary" /> Centre actions operateur (simule)
-                        </h2>
-                        <p className="mb-4 text-xs text-muted-foreground">
-                            Flux soutenance: decision SOC puis orchestration SHIELD vers API operateur simulee.
-                        </p>
-
-                        <button
-                            onClick={() => confirmAndBlockMutation.mutate()}
-                            disabled={confirmAndBlockMutation.isPending || !canQuickConfirmAndBlock}
-                            className="mb-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-3 py-2.5 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-500/25 disabled:opacity-50"
-                        >
-                            {confirmAndBlockMutation.isPending ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                                <Zap className="h-4 w-4" />
-                            )}
-                            Confirmer + Bloquer (auto)
-                        </button>
-                        {!canQuickConfirmAndBlock && (
-                            <p className="mb-3 text-xs text-muted-foreground">
-                                Incident deja bloque en simulation. Utiliser les actions standard pour les autres operations.
-                            </p>
-                        )}
-
-                        <label className="mb-2 block text-xs text-muted-foreground">Commentaire analyste</label>
-                        <textarea
-                            value={decisionComment}
-                            onChange={(e) => setDecisionComment(e.target.value)}
-                            placeholder="Justification, contexte, priorite..."
-                            className="mb-3 min-h-24 w-full rounded-xl border border-input bg-secondary/20 p-3 text-sm outline-none transition focus:ring-2 focus:ring-ring"
-                        />
-
-                        <div className="mb-3 grid grid-cols-3 gap-2">
-                            <button
-                                onClick={() => decisionMutation.mutate({ decision: 'CONFIRM' })}
-                                className="inline-flex items-center justify-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2 py-2 text-xs text-emerald-300 transition hover:bg-emerald-500/20"
-                            >
-                                <CheckCircle2 className="h-3.5 w-3.5" /> Confirmer
-                            </button>
-                            <button
-                                onClick={() => decisionMutation.mutate({ decision: 'ESCALATE' })}
-                                className="inline-flex items-center justify-center gap-1 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-2 text-xs text-amber-300 transition hover:bg-amber-500/20"
-                            >
-                                <Siren className="h-3.5 w-3.5" /> Escalader
-                            </button>
-                            <button
-                                onClick={() => decisionMutation.mutate({ decision: 'REJECT' })}
-                                className="inline-flex items-center justify-center gap-1 rounded-lg border border-destructive/30 bg-destructive/10 px-2 py-2 text-xs text-destructive transition hover:bg-destructive/20"
-                            >
-                                <ShieldX className="h-3.5 w-3.5" /> Rejeter
-                            </button>
-                        </div>
-
-                        <label className="mb-2 block text-xs text-muted-foreground">Action playbook</label>
-                        <select
-                            value={playbookAction}
-                            onChange={(e) => setPlaybookAction(e.target.value as PlaybookActionType)}
-                            className="mb-3 w-full rounded-xl border border-input bg-secondary/20 p-2.5 text-sm outline-none transition focus:ring-2 focus:ring-ring"
-                        >
-                            {(Object.keys(ACTION_LABELS) as PlaybookActionType[]).map((action) => (
-                                <option key={action} value={action}>
-                                    {ACTION_LABELS[action]} ({action})
-                                </option>
+            <section className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+                <article className="panel p-4 xl:col-span-2">
+                    <div className="mb-3 flex items-center justify-between">
+                        <h2 className="font-display text-base font-semibold">Captures citoyen</h2>
+                        <span className="text-xs text-muted-foreground">{incident.attachments.length} fichier(s)</span>
+                    </div>
+                    {incident.attachments.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">Aucune capture associee a ce signalement.</p>
+                    ) : (
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            {incident.attachments.map((attachment) => (
+                                <AttachmentPreview key={attachment.evidence_id} attachment={attachment} />
                             ))}
-                        </select>
-
-                        <button
-                            onClick={() => dispatchMutation.mutate()}
-                            disabled={dispatchMutation.isPending || !canDispatchShield}
-                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
-                        >
-                            {dispatchMutation.isPending ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                                <Send className="h-4 w-4" />
-                            )}
-                            Declencher action simulee
-                        </button>
-
-                        {!canDispatchShield && (
-                            <p className="mt-2 text-xs text-muted-foreground">
-                                Action SHIELD active uniquement quand le dossier est confirme ou deja bloque simule.
-                            </p>
-                        )}
-                    </article>
-
-                    <article className="rounded-2xl border border-border bg-card p-5">
-                        <div className="mb-3 flex items-center justify-between">
-                            <h2 className="text-base font-semibold">Timeline SHIELD</h2>
-                            <button
-                                onClick={() => refetchTimeline()}
-                                className="inline-flex items-center gap-1 rounded-lg border border-input px-2 py-1 text-xs text-muted-foreground transition hover:bg-secondary/30 hover:text-foreground"
-                            >
-                                <RefreshCcw className="h-3.5 w-3.5" /> Refresh
-                            </button>
                         </div>
+                    )}
+                </article>
 
-                        {timelineLoading ? (
-                            <div className="text-xs text-muted-foreground">Chargement timeline...</div>
-                        ) : shieldTimeline && shieldTimeline.actions.length > 0 ? (
-                            <ol className="space-y-3">
-                                {shieldTimeline.actions.map((entry) => (
-                                    <li key={entry.dispatch_id} className="rounded-lg border border-border bg-secondary/15 p-3 text-xs">
-                                        <div className="mb-1 flex items-center justify-between">
-                                            <span className="font-mono">#{entry.dispatch_id.slice(0, 8)}</span>
-                                            <Badge variant="outline">{ACTION_LABELS[entry.action_type]}</Badge>
-                                        </div>
-                                        <div className="grid gap-1 text-muted-foreground">
-                                            <span className="inline-flex items-center gap-1">
-                                                <ShieldCheck className="h-3.5 w-3.5" /> Operateur: {entry.operator_status}
-                                            </span>
-                                            <span className="inline-flex items-center gap-1">
-                                                <Clock3 className="h-3.5 w-3.5" /> Decision: {entry.decision_status}
-                                            </span>
-                                            <span>MAJ: {formatDate(entry.updated_at || entry.created_at)}</span>
-                                        </div>
-                                    </li>
-                                ))}
-                            </ol>
-                        ) : (
-                            <div className="text-xs text-muted-foreground">Aucune action SHIELD sur cet incident.</div>
-                        )}
-                    </article>
-                </aside>
+                <article className="panel p-4">
+                    <h2 className="mb-2 flex items-center gap-2 text-base font-semibold">
+                        <ShieldAlert className="h-4 w-4 text-primary" /> Actions SOC / Operateur
+                    </h2>
+
+                    <label className="mb-2 mt-3 block text-xs text-muted-foreground">Commentaire analyste</label>
+                    <textarea
+                        value={decisionComment}
+                        onChange={(e) => setDecisionComment(e.target.value)}
+                        placeholder="Justification, contexte, priorite"
+                        className="mb-3 min-h-24 w-full rounded-xl border border-input bg-secondary/20 p-3 text-sm outline-none transition focus:ring-2 focus:ring-ring"
+                    />
+
+                    <div className="mb-3 grid grid-cols-3 gap-2">
+                        <button
+                            onClick={() => decisionMutation.mutate({ decision: 'CONFIRM' })}
+                            className="inline-flex min-h-[40px] items-center justify-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2 py-2 text-xs text-emerald-300 transition hover:bg-emerald-500/20"
+                        >
+                            <CheckCircle2 className="h-3.5 w-3.5" /> Confirmer
+                        </button>
+                        <button
+                            onClick={() => decisionMutation.mutate({ decision: 'ESCALATE' })}
+                            className="inline-flex min-h-[40px] items-center justify-center gap-1 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-2 text-xs text-amber-300 transition hover:bg-amber-500/20"
+                        >
+                            <Siren className="h-3.5 w-3.5" /> Escalader
+                        </button>
+                        <button
+                            onClick={() => decisionMutation.mutate({ decision: 'REJECT' })}
+                            className="inline-flex min-h-[40px] items-center justify-center gap-1 rounded-lg border border-destructive/30 bg-destructive/10 px-2 py-2 text-xs text-destructive transition hover:bg-destructive/20"
+                        >
+                            <ShieldX className="h-3.5 w-3.5" /> Rejeter
+                        </button>
+                    </div>
+
+                    <label className="mb-2 block text-xs text-muted-foreground">Action playbook</label>
+                    <select
+                        value={playbookAction}
+                        onChange={(e) => setPlaybookAction(e.target.value as PlaybookActionType)}
+                        className="mb-3 h-10 w-full rounded-xl border border-input bg-secondary/20 px-3 text-sm outline-none transition focus:ring-2 focus:ring-ring"
+                    >
+                        {playbookActionEntries().map((action) => (
+                            <option key={action.value} value={action.value}>
+                                {action.label}
+                            </option>
+                        ))}
+                    </select>
+
+                    <button
+                        onClick={() => dispatchMutation.mutate()}
+                        disabled={dispatchMutation.isPending || !canDispatchShield}
+                        className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
+                    >
+                        {dispatchMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                        Declencher action
+                    </button>
+
+                    {!canDispatchShield && (
+                        <p className="mt-2 text-xs text-muted-foreground">
+                            Action playbook active uniquement si dossier confirme ou deja bloque en simulation.
+                        </p>
+                    )}
+                </article>
+            </section>
+
+            <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                <article className="panel p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                        <h2 className="text-base font-semibold">Journal analyste</h2>
+                    </div>
+                    {noteEntries.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">Aucune note structuree pour le moment.</p>
+                    ) : (
+                        <ol className="space-y-2">
+                            {noteEntries.map((entry) => (
+                                <li key={entry.id} className={`rounded-xl border p-3 ${toneClass(entry.tone)}`}>
+                                    <p className="text-xs uppercase tracking-wide text-muted-foreground">{entry.title}</p>
+                                    <p className="mt-1 text-sm font-medium">{entry.content}</p>
+                                    {entry.details.length > 0 && (
+                                        <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                                            {entry.details.map((detail, index) => (
+                                                <li key={`${entry.id}-${index}`} className="flex items-start gap-2">
+                                                    <span className="mt-1 h-1.5 w-1.5 rounded-full bg-primary/80" />
+                                                    <span>{detail}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </li>
+                            ))}
+                        </ol>
+                    )}
+                </article>
+
+                <article className="panel p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                        <h2 className="text-base font-semibold">Timeline SHIELD</h2>
+                        <button
+                            onClick={() => refetchTimeline()}
+                            className="inline-flex items-center gap-1 rounded-lg border border-input px-2 py-1 text-xs text-muted-foreground transition hover:bg-secondary/30 hover:text-foreground"
+                        >
+                            <RefreshCcw className="h-3.5 w-3.5" /> Refresh
+                        </button>
+                    </div>
+
+                    {timelineLoading ? (
+                        <div className="text-xs text-muted-foreground">Chargement timeline...</div>
+                    ) : shieldTimeline && shieldTimeline.actions.length > 0 ? (
+                        <ol className="space-y-2">
+                            {shieldTimeline.actions.map((entry) => (
+                                <li key={entry.dispatch_id} className="rounded-lg border border-border bg-secondary/15 p-3 text-xs">
+                                    <div className="mb-1 flex items-center justify-between gap-2">
+                                        <span className="font-mono">#{entry.dispatch_id.slice(0, 8)}</span>
+                                        <Badge variant="outline">{playbookActionLabel(entry.action_type)}</Badge>
+                                    </div>
+                                    <div className="grid gap-1 text-muted-foreground">
+                                        <span className="inline-flex items-center gap-1">
+                                            <ShieldCheck className="h-3.5 w-3.5" /> Operateur: {entry.operator_status}
+                                        </span>
+                                        <span className="inline-flex items-center gap-1">
+                                            <Clock3 className="h-3.5 w-3.5" /> Decision: {entry.decision_status}
+                                        </span>
+                                        <span>MAJ: {formatDate(entry.updated_at || entry.created_at)}</span>
+                                    </div>
+                                </li>
+                            ))}
+                        </ol>
+                    ) : (
+                        <div className="text-xs text-muted-foreground">Aucune action SHIELD sur cet incident.</div>
+                    )}
+                </article>
+            </section>
+
+            <section className="panel p-4">
+                <h2 className="mb-3 text-base font-semibold">Incidents lies (meme numero)</h2>
+                {incident.related_incidents.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">Aucun autre incident lie.</p>
+                ) : (
+                    <div className="space-y-2">
+                        {incident.related_incidents.map((related) => (
+                            <Link
+                                key={related.alert_uuid}
+                                to={`/incidents-signales/${related.alert_uuid}`}
+                                className="flex items-center justify-between rounded-lg border border-border bg-secondary/15 px-3 py-2 text-xs transition hover:border-primary/40 hover:bg-secondary/30"
+                            >
+                                <span className="font-mono">#{related.alert_uuid.slice(0, 8)}</span>
+                                <span className="text-muted-foreground">{formatDate(related.created_at)}</span>
+                                <Badge variant={alertStatusVariant(related.status)}>{alertStatusLabel(related.status)}</Badge>
+                                <span className="font-medium">Score {related.risk_score}</span>
+                            </Link>
+                        ))}
+                    </div>
+                )}
             </section>
         </div>
     );

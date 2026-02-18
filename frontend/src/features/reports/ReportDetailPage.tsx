@@ -1,23 +1,15 @@
-﻿import { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
-import {
-    CheckCircle2,
-    Download,
-    ExternalLink,
-    FileText,
-    Fingerprint,
-    Loader2,
-    Shield,
-    TriangleAlert,
-} from 'lucide-react';
+import { CheckCircle2, Download, ExternalLink, FileText, Fingerprint, Loader2, Shield, TriangleAlert } from 'lucide-react';
 
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
 import type { Alert } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
+import { alertStatusLabel, alertStatusVariant } from '@/lib/presentation';
 
 interface ReportListItem {
     id: number;
@@ -52,7 +44,7 @@ function riskBadge(score: number): 'destructive' | 'warning' | 'outline' {
 }
 
 export default function ReportDetailPage() {
-    const { id } = useParams<{ id: string }>(); // alert uuid
+    const { id } = useParams<{ id: string }>();
     const { toast } = useToast();
     const queryClient = useQueryClient();
 
@@ -127,7 +119,7 @@ export default function ReportDetailPage() {
 
     if (isAlertError || !alert) {
         return (
-            <div className="rounded-2xl border border-destructive/25 bg-destructive/10 p-8 text-center text-destructive">
+            <div className="panel border-destructive/25 bg-destructive/10 p-8 text-center text-destructive">
                 Impossible de charger cet incident pour le rapport.
             </div>
         );
@@ -136,46 +128,39 @@ export default function ReportDetailPage() {
     const canGenerate = alert.status === 'CONFIRMED' || alert.status === 'BLOCKED_SIMULATED';
 
     return (
-        <div className="mx-auto max-w-5xl space-y-6">
-            <section className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-card via-card to-primary/10 p-6">
-                <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-primary/20 blur-3xl" />
-                <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="mx-auto max-w-5xl space-y-5">
+            <section className="panel p-6">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div>
                         <p className="text-xs uppercase tracking-[0.22em] text-primary/90">Forensic dossier</p>
-                        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Rapport incident #{alert.uuid.slice(0, 8)}</h1>
-                        <p className="mt-1 text-sm text-muted-foreground">{alert.url}</p>
+                        <h1 className="font-display text-2xl font-bold tracking-tight md:text-3xl">Rapport incident #{alert.uuid.slice(0, 8)}</h1>
+                        <p className="mt-1 text-sm text-muted-foreground break-all">{alert.url}</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                         <Badge variant={riskBadge(alert.risk_score)}>Risque {alert.risk_score}/100</Badge>
-                        <Badge variant="outline">Statut: {alert.status}</Badge>
+                        <Badge variant={alertStatusVariant(alert.status)}>{alertStatusLabel(alert.status)}</Badge>
                     </div>
                 </div>
             </section>
 
-            <section className="rounded-2xl border border-border bg-card p-5">
+            <section className="panel p-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h2 className="text-base font-semibold">Generation forensique</h2>
-                        <p className="text-sm text-muted-foreground">
-                            Genere un snapshot certifie (hash SHA-256) + PDF telechargeable.
-                        </p>
+                        <p className="text-sm text-muted-foreground">Snapshot certifie (hash SHA-256) + PDF telechargeable.</p>
                     </div>
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => generateMutation.mutate()}
                             disabled={generateMutation.isPending || !canGenerate}
-                            className="inline-flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/15 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/25 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-primary/30 bg-primary/15 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/25 disabled:opacity-50"
                         >
-                            {generateMutation.isPending ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                                <FileText className="h-4 w-4" />
-                            )}
+                            {generateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
                             Generer rapport
                         </button>
                         <Link
                             to="/reports"
-                            className="inline-flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
+                            className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-input px-3 py-2 text-sm text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
                         >
                             Voir tous les rapports
                         </Link>
@@ -185,20 +170,18 @@ export default function ReportDetailPage() {
                 {!canGenerate && (
                     <div className="mt-3 inline-flex items-center gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
                         <TriangleAlert className="h-3.5 w-3.5" />
-                        L incident doit etre confirme ou bloque simule avant generation.
+                        Le dossier doit etre confirme ou bloque (simule) avant generation.
                     </div>
                 )}
             </section>
 
-            <section className="rounded-2xl border border-border bg-card p-5">
+            <section className="panel p-5">
                 <h2 className="mb-3 text-base font-semibold">Artefact disponible</h2>
 
                 {!activeReport ? (
                     <div className="rounded-xl border border-dashed border-border bg-secondary/20 p-8 text-center">
                         <Shield className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
-                        <p className="text-sm text-muted-foreground">
-                            Aucun rapport genere pour cet incident pour le moment.
-                        </p>
+                        <p className="text-sm text-muted-foreground">Aucun rapport genere pour cet incident pour le moment.</p>
                     </div>
                 ) : (
                     <div className="space-y-4">

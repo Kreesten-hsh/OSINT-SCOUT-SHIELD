@@ -1,44 +1,42 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '@/api/client';
-import { Alert } from '@/types';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, Eye, Loader2, Search } from 'lucide-react';
+
+import { apiClient } from '@/api/client';
+import type { Alert, AlertStatus } from '@/types';
+import { Badge } from '@/components/ui/badge';
+import {
+    alertStatusLabel,
+    alertStatusVariant,
+    displayTarget,
+    riskSeverity,
+    sourceLabel,
+} from '@/lib/presentation';
 
 interface AlertsPageProps {
     title?: string;
-}
-
-function getSeverity(score: number): 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' {
-    if (score >= 90) return 'CRITICAL';
-    if (score >= 70) return 'HIGH';
-    if (score >= 40) return 'MEDIUM';
-    return 'LOW';
 }
 
 function isCitizenSource(sourceType: string): boolean {
     return sourceType.startsWith('CITIZEN_');
 }
 
-function sourceLabel(sourceType: string): string {
-    if (sourceType === 'CITIZEN_MOBILE_APP') return 'CITOYEN MOBILE';
-    if (sourceType === 'CITIZEN_WEB_PORTAL') return 'CITOYEN WEB';
-    return sourceType;
-}
+const STATUS_OPTIONS: Array<{ label: string; value: '' | AlertStatus }> = [
+    { label: 'Tous les statuts', value: '' },
+    { label: 'Nouveau', value: 'NEW' },
+    { label: 'En revision', value: 'IN_REVIEW' },
+    { label: 'Confirme', value: 'CONFIRMED' },
+    { label: 'Classe sans suite', value: 'DISMISSED' },
+    { label: 'Bloque (simule)', value: 'BLOCKED_SIMULATED' },
+];
 
-function displayTarget(url: string): string {
-    if (url.startsWith('citizen://')) return 'Signal textuel (sans URL)';
-    return url;
-}
-
-export default function AlertsPage({ title = 'Gestion des Alertes' }: AlertsPageProps) {
+export default function AlertsPage({ title = 'Alertes techniques' }: AlertsPageProps) {
     const [searchParams, setSearchParams] = useSearchParams();
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
 
-    // Get filter from URL or default to empty (SHOW ALL)
-    const statusFilter = searchParams.get('status') || '';
+    const statusFilter = (searchParams.get('status') || '') as '' | AlertStatus;
     const pageSize = 10;
 
     const { data, isLoading, isError } = useQuery({
@@ -48,191 +46,154 @@ export default function AlertsPage({ title = 'Gestion des Alertes' }: AlertsPage
                 skip: ((page - 1) * pageSize).toString(),
                 limit: pageSize.toString(),
             });
-            if (search) params.append('q', search);
+            if (search.trim()) params.append('q', search.trim());
             if (statusFilter) params.append('status', statusFilter);
 
-            const response = await apiClient.get<Alert[]>('/alerts?' + params.toString());
-            // Backend returns array directly based on current implementation
+            const response = await apiClient.get<Alert[]>(`/alerts?${params.toString()}`);
             return response.data;
-        }
+        },
     });
 
-    const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const newStatus = e.target.value;
-        setSearchParams(prev => {
-            if (newStatus) {
-                prev.set('status', newStatus);
-            } else {
-                prev.delete('status');
-            }
-            return prev;
-        });
-        setPage(1); // Reset to first page on filter change
-    };
-
-    // Simple hasNextPage logic
     const hasNextPage = data?.length === pageSize;
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <div className="relative flex-1 sm:w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <input
-                            type="text"
-                            placeholder="Filtrer..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="w-full bg-card border border-input rounded-md py-2 pl-9 pr-4 text-sm focus:ring-1 focus:ring-primary outline-none"
-                        />
+        <div className="space-y-5">
+            <section className="panel p-5">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                        <h2 className="font-display text-2xl font-semibold tracking-tight">{title}</h2>
+                        <p className="text-sm text-muted-foreground">File technique unifiee des dossiers web et citoyens.</p>
                     </div>
-                    <select
-                        value={statusFilter}
-                        onChange={handleStatusChange}
-                        className="p-2 border border-input bg-card rounded-md hover:bg-secondary transition-colors text-sm outline-none focus:ring-1 focus:ring-primary"
-                    >
-                        <option value="">Tous les statuts</option>
-                        <option value="NEW">Nouveau</option>
-                        <option value="IN_REVIEW">En revision</option>
-                        <option value="CONFIRMED">Confirme</option>
-                        <option value="DISMISSED">Classe sans suite</option>
-                        <option value="BLOCKED_SIMULATED">Bloque (simule)</option>
-                    </select>
-                </div>
-            </div>
 
-            <div className="border border-border rounded-xl bg-card overflow-hidden shadow-sm">
+                    <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto">
+                        <label className="relative w-full sm:w-72">
+                            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <input
+                                type="search"
+                                value={search}
+                                onChange={(e) => {
+                                    setSearch(e.target.value);
+                                    setPage(1);
+                                }}
+                                placeholder="Rechercher URL, source, score"
+                                className="h-10 w-full rounded-xl border border-input bg-background/70 pl-9 pr-3 text-sm outline-none transition focus:ring-2 focus:ring-ring"
+                            />
+                        </label>
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => {
+                                const next = e.target.value as '' | AlertStatus;
+                                setSearchParams((prev) => {
+                                    if (next) prev.set('status', next);
+                                    else prev.delete('status');
+                                    return prev;
+                                });
+                                setPage(1);
+                            }}
+                            className="h-10 rounded-xl border border-input bg-background/70 px-3 text-sm outline-none transition focus:ring-2 focus:ring-ring"
+                        >
+                            {STATUS_OPTIONS.map((option) => (
+                                <option key={option.value || 'all'} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <section className="panel overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead className="bg-secondary/50 text-muted-foreground uppercase text-xs font-semibold">
+                    <table className="w-full min-w-[820px] text-left text-sm">
+                        <thead className="bg-secondary/35 text-xs uppercase tracking-wide text-muted-foreground">
                             <tr>
-                                <th className="px-6 py-4">Severite</th>
-                                <th className="px-6 py-4">Source / URL</th>
-                                <th className="px-6 py-4">Statut</th>
-                                <th className="px-6 py-4">Score</th>
-                                <th className="px-6 py-4">Detecte le</th>
-                                <th className="px-6 py-4 text-right">Actions</th>
+                                <th className="px-4 py-3">Severite</th>
+                                <th className="px-4 py-3">Cible</th>
+                                <th className="px-4 py-3">Source</th>
+                                <th className="px-4 py-3">Statut</th>
+                                <th className="px-4 py-3">Risque</th>
+                                <th className="px-4 py-3">Date</th>
+                                <th className="px-4 py-3 text-right">Action</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-border">
-                            {isLoading ? (
+                        <tbody className="divide-y divide-border/70">
+                            {isLoading && (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
-                                        <div className="flex items-center justify-center gap-2">
-                                            <Loader2 className="w-5 h-5 animate-spin" />
-                                            Chargement des alertes...
-                                        </div>
+                                    <td colSpan={7} className="px-4 py-14 text-center text-muted-foreground">
+                                        <Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin" />
+                                        Chargement des alertes...
                                     </td>
                                 </tr>
-                            ) : isError ? (
-                                <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-destructive">
-                                        Erreur de chargement des donnees.
-                                    </td>
-                                </tr>
-                            ) : data?.length === 0 ? (
-                                <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
-                                        Aucune alerte trouvee.
-                                    </td>
-                                </tr>
-                            ) : (
-                                data?.map((alert: Alert) => {
-                                    const severity = alert.severity ?? getSeverity(alert.risk_score);
-                                    return (
-                                    <tr key={alert.id} className="hover:bg-secondary/30 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <Badge
-                                                variant={
-                                                    severity === 'CRITICAL'
-                                                        ? 'destructive'
-                                                        : severity === 'HIGH'
-                                                            ? 'warning'
-                                                            : severity === 'MEDIUM'
-                                                                ? 'secondary'
-                                                                : 'outline'
-                                                }
-                                            >
-                                                {severity}
-                                            </Badge>
-                                        </td>
-                                        <td className="px-6 py-4 max-w-[300px]">
-                                            <div className="flex flex-col">
-                                                <span className="font-medium text-foreground truncate " title={alert.url}>
-                                                    {displayTarget(alert.url)}
-                                                </span>
-                                                <div className="mt-1 flex items-center gap-2">
-                                                    <span className="text-xs text-muted-foreground">{alert.source_type}</span>
-                                                    {isCitizenSource(alert.source_type) && (
-                                                        <Badge variant="outline" className="text-[10px] tracking-wide">
-                                                            {sourceLabel(alert.source_type)}
-                                                        </Badge>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <Badge variant={
-                                                alert.status === 'NEW' ? 'outline' :
-                                                    alert.status === 'IN_REVIEW' ? 'default' :
-                                                        alert.status === 'CONFIRMED' ? 'destructive' :
-                                                            alert.status === 'BLOCKED_SIMULATED' ? 'success' : 'secondary'
-                                            }>
-                                                {alert.status === 'IN_REVIEW'
-                                                    ? 'EN REVISION'
-                                                    : alert.status === 'BLOCKED_SIMULATED'
-                                                        ? 'BLOQUE_SIMULE'
-                                                        : alert.status}
-                                            </Badge>
-                                        </td>
-                                        <td className="px-6 py-4 font-mono text-muted-foreground">
-                                            {alert.risk_score}/100
-                                        </td>
-                                        <td className="px-6 py-4 text-muted-foreground whitespace-nowrap">
-                                            {new Date(alert.created_at).toLocaleDateString()} <span className="text-xs opacity-50">{new Date(alert.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <Link
-                                                to={isCitizenSource(alert.source_type) ? `/incidents-signales/${alert.uuid}` : `/alerts/${alert.uuid}`}
-                                                className="inline-flex items-center justify-center p-2 rounded-md hover:bg-primary/20 hover:text-primary transition-colors"
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                            </Link>
-                                        </td>
-                                    </tr>
-                                    );
-                                })
                             )}
+
+                            {isError && !isLoading && (
+                                <tr>
+                                    <td colSpan={7} className="px-4 py-14 text-center text-destructive">
+                                        Erreur de chargement des alertes.
+                                    </td>
+                                </tr>
+                            )}
+
+                            {!isLoading && !isError && data?.length === 0 && (
+                                <tr>
+                                    <td colSpan={7} className="px-4 py-14 text-center text-muted-foreground">
+                                        Aucun dossier trouve pour ce filtre.
+                                    </td>
+                                </tr>
+                            )}
+
+                            {data?.map((alert) => (
+                                <tr key={alert.id} className="bg-card/70 transition hover:bg-secondary/20">
+                                    <td className="px-4 py-3">
+                                        <Badge variant={riskSeverity(alert.risk_score) === 'CRITICAL' ? 'destructive' : riskSeverity(alert.risk_score) === 'HIGH' ? 'warning' : 'outline'}>
+                                            {riskSeverity(alert.risk_score)}
+                                        </Badge>
+                                    </td>
+                                    <td className="max-w-[280px] px-4 py-3">
+                                        <span className="line-clamp-1" title={alert.url}>
+                                            {displayTarget(alert.url)}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-xs text-muted-foreground">{sourceLabel(alert.source_type)}</td>
+                                    <td className="px-4 py-3">
+                                        <Badge variant={alertStatusVariant(alert.status)}>{alertStatusLabel(alert.status)}</Badge>
+                                    </td>
+                                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{alert.risk_score}/100</td>
+                                    <td className="px-4 py-3 text-xs text-muted-foreground">{new Date(alert.created_at).toLocaleString()}</td>
+                                    <td className="px-4 py-3 text-right">
+                                        <Link
+                                            to={isCitizenSource(alert.source_type) ? `/incidents-signales/${alert.uuid}` : `/alerts/${alert.uuid}`}
+                                            className="inline-flex rounded-lg border border-input bg-background/50 p-2 text-muted-foreground transition hover:border-primary/40 hover:text-primary"
+                                        >
+                                            <Eye className="h-4 w-4" />
+                                        </Link>
+                                    </td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>
 
-                {/* PAGINATION */}
-                <div className="px-6 py-4 border-t border-border flex items-center justify-between bg-secondary/20">
-                    <span className="text-xs text-muted-foreground">Page {page}</span>
-                    <div className="flex gap-2">
+                <div className="flex items-center justify-between border-t border-border/70 bg-secondary/20 px-4 py-3 text-xs text-muted-foreground">
+                    <span>Page {page}</span>
+                    <div className="flex items-center gap-1">
                         <button
-                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                            onClick={() => setPage((p) => Math.max(1, p - 1))}
                             disabled={page === 1 || isLoading}
-                            className="p-1.5 rounded-md hover:bg-secondary disabled:opacity-50 transition-colors"
+                            className="rounded-md border border-input p-1.5 transition hover:bg-secondary/40 disabled:opacity-50"
                         >
-                            <ChevronLeft className="w-4 h-4" />
+                            <ChevronLeft className="h-4 w-4" />
                         </button>
                         <button
-                            onClick={() => setPage(p => p + 1)}
+                            onClick={() => setPage((p) => p + 1)}
                             disabled={!hasNextPage || isLoading}
-                            className="p-1.5 rounded-md hover:bg-secondary disabled:opacity-50 transition-colors"
+                            className="rounded-md border border-input p-1.5 transition hover:bg-secondary/40 disabled:opacity-50"
                         >
-                            <ChevronRight className="w-4 h-4" />
+                            <ChevronRight className="h-4 w-4" />
                         </button>
                     </div>
                 </div>
-            </div>
+            </section>
         </div>
     );
 }
-
-

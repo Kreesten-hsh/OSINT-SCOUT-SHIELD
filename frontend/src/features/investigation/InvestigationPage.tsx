@@ -1,30 +1,16 @@
 import { useState } from 'react';
 import { type AxiosError } from 'axios';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useParams } from 'react-router-dom';
-import { format } from 'date-fns';
-import {
-    Activity,
-    AlertCircle,
-    ArrowLeft,
-    CheckCircle,
-    Clock,
-    FileBarChart,
-    FileText,
-    Globe,
-    Loader2,
-    Lock,
-    Send,
-    ShieldAlert,
-    XCircle,
-} from 'lucide-react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, CheckCircle, FileBarChart, FileText, Loader2, Send, ShieldAlert, Siren, XCircle } from 'lucide-react';
 
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
-import { cn } from '@/lib/utils';
 import type { Alert, AlertStatus } from '@/types';
+import { alertStatusLabel, alertStatusVariant, displayTarget, riskSeverity, sourceLabel } from '@/lib/presentation';
+import { parseAnalystNotes } from '@/lib/analyst-notes';
 
 type ApiErrorPayload = { message?: string; detail?: string };
 
@@ -43,30 +29,6 @@ interface IncidentDecisionData {
     alert_status: string;
     decision_status: 'PENDING' | 'VALIDATED' | 'REJECTED' | 'ESCALATED' | 'EXECUTED';
     comment?: string | null;
-}
-
-function sourceLabel(sourceType: string): string {
-    if (sourceType === 'CITIZEN_MOBILE_APP') return 'CITOYEN MOBILE';
-    if (sourceType === 'CITIZEN_WEB_PORTAL') return 'CITOYEN WEB';
-    return sourceType;
-}
-
-function isHttpTarget(url: string): boolean {
-    return url.startsWith('http://') || url.startsWith('https://');
-}
-
-function targetDisplay(url: string): string {
-    if (url.startsWith('citizen://')) return 'Signal textuel (sans URL crawlable)';
-    return url;
-}
-
-function targetHost(url: string): string {
-    if (!isHttpTarget(url)) return 'Signal citoyen';
-    try {
-        return new URL(url).hostname;
-    } catch {
-        return 'Cible invalide';
-    }
 }
 
 export default function InvestigationPage() {
@@ -115,11 +77,7 @@ export default function InvestigationPage() {
         },
     });
 
-    const generateReportMutation = useMutation<
-        APIResponse<GeneratedReport>,
-        AxiosError<ApiErrorPayload>,
-        void
-    >({
+    const generateReportMutation = useMutation<APIResponse<GeneratedReport>, AxiosError<ApiErrorPayload>, void>({
         mutationFn: async () => {
             if (!alert?.uuid) throw new Error('Alert UUID missing');
             const res = await apiClient.post<APIResponse<GeneratedReport>>(`/reports/generate/${alert.uuid}`);
@@ -165,247 +123,162 @@ export default function InvestigationPage() {
 
     if (isLoading) {
         return (
-            <div className="flex h-full min-h-[60vh] flex-col items-center justify-center text-muted-foreground">
-                <Loader2 className="mb-4 h-10 w-10 animate-spin text-primary" />
-                <p>Chargement du dossier d&apos;investigation...</p>
+            <div className="flex min-h-[60vh] items-center justify-center text-muted-foreground">
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Chargement du dossier...
             </div>
         );
     }
 
     if (isError || !alert) {
         return (
-            <div className="flex h-full min-h-[60vh] flex-col items-center justify-center text-destructive">
-                <AlertCircle className="mb-4 h-12 w-12" />
-                <h2 className="text-xl font-bold">Erreur de chargement</h2>
-                <p className="mb-6 opacity-80">Impossible de recuperer les details de l&apos;alerte.</p>
-                <button onClick={() => navigate('/alerts')} className="rounded-md bg-secondary px-4 py-2 text-secondary-foreground">
-                    Retour aux alertes
-                </button>
+            <div className="panel border-destructive/25 bg-destructive/10 p-8 text-center text-destructive">
+                Impossible de recuperer les details de l'alerte.
             </div>
         );
     }
 
     const notesValue = notesDraft ?? alert.analysis_note ?? '';
-
-    const getSeverityColor = (score: number) => {
-        if (score >= 90) return 'text-red-500 bg-red-950/30 border-red-900/50';
-        if (score >= 70) return 'text-orange-500 bg-orange-950/30 border-orange-900/50';
-        if (score >= 40) return 'text-yellow-500 bg-yellow-950/30 border-yellow-900/50';
-        return 'text-blue-500 bg-blue-950/30 border-blue-900/50';
-    };
-
-    const handleSaveNote = () => {
-        updateAlertMutation.mutate({ analysis_note: notesValue });
-    };
-
-    const handleConfirm = () => {
-        const note = notesValue.trim();
-        if (!note) {
-            toast({
-                title: 'Note requise',
-                description: "Vous devez ajouter une note d'analyse avant de confirmer.",
-                variant: 'destructive',
-            });
-            return;
-        }
-        if (window.confirm('Confirmer cette menace comme REELLE ?')) {
-            decisionMutation.mutate({ decision: 'CONFIRM', comment: note });
-        }
-    };
-
-    const handleDismiss = () => {
-        const note = notesValue.trim();
-        if (!note) {
-            toast({
-                title: 'Note requise',
-                description: 'Vous devez ajouter une justification avant de classer sans suite.',
-                variant: 'destructive',
-            });
-            return;
-        }
-        if (window.confirm('Classer cette alerte sans suite ?')) {
-            decisionMutation.mutate({ decision: 'REJECT', comment: note });
-        }
-    };
-
-    const severityClass = getSeverityColor(alert.risk_score);
-    const severityLabel = alert.risk_score >= 90 ? 'CRITICAL' : alert.risk_score >= 70 ? 'HIGH' : alert.risk_score >= 40 ? 'MEDIUM' : 'LOW';
+    const notes = parseAnalystNotes(alert.analysis_note);
     const canGenerateReport = alert.status === 'CONFIRMED' || alert.status === 'BLOCKED_SIMULATED';
 
     return (
-        <div className="animate-in space-y-6 fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-center">
-                <div className="space-y-1">
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => navigate('/alerts')}
-                            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-secondary/50 hover:text-foreground"
-                        >
-                            <ArrowLeft className="h-5 w-5" />
-                        </button>
-                        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-foreground">
-                            Investigation
-                            <span className="font-mono text-base font-normal text-muted-foreground">#{alert.uuid.slice(0, 8)}</span>
-                        </h1>
-                    </div>
-                    <div className="flex items-center gap-2 pl-9">
-                        <span className={cn('rounded-full border px-2.5 py-0.5 text-xs font-medium', severityClass)}>{severityLabel}</span>
-                        <Badge variant="outline" className="uppercase tracking-wide text-xs">
-                            {alert.status}
-                        </Badge>
-                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Clock className="h-3 w-3" />
-                            {format(new Date(alert.created_at), 'dd MMM yyyy HH:mm')}
-                        </span>
+        <div className="space-y-5">
+            <section className="panel p-5">
+                <div className="mb-4 flex items-center gap-2">
+                    <button
+                        onClick={() => navigate('/alerts')}
+                        className="inline-flex rounded-lg border border-input bg-background/50 p-2 text-muted-foreground transition hover:border-primary/40 hover:text-primary"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                    </button>
+                    <div>
+                        <h2 className="font-display text-2xl font-semibold tracking-tight">Investigation #{alert.uuid.slice(0, 8)}</h2>
+                        <p className="text-sm text-muted-foreground">{sourceLabel(alert.source_type)} - {new Date(alert.created_at).toLocaleString()}</p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant={riskSeverity(alert.risk_score) === 'CRITICAL' ? 'destructive' : riskSeverity(alert.risk_score) === 'HIGH' ? 'warning' : 'outline'}>
+                        {riskSeverity(alert.risk_score)} / {alert.risk_score}
+                    </Badge>
+                    <Badge variant={alertStatusVariant(alert.status)}>{alertStatusLabel(alert.status)}</Badge>
+                    <span className="rounded-lg border border-border/70 bg-secondary/20 px-2.5 py-1 text-xs text-muted-foreground">{displayTarget(alert.url)}</span>
+                </div>
+            </section>
+
+            <section className="panel p-4">
+                <div className="flex flex-wrap items-center gap-2">
                     {alert.status === 'NEW' && (
                         <button
                             onClick={() => updateAlertMutation.mutate({ status: 'IN_REVIEW' })}
-                            className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                            className="inline-flex min-h-[40px] items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
                         >
-                            <Activity className="h-4 w-4" />
-                            Prendre en charge
+                            <ShieldAlert className="h-4 w-4" /> Prendre en charge
                         </button>
                     )}
 
-                    {alert.status === 'IN_REVIEW' && (
-                        <>
-                            <button
-                                onClick={handleDismiss}
-                                className="flex items-center gap-2 rounded-md border border-input bg-secondary px-3 py-2 text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary/80"
-                            >
-                                <XCircle className="h-4 w-4" />
-                                Classer sans suite
-                            </button>
-                            <button
-                                onClick={handleConfirm}
-                                className="flex items-center gap-2 rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/20"
-                            >
-                                <CheckCircle className="h-4 w-4" />
-                                Confirmer la menace
-                            </button>
-                        </>
-                    )}
+                    <button
+                        onClick={() => decisionMutation.mutate({ decision: 'ESCALATE', comment: notesValue.trim() || undefined })}
+                        className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-300 transition hover:bg-amber-500/20"
+                    >
+                        <Siren className="h-4 w-4" /> Escalader
+                    </button>
 
-                    {canGenerateReport && (
+                    <button
+                        onClick={() => decisionMutation.mutate({ decision: 'REJECT', comment: notesValue.trim() || undefined })}
+                        className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive transition hover:bg-destructive/20"
+                    >
+                        <XCircle className="h-4 w-4" /> Classer sans suite
+                    </button>
+
+                    <button
+                        onClick={() => decisionMutation.mutate({ decision: 'CONFIRM', comment: notesValue.trim() || undefined })}
+                        className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300 transition hover:bg-emerald-500/20"
+                    >
+                        <CheckCircle className="h-4 w-4" /> Confirmer
+                    </button>
+
+                    <button
+                        onClick={() => generateReportMutation.mutate()}
+                        disabled={!canGenerateReport || generateReportMutation.isPending}
+                        className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-primary/30 bg-primary/15 px-3 py-2 text-sm font-semibold text-primary transition hover:bg-primary/25 disabled:opacity-50"
+                    >
+                        {generateReportMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileBarChart className="h-4 w-4" />}
+                        Generer rapport
+                    </button>
+                </div>
+            </section>
+
+            <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                <article className="panel p-4">
+                    <h3 className="mb-2 font-display text-lg font-semibold">Note analyste</h3>
+                    <textarea
+                        className="min-h-[180px] w-full rounded-xl border border-input bg-secondary/20 p-3 text-sm outline-none transition focus:ring-2 focus:ring-ring"
+                        placeholder="Observations forensiques"
+                        value={notesValue}
+                        onChange={(e) => setNotesDraft(e.target.value)}
+                    />
+                    <div className="mt-3 flex justify-end">
                         <button
-                            onClick={() => generateReportMutation.mutate()}
-                            disabled={generateReportMutation.isPending}
-                            className="ml-2 flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                            onClick={() => updateAlertMutation.mutate({ analysis_note: notesValue })}
+                            disabled={updateAlertMutation.isPending}
+                            className="inline-flex min-h-[40px] items-center gap-2 rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
                         >
-                            {generateReportMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileBarChart className="h-4 w-4" />}
-                            Generer rapport
+                            {updateAlertMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                            Enregistrer note
                         </button>
+                    </div>
+                </article>
+
+                <article className="panel p-4">
+                    <h3 className="mb-2 font-display text-lg font-semibold">Journal de decisions</h3>
+                    {notes.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">Aucune entree structuree.</p>
+                    ) : (
+                        <ol className="space-y-2">
+                            {notes.map((entry) => (
+                                <li key={entry.id} className="rounded-xl border border-border/70 bg-secondary/20 p-3">
+                                    <p className="text-xs uppercase tracking-wide text-muted-foreground">{entry.title}</p>
+                                    <p className="mt-1 text-sm font-medium">{entry.content}</p>
+                                    {entry.details.length > 0 ? (
+                                        <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
+                                            {entry.details.map((detail, idx) => (
+                                                <li key={`${entry.id}-${idx}`}>- {detail}</li>
+                                            ))}
+                                        </ul>
+                                    ) : null}
+                                </li>
+                            ))}
+                        </ol>
                     )}
-                </div>
-            </div>
+                </article>
+            </section>
 
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-                <div className="space-y-6 lg:col-span-3">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-                            <div className="mb-1 flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase">
-                                <Activity className="h-4 w-4" />
-                                Risk score
+            <section className="panel p-4">
+                <h3 className="mb-2 font-display text-lg font-semibold">Preuves associees</h3>
+                {alert.evidences && alert.evidences.length > 0 ? (
+                    <div className="space-y-2">
+                        {alert.evidences.map((ev) => (
+                            <div key={ev.id} className="flex items-center justify-between rounded-lg border border-border/70 bg-secondary/15 px-3 py-2 text-sm">
+                                <span className="max-w-[65%] truncate">{ev.file_path}</span>
+                                <Badge variant={ev.status === 'SEALED' ? 'warning' : 'outline'}>{ev.status === 'SEALED' ? 'Scellee' : 'Active'}</Badge>
                             </div>
-                            <div className="font-mono text-3xl font-bold text-foreground">
-                                {alert.risk_score}<span className="text-lg font-normal text-muted-foreground">/100</span>
-                            </div>
-                            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-secondary/50">
-                                <div className={cn('h-full rounded-full', severityClass.split(' ')[1])} style={{ width: `${alert.risk_score}%` }} />
-                            </div>
-                        </div>
-                        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-                            <div className="mb-1 flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase">
-                                <Globe className="h-4 w-4" />
-                                Source
-                            </div>
-                            <div className="truncate text-lg font-medium text-foreground" title={alert.url}>
-                                {targetHost(alert.url)}
-                            </div>
-                            <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">{sourceLabel(alert.source_type)}</div>
-                        </div>
+                        ))}
+                        <Link to="/evidence" className="text-xs text-primary hover:underline">
+                            Ouvrir registre des preuves
+                        </Link>
                     </div>
+                ) : (
+                    <p className="text-sm text-muted-foreground">Aucune preuve technique associee.</p>
+                )}
+            </section>
 
-                    <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-                        <div className="border-b border-border bg-secondary/30 px-6 py-4">
-                            <h3 className="flex items-center gap-2 font-semibold">
-                                <ShieldAlert className="h-4 w-4 text-primary" />
-                                Contexte
-                            </h3>
-                        </div>
-                        <div className="space-y-4 p-6">
-                            <div>
-                                <h4 className="mb-1 text-sm font-medium text-muted-foreground">URL</h4>
-                                {isHttpTarget(alert.url) ? (
-                                    <a href={alert.url} target="_blank" rel="noreferrer" className="block break-all rounded bg-primary/5 p-2 font-mono text-sm text-primary hover:underline">
-                                        {alert.url}
-                                    </a>
-                                ) : (
-                                    <div className="block break-all rounded bg-secondary/20 p-2 font-mono text-sm text-muted-foreground">
-                                        {targetDisplay(alert.url)}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="space-y-6 lg:col-span-2">
-                    <div className="flex h-[400px] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-                        <div className="flex items-center justify-between border-b border-border bg-secondary/30 px-6 py-4">
-                            <h3 className="flex items-center gap-2 font-semibold">
-                                <FileText className="h-4 w-4 text-primary" />
-                                Note d&apos;analyste
-                            </h3>
-                            <Lock className="h-3 w-3 text-muted-foreground" />
-                        </div>
-                        <div className="flex flex-1 flex-col p-4">
-                            <textarea
-                                className="flex-1 resize-none rounded-md border border-input bg-secondary/20 p-3 text-sm outline-none placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-primary"
-                                placeholder="Observations forensiques..."
-                                value={notesValue}
-                                onChange={(e) => setNotesDraft(e.target.value)}
-                            />
-                            <div className="mt-4 flex justify-end">
-                                <button
-                                    onClick={handleSaveNote}
-                                    disabled={updateAlertMutation.isPending}
-                                    className="flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-                                >
-                                    {updateAlertMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
-                                    Enregistrer
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-                        <h3 className="mb-2 flex items-center gap-2 font-semibold">
-                            <FileText className="h-4 w-4 text-primary" />
-                            Preuves
-                        </h3>
-                        {alert.evidences && alert.evidences.length > 0 ? (
-                            <div className="space-y-2">
-                                {alert.evidences.map((ev) => (
-                                    <div key={ev.id} className="flex items-center justify-between rounded border border-border bg-secondary/10 p-2 text-sm">
-                                        <span className="max-w-[150px] truncate">{ev.file_path}</span>
-                                        <span className="font-mono text-xs text-muted-foreground">{ev.status}</span>
-                                    </div>
-                                ))}
-                                <button onClick={() => navigate('/evidence')} className="mt-2 w-full text-center text-xs text-primary hover:underline">
-                                    Voir registre preuves
-                                </button>
-                            </div>
-                        ) : (
-                            <p className="text-sm text-muted-foreground">Aucune preuve technique.</p>
-                        )}
-                    </div>
-                </div>
-            </div>
+            <section className="panel p-4">
+                <h3 className="mb-2 font-display text-lg font-semibold">Rapports</h3>
+                <Link to="/reports" className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-input px-3 py-2 text-sm text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground">
+                    <FileText className="h-4 w-4" /> Voir tous les rapports
+                </Link>
+            </section>
         </div>
     );
 }

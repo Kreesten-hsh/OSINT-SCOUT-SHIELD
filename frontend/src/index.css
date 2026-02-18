@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,10 +6,64 @@
 
 @layer base {
     :root {
-        --radius: 0.5rem;
+        --radius: 0.9rem;
+        --font-sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+        --font-display: 'Space Grotesk', 'Manrope', ui-sans-serif, system-ui, sans-serif;
+        --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * {
+        @apply border-border;
+    }
+
+    html,
+    body {
+        @apply bg-background text-foreground font-sans antialiased;
+        min-height: 100%;
     }
 
     body {
-        @apply bg-background text-foreground font-sans antialiased;
+        font-family: var(--font-sans);
+        background-image:
+            radial-gradient(circle at 8% -12%, rgba(13, 147, 242, 0.22), transparent 36%),
+            radial-gradient(circle at 92% 2%, rgba(16, 185, 129, 0.18), transparent 34%),
+            linear-gradient(180deg, #090d13 0%, #0b1018 100%);
+        background-attachment: fixed;
+    }
+
+    h1,
+    h2,
+    h3 {
+        font-family: var(--font-display);
+        letter-spacing: -0.01em;
+    }
+
+    ::selection {
+        @apply bg-primary/30 text-foreground;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        * {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+    }
+}
+
+@layer components {
+    .panel {
+        @apply rounded-2xl border border-border/80 bg-card/90 backdrop-blur;
+        box-shadow: 0 12px 36px -24px rgba(2, 8, 23, 0.95);
+    }
+
+    .metric {
+        @apply rounded-xl border border-border/70 bg-background/60 px-4 py-3;
+    }
+
+    .soft-grid {
+        background-image: linear-gradient(rgba(51, 65, 85, 0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(51, 65, 85, 0.18) 1px, transparent 1px);
+        background-size: 22px 22px;
     }
 }
