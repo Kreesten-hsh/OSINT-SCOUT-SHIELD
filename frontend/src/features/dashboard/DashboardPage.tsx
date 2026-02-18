@@ -134,7 +134,7 @@ export default function DashboardPage() {
 
     return (
         <div className="space-y-6">
-            <section className="panel soft-grid relative overflow-hidden p-6">
+            <section className="panel soft-grid relative overflow-hidden p-6 fade-rise-in">
                 <div className="pointer-events-none absolute -right-24 -top-20 h-56 w-56 rounded-full bg-primary/20 blur-3xl" />
                 <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <div>
@@ -154,9 +154,9 @@ export default function DashboardPage() {
                 </div>
             </section>
 
-            <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 fade-rise-in-1">
                 {cards.map((card) => (
-                    <article key={card.label} className="panel p-4">
+                    <article key={card.label} className="panel interactive-row p-4">
                         <div className="flex items-start justify-between gap-3">
                             <div>
                                 <p className="text-xs uppercase tracking-wide text-muted-foreground">{card.label}</p>
@@ -171,10 +171,10 @@ export default function DashboardPage() {
                 ))}
             </section>
 
-            <section className="grid grid-cols-1 gap-4 xl:grid-cols-5">
+            <section className="grid grid-cols-1 gap-4 xl:grid-cols-5 fade-rise-in-2">
                 <article className="panel p-5 xl:col-span-3">
                     <div className="mb-4 flex items-center justify-between">
-                        <h3 className="font-display text-lg font-semibold">Menaces critiques prioritaires</h3>
+                        <h3 className="section-title">Menaces critiques prioritaires</h3>
                         <Link to="/alerts" className="text-xs text-primary hover:underline">
                             Ouvrir toutes les alertes
                         </Link>
@@ -186,7 +186,7 @@ export default function DashboardPage() {
                                 <Link
                                     key={alert.id}
                                     to={`/alerts/${alert.uuid}`}
-                                    className="flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-background/60 px-3 py-3 transition hover:border-primary/40"
+                                    className="interactive-row flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-background/60 px-3 py-3"
                                 >
                                     <div className="min-w-0">
                                         <p className="truncate text-sm font-medium" title={alert.url}>
@@ -210,7 +210,7 @@ export default function DashboardPage() {
 
                 <article className="panel p-5 xl:col-span-2">
                     <div className="mb-4 flex items-center justify-between">
-                        <h3 className="font-display text-lg font-semibold">Incidents citoyens recents</h3>
+                        <h3 className="section-title">Incidents citoyens recents</h3>
                         <Link to="/incidents-signales" className="text-xs text-primary hover:underline">
                             Ouvrir la file
                         </Link>
@@ -222,7 +222,7 @@ export default function DashboardPage() {
                                 <Link
                                     key={incident.alert_uuid}
                                     to={`/incidents-signales/${incident.alert_uuid}`}
-                                    className="flex items-center justify-between gap-2 rounded-xl border border-border/70 bg-background/55 px-3 py-3 transition hover:border-primary/40"
+                                    className="interactive-row flex items-center justify-between gap-2 rounded-xl border border-border/70 bg-background/55 px-3 py-3"
                                 >
                                     <div className="min-w-0">
                                         <p className="truncate text-sm font-medium">{incident.phone_number}</p>
@@ -243,22 +243,22 @@ export default function DashboardPage() {
                 </article>
             </section>
 
-            <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <Link to="/verify" className="panel flex items-center gap-3 p-4 transition hover:border-primary/45">
+            <section className="grid grid-cols-1 gap-3 sm:grid-cols-3 fade-rise-in-3">
+                <Link to="/verify" className="panel interactive-row flex items-center gap-3 p-4">
                     <Signal className="h-4 w-4 text-primary" />
                     <div>
                         <p className="text-sm font-semibold">Canal citoyen</p>
                         <p className="text-xs text-muted-foreground">Verifier ou signaler un cas</p>
                     </div>
                 </Link>
-                <Link to="/reports" className="panel flex items-center gap-3 p-4 transition hover:border-primary/45">
+                <Link to="/reports" className="panel interactive-row flex items-center gap-3 p-4">
                     <FileBarChart className="h-4 w-4 text-primary" />
                     <div>
                         <p className="text-sm font-semibold">Rapports</p>
                         <p className="text-xs text-muted-foreground">PDF et snapshots forensiques</p>
                     </div>
                 </Link>
-                <Link to="/monitoring" className="panel flex items-center gap-3 p-4 transition hover:border-primary/45">
+                <Link to="/monitoring" className="panel interactive-row flex items-center gap-3 p-4">
                     <Link2 className="h-4 w-4 text-primary" />
                     <div>
                         <p className="text-sm font-semibold">Surveillance</p>

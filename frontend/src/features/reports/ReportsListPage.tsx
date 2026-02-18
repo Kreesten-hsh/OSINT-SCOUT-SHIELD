@@ -49,11 +49,11 @@ export default function ReportsListPage() {
 
     return (
         <div className="space-y-5">
-            <section className="panel p-5">
+            <section className="panel p-5 fade-rise-in">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div>
-                        <h2 className="font-display text-2xl font-semibold tracking-tight">Rapports forensiques</h2>
-                        <p className="text-sm text-muted-foreground">Snapshots certifies (PDF + JSON) issus des incidents confirmes.</p>
+                        <h2 className="section-title text-2xl">Rapports forensiques</h2>
+                        <p className="section-subtitle">Snapshots certifies (PDF + JSON) issus des incidents confirmes.</p>
                     </div>
                     <div className="flex items-center gap-2 text-xs">
                         <div className="metric">
@@ -75,13 +75,13 @@ export default function ReportsListPage() {
             </section>
 
             {isLoading && (
-                <section className="panel flex min-h-56 items-center justify-center text-muted-foreground">
+                <section className="panel flex min-h-56 items-center justify-center text-muted-foreground fade-rise-in-1">
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Chargement des rapports...
                 </section>
             )}
 
             {isError && !isLoading && (
-                <section className="panel border-destructive/25 bg-destructive/10 p-8 text-center">
+                <section className="panel border-destructive/25 bg-destructive/10 p-8 text-center fade-rise-in-1">
                     <p className="text-sm font-semibold text-destructive">Erreur de chargement des rapports.</p>
                     <button onClick={() => refetch()} className="mt-3 rounded-lg border border-destructive/30 px-3 py-2 text-xs text-destructive">
                         Reessayer
@@ -90,7 +90,7 @@ export default function ReportsListPage() {
             )}
 
             {!isLoading && !isError && (!reports || reports.length === 0) && (
-                <section className="panel border-dashed p-10 text-center">
+                <section className="panel border-dashed p-10 text-center fade-rise-in-1">
                     <FileText className="mx-auto mb-3 h-12 w-12 text-muted-foreground/50" />
                     <h2 className="text-lg font-semibold">Aucun rapport genere</h2>
                     <p className="mx-auto mt-2 max-w-lg text-sm text-muted-foreground">
@@ -114,7 +114,7 @@ export default function ReportsListPage() {
             )}
 
             {!isLoading && !isError && reports && reports.length > 0 && (
-                <section className="space-y-3">
+                <section className="space-y-3 fade-rise-in-1">
                     {reports.map((report) => {
                         const alert = report.snapshot_json?.data?.alert;
                         const alertUuid = alert?.uuid;
@@ -123,7 +123,7 @@ export default function ReportsListPage() {
                         const createdAt = new Date(report.generated_at);
 
                         return (
-                            <article key={report.uuid} className="panel p-5 transition hover:border-primary/40">
+                            <article key={report.uuid} className="panel interactive-row p-5">
                                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                                     <div className="space-y-2">
                                         <div className="flex flex-wrap items-center gap-2">

@@ -143,7 +143,7 @@ export default function InvestigationPage() {
 
     return (
         <div className="space-y-5">
-            <section className="panel p-5">
+            <section className="panel p-5 fade-rise-in">
                 <div className="mb-4 flex items-center gap-2">
                     <button
                         onClick={() => navigate('/alerts')}
@@ -166,7 +166,7 @@ export default function InvestigationPage() {
                 </div>
             </section>
 
-            <section className="panel p-4">
+            <section className="panel p-4 fade-rise-in-1">
                 <div className="flex flex-wrap items-center gap-2">
                     {alert.status === 'NEW' && (
                         <button
@@ -209,9 +209,9 @@ export default function InvestigationPage() {
                 </div>
             </section>
 
-            <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <section className="grid grid-cols-1 gap-4 xl:grid-cols-2 fade-rise-in-2">
                 <article className="panel p-4">
-                    <h3 className="mb-2 font-display text-lg font-semibold">Note analyste</h3>
+                    <h3 className="section-title mb-2 text-lg">Note analyste</h3>
                     <textarea
                         className="min-h-[180px] w-full rounded-xl border border-input bg-secondary/20 p-3 text-sm outline-none transition focus:ring-2 focus:ring-ring"
                         placeholder="Observations forensiques"
@@ -231,7 +231,7 @@ export default function InvestigationPage() {
                 </article>
 
                 <article className="panel p-4">
-                    <h3 className="mb-2 font-display text-lg font-semibold">Journal de decisions</h3>
+                    <h3 className="section-title mb-2 text-lg">Journal de decisions</h3>
                     {notes.length === 0 ? (
                         <p className="text-sm text-muted-foreground">Aucune entree structuree.</p>
                     ) : (
@@ -254,8 +254,8 @@ export default function InvestigationPage() {
                 </article>
             </section>
 
-            <section className="panel p-4">
-                <h3 className="mb-2 font-display text-lg font-semibold">Preuves associees</h3>
+            <section className="panel p-4 fade-rise-in-3">
+                <h3 className="section-title mb-2 text-lg">Preuves associees</h3>
                 {alert.evidences && alert.evidences.length > 0 ? (
                     <div className="space-y-2">
                         {alert.evidences.map((ev) => (
@@ -273,8 +273,8 @@ export default function InvestigationPage() {
                 )}
             </section>
 
-            <section className="panel p-4">
-                <h3 className="mb-2 font-display text-lg font-semibold">Rapports</h3>
+            <section className="panel p-4 fade-rise-in-3">
+                <h3 className="section-title mb-2 text-lg">Rapports</h3>
                 <Link to="/reports" className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-input px-3 py-2 text-sm text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground">
                     <FileText className="h-4 w-4" /> Voir tous les rapports
                 </Link>

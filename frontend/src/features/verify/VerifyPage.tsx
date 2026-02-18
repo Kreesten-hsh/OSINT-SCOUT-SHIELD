@@ -141,7 +141,7 @@ export default function VerifyPage() {
     return (
         <div className="min-h-screen bg-background text-foreground">
             <div className="mx-auto w-full max-w-5xl space-y-5 px-4 py-8 sm:px-6 lg:px-8">
-                <section className="panel soft-grid relative overflow-hidden p-6 md:p-8">
+                <section className="panel soft-grid relative overflow-hidden p-6 md:p-8 fade-rise-in">
                     <div className="pointer-events-none absolute -right-24 -top-20 h-56 w-56 rounded-full bg-primary/20 blur-3xl" />
                     <div className="relative z-10 mb-6">
                         <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs uppercase tracking-wide text-primary">
@@ -221,9 +221,9 @@ export default function VerifyPage() {
                 {error && <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div>}
 
                 {result && (
-                    <section className="panel space-y-4 p-6">
+                    <section className="panel space-y-4 p-6 fade-rise-in-1">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                            <h2 className="font-display text-lg font-semibold">Resultat d'analyse</h2>
+                            <h2 className="section-title text-lg">Resultat d'analyse</h2>
                             <span className={`text-sm font-semibold ${levelColor}`}>
                                 {result.risk_level} - Score {result.risk_score}/100
                             </span>

@@ -58,11 +58,11 @@ export default function AlertsPage({ title = 'Alertes techniques' }: AlertsPageP
 
     return (
         <div className="space-y-5">
-            <section className="panel p-5">
+            <section className="panel p-5 fade-rise-in">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div>
-                        <h2 className="font-display text-2xl font-semibold tracking-tight">{title}</h2>
-                        <p className="text-sm text-muted-foreground">File technique unifiee des dossiers web et citoyens.</p>
+                        <h2 className="section-title text-2xl">{title}</h2>
+                        <p className="section-subtitle">File technique unifiee des dossiers web et citoyens.</p>
                     </div>
 
                     <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto">
@@ -102,7 +102,7 @@ export default function AlertsPage({ title = 'Alertes techniques' }: AlertsPageP
                 </div>
             </section>
 
-            <section className="panel overflow-hidden">
+            <section className="panel overflow-hidden fade-rise-in-1">
                 <div className="overflow-x-auto">
                     <table className="w-full min-w-[820px] text-left text-sm">
                         <thead className="bg-secondary/35 text-xs uppercase tracking-wide text-muted-foreground">
@@ -143,7 +143,7 @@ export default function AlertsPage({ title = 'Alertes techniques' }: AlertsPageP
                             )}
 
                             {data?.map((alert) => (
-                                <tr key={alert.id} className="bg-card/70 transition hover:bg-secondary/20">
+                                <tr key={alert.id} className="interactive-row bg-card/70 hover:bg-secondary/20">
                                     <td className="px-4 py-3">
                                         <Badge variant={riskSeverity(alert.risk_score) === 'CRITICAL' ? 'destructive' : riskSeverity(alert.risk_score) === 'HIGH' ? 'warning' : 'outline'}>
                                             {riskSeverity(alert.risk_score)}

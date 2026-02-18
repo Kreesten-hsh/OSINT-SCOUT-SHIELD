@@ -300,7 +300,7 @@ export default function CitizenIncidentDetailPage() {
 
     return (
         <div className="space-y-5">
-            <section className="panel soft-grid relative overflow-hidden p-6">
+            <section className="panel soft-grid relative overflow-hidden p-6 fade-rise-in">
                 <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-primary/20 blur-3xl" />
                 <div className="relative z-10 space-y-4">
                     <button
@@ -336,7 +336,7 @@ export default function CitizenIncidentDetailPage() {
                 </div>
             </section>
 
-            <section className="panel p-4">
+            <section className="panel p-4 fade-rise-in-1">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Actions rapides</h2>
@@ -371,9 +371,9 @@ export default function CitizenIncidentDetailPage() {
                 </div>
             </section>
 
-            <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <section className="grid grid-cols-1 gap-4 lg:grid-cols-3 fade-rise-in-2">
                 <article className="panel p-4 lg:col-span-2">
-                    <h2 className="mb-4 font-display text-lg font-semibold">Dossier incident</h2>
+                    <h2 className="section-title mb-4 text-lg">Dossier incident</h2>
                     <dl className="grid gap-3 text-sm sm:grid-cols-2">
                         <div className="rounded-lg border border-border/70 bg-secondary/20 p-3">
                             <dt className="text-xs text-muted-foreground">Numero suspect</dt>
@@ -395,7 +395,7 @@ export default function CitizenIncidentDetailPage() {
                 </article>
 
                 <article className="panel p-4">
-                    <h2 className="mb-3 font-display text-base font-semibold">Statistiques numero</h2>
+                    <h2 className="section-title mb-3 text-base">Statistiques numero</h2>
                     <div className="space-y-2 text-sm">
                         <div className="metric flex items-center justify-between"><span>Signalements</span><span className="font-semibold">{incident.stats.reports_for_phone}</span></div>
                         <div className="metric flex items-center justify-between"><span>Ouverts</span><span className="font-semibold">{incident.stats.open_reports_for_phone}</span></div>
@@ -405,10 +405,10 @@ export default function CitizenIncidentDetailPage() {
                 </article>
             </section>
 
-            <section className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+            <section className="grid grid-cols-1 gap-4 xl:grid-cols-3 fade-rise-in-2">
                 <article className="panel p-4 xl:col-span-2">
                     <div className="mb-3 flex items-center justify-between">
-                        <h2 className="font-display text-base font-semibold">Captures citoyen</h2>
+                        <h2 className="section-title text-base">Captures citoyen</h2>
                         <span className="text-xs text-muted-foreground">{incident.attachments.length} fichier(s)</span>
                     </div>
                     {incident.attachments.length === 0 ? (
@@ -423,7 +423,7 @@ export default function CitizenIncidentDetailPage() {
                 </article>
 
                 <article className="panel p-4">
-                    <h2 className="mb-2 flex items-center gap-2 text-base font-semibold">
+                    <h2 className="section-title mb-2 flex items-center gap-2 text-base">
                         <ShieldAlert className="h-4 w-4 text-primary" /> Actions SOC / Operateur
                     </h2>
 
@@ -456,7 +456,7 @@ export default function CitizenIncidentDetailPage() {
                         </button>
                     </div>
 
-                    <label className="mb-2 block text-xs text-muted-foreground">Action playbook</label>
+                    <label className="mb-2 block text-xs text-muted-foreground">Mesure operateur simulee</label>
                     <select
                         value={playbookAction}
                         onChange={(e) => setPlaybookAction(e.target.value as PlaybookActionType)}
@@ -486,10 +486,10 @@ export default function CitizenIncidentDetailPage() {
                 </article>
             </section>
 
-            <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <section className="grid grid-cols-1 gap-4 xl:grid-cols-2 fade-rise-in-3">
                 <article className="panel p-4">
                     <div className="mb-3 flex items-center justify-between">
-                        <h2 className="text-base font-semibold">Journal analyste</h2>
+                        <h2 className="section-title text-base">Journal analyste</h2>
                     </div>
                     {noteEntries.length === 0 ? (
                         <p className="text-sm text-muted-foreground">Aucune note structuree pour le moment.</p>
@@ -517,7 +517,7 @@ export default function CitizenIncidentDetailPage() {
 
                 <article className="panel p-4">
                     <div className="mb-3 flex items-center justify-between">
-                        <h2 className="text-base font-semibold">Timeline SHIELD</h2>
+                        <h2 className="section-title text-base">Timeline SHIELD</h2>
                         <button
                             onClick={() => refetchTimeline()}
                             className="inline-flex items-center gap-1 rounded-lg border border-input px-2 py-1 text-xs text-muted-foreground transition hover:bg-secondary/30 hover:text-foreground"
@@ -554,8 +554,8 @@ export default function CitizenIncidentDetailPage() {
                 </article>
             </section>
 
-            <section className="panel p-4">
-                <h2 className="mb-3 text-base font-semibold">Incidents lies (meme numero)</h2>
+            <section className="panel p-4 fade-rise-in-3">
+                <h2 className="section-title mb-3 text-base">Incidents lies (meme numero)</h2>
                 {incident.related_incidents.length === 0 ? (
                     <p className="text-sm text-muted-foreground">Aucun autre incident lie.</p>
                 ) : (
@@ -564,7 +564,7 @@ export default function CitizenIncidentDetailPage() {
                             <Link
                                 key={related.alert_uuid}
                                 to={`/incidents-signales/${related.alert_uuid}`}
-                                className="flex items-center justify-between rounded-lg border border-border bg-secondary/15 px-3 py-2 text-xs transition hover:border-primary/40 hover:bg-secondary/30"
+                                className="interactive-row flex items-center justify-between rounded-lg border border-border bg-secondary/15 px-3 py-2 text-xs hover:bg-secondary/30"
                             >
                                 <span className="font-mono">#{related.alert_uuid.slice(0, 8)}</span>
                                 <span className="text-muted-foreground">{formatDate(related.created_at)}</span>

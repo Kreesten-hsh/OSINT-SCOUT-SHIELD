@@ -17,7 +17,7 @@ export default function DashboardLayout() {
             <Sidebar mobileOpen={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} />
             <div className="md:ml-72">
                 <Topbar onMenuToggle={() => setMobileSidebarOpen((prev) => !prev)} />
-                <main id="main-content" className="mx-auto max-w-[1600px] px-4 pb-8 pt-6 sm:px-6 lg:px-8">
+                <main id="main-content" className="fade-rise-in mx-auto max-w-[1600px] px-4 pb-8 pt-6 sm:px-6 lg:px-8">
                     <Outlet />
                 </main>
             </div>

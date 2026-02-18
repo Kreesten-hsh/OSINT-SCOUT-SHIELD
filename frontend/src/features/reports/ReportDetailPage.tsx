@@ -129,7 +129,7 @@ export default function ReportDetailPage() {
 
     return (
         <div className="mx-auto max-w-5xl space-y-5">
-            <section className="panel p-6">
+            <section className="panel p-6 fade-rise-in">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div>
                         <p className="text-xs uppercase tracking-[0.22em] text-primary/90">Forensic dossier</p>
@@ -143,10 +143,10 @@ export default function ReportDetailPage() {
                 </div>
             </section>
 
-            <section className="panel p-5">
+            <section className="panel p-5 fade-rise-in-1">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h2 className="text-base font-semibold">Generation forensique</h2>
+                        <h2 className="section-title text-base">Generation forensique</h2>
                         <p className="text-sm text-muted-foreground">Snapshot certifie (hash SHA-256) + PDF telechargeable.</p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -175,8 +175,8 @@ export default function ReportDetailPage() {
                 )}
             </section>
 
-            <section className="panel p-5">
-                <h2 className="mb-3 text-base font-semibold">Artefact disponible</h2>
+            <section className="panel p-5 fade-rise-in-2">
+                <h2 className="section-title mb-3 text-base">Artefact disponible</h2>
 
                 {!activeReport ? (
                     <div className="rounded-xl border border-dashed border-border bg-secondary/20 p-8 text-center">

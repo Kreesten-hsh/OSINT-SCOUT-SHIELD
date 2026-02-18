@@ -96,11 +96,11 @@ export default function CitizenIncidentsPage() {
 
     return (
         <div className="space-y-5">
-            <section className="panel p-5">
+            <section className="panel p-5 fade-rise-in">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                     <div>
-                        <h2 className="font-display text-2xl font-semibold tracking-tight">Incidents signales</h2>
-                        <p className="text-sm text-muted-foreground">
+                        <h2 className="section-title text-2xl">Incidents signales</h2>
+                        <p className="section-subtitle">
                             Dossiers citoyens pour revue SOC, decisions et generation probatoire.
                         </p>
                     </div>
@@ -117,7 +117,7 @@ export default function CitizenIncidentsPage() {
                 </div>
             </section>
 
-            <section className="panel p-4">
+            <section className="panel p-4 fade-rise-in-1">
                 <div className="flex flex-col gap-2 sm:flex-row">
                     <label className="relative w-full sm:max-w-sm">
                         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -161,7 +161,7 @@ export default function CitizenIncidentsPage() {
                 </div>
             </section>
 
-            <section className="panel overflow-hidden">
+            <section className="panel overflow-hidden fade-rise-in-2">
                 <div className="overflow-x-auto">
                     <table className="w-full min-w-[920px] text-left text-sm">
                         <thead className="bg-secondary/35 text-xs uppercase tracking-wide text-muted-foreground">
@@ -205,7 +205,7 @@ export default function CitizenIncidentsPage() {
                             {data?.items.map((item: CitizenIncidentListItem) => {
                                 const canGenerate = item.status === 'CONFIRMED' || item.status === 'BLOCKED_SIMULATED';
                                 return (
-                                    <tr key={item.alert_uuid} className="bg-card/70 transition hover:bg-secondary/20">
+                                    <tr key={item.alert_uuid} className="interactive-row bg-card/70 hover:bg-secondary/20">
                                         <td className="px-4 py-3 font-mono text-xs">{item.phone_number}</td>
                                         <td className="px-4 py-3 text-xs text-muted-foreground">{channelLabel(item.channel)}</td>
                                         <td className="max-w-[260px] px-4 py-3">
