@@ -14,6 +14,7 @@ import {
     ShieldCheck,
     ShieldX,
     Siren,
+    Zap,
 } from 'lucide-react';
 import type { AxiosError } from 'axios';
 
@@ -197,6 +198,59 @@ export default function CitizenIncidentDetailPage() {
         },
     });
 
+    const confirmAndBlockMutation = useMutation<
+        { decision: APIResponse<IncidentDecisionData>; dispatch: APIResponse<ShieldDispatchData> },
+        AxiosError<ApiErrorPayload>,
+        void
+    >({
+        mutationFn: async () => {
+            if (!id) {
+                throw new Error('Incident id manquant');
+            }
+
+            const comment = decisionComment.trim() || null;
+            const decisionResponse = await apiClient.patch<APIResponse<IncidentDecisionData>>(`/incidents/${id}/decision`, {
+                decision: 'CONFIRM',
+                comment,
+            });
+
+            if (!decisionResponse.data.success) {
+                throw new Error(decisionResponse.data.message || 'Echec confirmation incident');
+            }
+
+            const dispatchResponse = await apiClient.post<APIResponse<ShieldDispatchData>>('/shield/actions/dispatch', {
+                incident_id: id,
+                action_type: 'BLOCK_NUMBER',
+                reason: comment ?? 'Action rapide soutenance',
+                auto_callback: true,
+            });
+
+            if (!dispatchResponse.data.success) {
+                throw new Error(dispatchResponse.data.message || 'Echec action SHIELD');
+            }
+
+            return {
+                decision: decisionResponse.data,
+                dispatch: dispatchResponse.data,
+            };
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['citizen-incident', id] });
+            queryClient.invalidateQueries({ queryKey: ['citizen-incidents'] });
+            queryClient.invalidateQueries({ queryKey: ['shield-actions', id] });
+            queryClient.invalidateQueries({ queryKey: ['reports-list'] });
+            toast({
+                title: 'Workflow automatique execute',
+                description: 'Incident confirme et blocage simule declenche avec succes.',
+            });
+        },
+        onError: (err) => {
+            const fallback = err instanceof Error ? err.message : 'Erreur workflow automatique';
+            const msg = err.response?.data?.message || err.response?.data?.detail || fallback;
+            toast({ title: 'Erreur workflow', description: msg, variant: 'destructive' });
+        },
+    });
+
     const decisionMutation = useMutation<
         APIResponse<IncidentDecisionData>,
         AxiosError<ApiErrorPayload>,
@@ -248,6 +302,7 @@ export default function CitizenIncidentDetailPage() {
 
     const canDispatchShield = incident?.status === 'CONFIRMED' || incident?.status === 'BLOCKED_SIMULATED';
     const canGenerateReport = incident?.status === 'CONFIRMED' || incident?.status === 'BLOCKED_SIMULATED';
+    const canQuickConfirmAndBlock = incident?.status !== 'BLOCKED_SIMULATED';
 
     const riskProgress = useMemo(() => Math.min(100, Math.max(0, incident?.risk_score ?? 0)), [incident?.risk_score]);
 
@@ -431,6 +486,24 @@ export default function CitizenIncidentDetailPage() {
                         <p className="mb-4 text-xs text-muted-foreground">
                             Flux soutenance: decision SOC puis orchestration SHIELD vers API operateur simulee.
                         </p>
+
+                        <button
+                            onClick={() => confirmAndBlockMutation.mutate()}
+                            disabled={confirmAndBlockMutation.isPending || !canQuickConfirmAndBlock}
+                            className="mb-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-3 py-2.5 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-500/25 disabled:opacity-50"
+                        >
+                            {confirmAndBlockMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <Zap className="h-4 w-4" />
+                            )}
+                            Confirmer + Bloquer (auto)
+                        </button>
+                        {!canQuickConfirmAndBlock && (
+                            <p className="mb-3 text-xs text-muted-foreground">
+                                Incident deja bloque en simulation. Utiliser les actions standard pour les autres operations.
+                            </p>
+                        )}
 
                         <label className="mb-2 block text-xs text-muted-foreground">Commentaire analyste</label>
                         <textarea

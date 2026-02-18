@@ -1,7 +1,7 @@
 # Demo Checklist - Sprint 1 (L3)
 
-Version: v1.1  
-Date: 2026-02-17  
+Version: v1.2  
+Date: 2026-02-18  
 Objectif: valider un flux E2E demonstrable, repetable et sans ambiguite entre `verify` (analyse) et `report` (creation incident).
 
 ## 1. Prerequis environnement
@@ -20,11 +20,13 @@ Note operationnelle:
 
 Script fourni:
 - `scripts/demo_sprint1_smoke.ps1`
+- `scripts/demo_confirm_block_smoke.ps1` (workflow rapide SOC -> SHIELD)
 
 Execution:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/demo_sprint1_smoke.ps1
+powershell -ExecutionPolicy Bypass -File scripts/demo_confirm_block_smoke.ps1 -Username "admin@osint.com" -Password "adminosint"
 ```
 
 Resultats attendus:
@@ -33,6 +35,10 @@ Resultats attendus:
 - `POST /incidents/report` avec URL HTTP(S) retourne `queued_for_osint=true`
 - login analyste + lecture `GET /incidents/citizen` OK (si identifiants fournis)
 - generation `POST /reports/generate/{alert_uuid}` OK (si identifiants fournis)
+- workflow accelere:
+  - `PATCH /incidents/{id}/decision` avec `CONFIRM`
+  - `POST /shield/actions/dispatch` avec `BLOCK_NUMBER`
+  - verification `BLOCKED_SIMULATED` + timeline SHIELD
 
 ## 3. Scenario E2E UI principal (soutenance)
 
@@ -55,12 +61,13 @@ Resultats attendus:
     - stats numero (`reports_for_phone`, etc.)
     - captures associees
     - incidents lies
-11. Appliquer une decision SOC (`CONFIRM`, `REJECT` ou `ESCALATE`).
-12. Generer un rapport depuis:
+11. Option A (classique): appliquer une decision SOC (`CONFIRM`, `REJECT` ou `ESCALATE`) puis declencher une action SHIELD.
+12. Option B (raccourci soutenance): cliquer `Confirmer + Bloquer (auto)`.
+13. Generer un rapport depuis:
     - soit la liste `incidents-signales`
     - soit le detail incident
-13. Ouvrir `http://localhost:5173/reports` et verifier le rapport cree.
-14. Ouvrir le detail rapport et tester le telechargement PDF.
+14. Ouvrir `http://localhost:5173/reports` et verifier le rapport cree.
+15. Ouvrir le detail rapport et tester le telechargement PDF.
 
 ## 4. Cas de validation rapide
 
