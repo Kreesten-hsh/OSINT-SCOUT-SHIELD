@@ -10,6 +10,7 @@ import type { Alert } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { alertStatusLabel, alertStatusVariant } from '@/lib/presentation';
+import { downloadApiFile } from '@/lib/download';
 
 interface ReportListItem {
     id: number;
@@ -107,7 +108,6 @@ export default function ReportDetailPage() {
     });
 
     const activeReport = lastGeneratedReport ?? existingReport;
-    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
     if (isLoadingAlert) {
         return (
@@ -206,13 +206,33 @@ export default function ReportDetailPage() {
 
                         <div className="flex flex-wrap items-center gap-2">
                             <button
-                                onClick={() => window.open(`${apiBase}/reports/${activeReport.uuid}/download/pdf`, '_blank')}
+                                onClick={async () => {
+                                    try {
+                                        await downloadApiFile(`/reports/${activeReport.uuid}/download/pdf`, `report_${activeReport.uuid}.pdf`);
+                                    } catch {
+                                        toast({
+                                            title: 'Telechargement impossible',
+                                            description: 'Le PDF du rapport est indisponible.',
+                                            variant: 'destructive',
+                                        });
+                                    }
+                                }}
                                 className="inline-flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/15 px-3 py-2 text-sm font-semibold text-primary transition hover:bg-primary/25"
                             >
                                 <Download className="h-4 w-4" /> Telecharger PDF
                             </button>
                             <button
-                                onClick={() => window.open(`${apiBase}/reports/${activeReport.uuid}/download/json`, '_blank')}
+                                onClick={async () => {
+                                    try {
+                                        await downloadApiFile(`/reports/${activeReport.uuid}/download/json`, `report_${activeReport.uuid}.json`);
+                                    } catch {
+                                        toast({
+                                            title: 'Telechargement impossible',
+                                            description: 'Le JSON du rapport est indisponible.',
+                                            variant: 'destructive',
+                                        });
+                                    }
+                                }}
                                 className="inline-flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
                             >
                                 <ExternalLink className="h-4 w-4" /> Ouvrir JSON

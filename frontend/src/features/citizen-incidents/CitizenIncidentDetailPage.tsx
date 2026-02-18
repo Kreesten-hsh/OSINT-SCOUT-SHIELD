@@ -14,6 +14,7 @@ import {
     ShieldCheck,
     ShieldX,
     Siren,
+    Trash2,
     Zap,
 } from 'lucide-react';
 import type { AxiosError } from 'axios';
@@ -69,6 +70,12 @@ interface IncidentDecisionData {
 
 interface GeneratedReportData {
     uuid: string;
+}
+
+interface IncidentDeleteData {
+    alert_uuid: string;
+    deleted_reports_count: number;
+    deleted_evidences_count: number;
 }
 
 function formatDate(value: string): string {
@@ -279,6 +286,29 @@ export default function CitizenIncidentDetailPage() {
         },
     });
 
+    const deleteIncidentMutation = useMutation<APIResponse<IncidentDeleteData>, AxiosError<ApiErrorPayload>, void>({
+        mutationFn: async () => {
+            const response = await apiClient.delete<APIResponse<IncidentDeleteData>>(`/incidents/citizen/${id}`);
+            return response.data;
+        },
+        onSuccess: (payload) => {
+            if (!payload.success) {
+                toast({ title: 'Suppression impossible', description: payload.message, variant: 'destructive' });
+                return;
+            }
+            queryClient.invalidateQueries({ queryKey: ['citizen-incidents'] });
+            queryClient.invalidateQueries({ queryKey: ['alerts'] });
+            queryClient.invalidateQueries({ queryKey: ['reports-list'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+            toast({ title: 'Incident supprime', description: 'Le dossier et ses artefacts ont ete supprimes.' });
+            navigate('/incidents-signales');
+        },
+        onError: (err) => {
+            const msg = err.response?.data?.message || err.response?.data?.detail || 'Erreur suppression incident';
+            toast({ title: 'Suppression impossible', description: msg, variant: 'destructive' });
+        },
+    });
+
     const canDispatchShield = incident?.status === 'CONFIRMED' || incident?.status === 'BLOCKED_SIMULATED';
     const canGenerateReport = incident?.status === 'CONFIRMED' || incident?.status === 'BLOCKED_SIMULATED';
     const canQuickConfirmAndBlock = incident?.status !== 'BLOCKED_SIMULATED';
@@ -367,6 +397,21 @@ export default function CitizenIncidentDetailPage() {
                         >
                             Voir Rapports
                         </Link>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const ok = window.confirm(
+                                    'Supprimer cet incident va supprimer les preuves, rapports et fichiers associes. Continuer ?'
+                                );
+                                if (!ok) return;
+                                deleteIncidentMutation.mutate();
+                            }}
+                            disabled={deleteIncidentMutation.isPending}
+                            className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-destructive/35 bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive transition hover:bg-destructive/20 disabled:opacity-50"
+                        >
+                            {deleteIncidentMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                            Supprimer
+                        </button>
                     </div>
                 </div>
             </section>

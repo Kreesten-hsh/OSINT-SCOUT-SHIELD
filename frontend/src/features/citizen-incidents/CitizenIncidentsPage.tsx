@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import type { AxiosError } from 'axios';
-import { FileText, Loader2, Search } from 'lucide-react';
+import { FileText, Loader2, Search, Trash2 } from 'lucide-react';
 
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
@@ -17,6 +17,12 @@ type ApiErrorPayload = { message?: string; detail?: string };
 
 interface GeneratedReportData {
     uuid: string;
+}
+
+interface IncidentDeleteData {
+    alert_uuid: string;
+    deleted_reports_count: number;
+    deleted_evidences_count: number;
 }
 
 export default function CitizenIncidentsPage() {
@@ -77,6 +83,39 @@ export default function CitizenIncidentsPage() {
         },
         onSettled: () => {
             setGeneratingFor(null);
+        },
+    });
+
+    const deleteIncidentMutation = useMutation<
+        APIResponse<IncidentDeleteData>,
+        AxiosError<ApiErrorPayload>,
+        { incidentId: string }
+    >({
+        mutationFn: async ({ incidentId }) => {
+            const response = await apiClient.delete<APIResponse<IncidentDeleteData>>(`/incidents/citizen/${incidentId}`);
+            return response.data;
+        },
+        onSuccess: (payload) => {
+            if (!payload.success || !payload.data) {
+                toast({
+                    title: 'Erreur suppression',
+                    description: payload.message || 'Impossible de supprimer ce signalement.',
+                    variant: 'destructive',
+                });
+                return;
+            }
+            queryClient.invalidateQueries({ queryKey: ['citizen-incidents'] });
+            queryClient.invalidateQueries({ queryKey: ['alerts'] });
+            queryClient.invalidateQueries({ queryKey: ['reports-list'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+            toast({
+                title: 'Signalement supprime',
+                description: 'Incident, preuves et rapports associes supprimes.',
+            });
+        },
+        onError: (err) => {
+            const msg = err.response?.data?.message || err.response?.data?.detail || 'Impossible de supprimer ce signalement.';
+            toast({ title: 'Erreur suppression', description: msg, variant: 'destructive' });
         },
     });
 
@@ -246,6 +285,25 @@ export default function CitizenIncidentsPage() {
                                                         <FileText className="h-3.5 w-3.5" />
                                                     )}
                                                     Rapport
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const ok = window.confirm(
+                                                            'Supprimer ce signalement va supprimer preuves, rapports et fichiers associes. Continuer ?'
+                                                        );
+                                                        if (!ok) return;
+                                                        deleteIncidentMutation.mutate({ incidentId: item.alert_uuid });
+                                                    }}
+                                                    disabled={deleteIncidentMutation.isPending}
+                                                    className="inline-flex min-h-[32px] items-center gap-1 rounded-lg border border-destructive/35 bg-destructive/10 px-2.5 py-1.5 text-xs font-semibold text-destructive transition hover:bg-destructive/20 disabled:opacity-45"
+                                                >
+                                                    {deleteIncidentMutation.isPending ? (
+                                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                    ) : (
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    )}
+                                                    Supprimer
                                                 </button>
                                             </div>
                                         </td>

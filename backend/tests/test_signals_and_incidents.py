@@ -16,6 +16,7 @@ from app.schemas.shield import (
     ShieldIncidentTimelineData,
 )
 from app.schemas.citizen_incident import CitizenIncidentDetailData, CitizenIncidentListData
+from app.schemas.deletion import AlertDeletionData
 
 
 class FakeSession:
@@ -455,3 +456,75 @@ def test_citizen_incident_detail_authenticated_contract(monkeypatch) -> None:
     payload = response.json()
     assert payload["success"] is True
     assert payload["data"]["alert_uuid"] == str(incident_id)
+
+
+def test_alert_delete_requires_jwt() -> None:
+    fake_session = FakeSession()
+    client = build_client(fake_session, authenticated=False)
+
+    response = client.delete(f"/api/v1/alerts/{uuid.uuid4()}")
+
+    assert response.status_code == 401
+
+
+def test_alert_delete_authenticated_returns_contract(monkeypatch) -> None:
+    fake_session = FakeSession()
+    client = build_client(fake_session, authenticated=True)
+    alert_id = uuid.uuid4()
+
+    async def _fake_delete(*_args, **_kwargs):
+        return AlertDeletionData(
+            alert_uuid=alert_id,
+            deleted_reports_count=1,
+            deleted_evidences_count=2,
+            deleted_analysis_results_count=1,
+            deleted_files_count=3,
+            missing_files_count=0,
+            deleted_shield_actions_count=1,
+        )
+
+    monkeypatch.setattr("app.api.v1.endpoints.alerts.delete_alert_cascade", _fake_delete)
+
+    response = client.delete(f"/api/v1/alerts/{alert_id}")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["data"]["alert_uuid"] == str(alert_id)
+    assert payload["data"]["deleted_reports_count"] == 1
+
+
+def test_citizen_incident_delete_requires_jwt() -> None:
+    fake_session = FakeSession()
+    client = build_client(fake_session, authenticated=False)
+
+    response = client.delete(f"/api/v1/incidents/citizen/{uuid.uuid4()}")
+
+    assert response.status_code == 401
+
+
+def test_citizen_incident_delete_authenticated_returns_contract(monkeypatch) -> None:
+    fake_session = FakeSession()
+    client = build_client(fake_session, authenticated=True)
+    incident_id = uuid.uuid4()
+
+    async def _fake_delete(*_args, **_kwargs):
+        return AlertDeletionData(
+            alert_uuid=incident_id,
+            deleted_reports_count=2,
+            deleted_evidences_count=4,
+            deleted_analysis_results_count=1,
+            deleted_files_count=5,
+            missing_files_count=0,
+            deleted_shield_actions_count=2,
+        )
+
+    monkeypatch.setattr("app.api.v1.endpoints.incidents.delete_alert_cascade", _fake_delete)
+
+    response = client.delete(f"/api/v1/incidents/citizen/{incident_id}")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["data"]["alert_uuid"] == str(incident_id)
+    assert payload["data"]["deleted_evidences_count"] == 4

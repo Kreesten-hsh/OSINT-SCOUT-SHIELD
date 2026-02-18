@@ -9,8 +9,11 @@ from sqlalchemy.orm import selectinload
 
 from app.database import get_db
 from app.models import Alert
+from app.core.security import get_current_subject
 from app.schemas import AlertResponse, AlertUpdate
+from app.schemas.deletion import AlertDeletionData
 from app.schemas.response import APIResponse
+from app.services.cascade_delete import delete_alert_cascade
 
 
 router = APIRouter()
@@ -153,4 +156,22 @@ async def update_alert(
         success=True,
         message="Alerte mise a jour avec succes",
         data=_serialize_alert(alert),
+    )
+
+
+@router.delete("/{alert_uuid}", response_model=APIResponse[AlertDeletionData])
+async def delete_alert(
+    alert_uuid: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _subject: str = Depends(get_current_subject),
+):
+    result = await delete_alert_cascade(
+        db=db,
+        alert_uuid=alert_uuid,
+        require_citizen_source=False,
+    )
+    return APIResponse(
+        success=True,
+        message="Alerte supprimee avec nettoyage des artefacts associes.",
+        data=result,
     )

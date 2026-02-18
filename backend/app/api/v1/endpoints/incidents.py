@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import get_current_subject
 from app.database import get_db
 from app.schemas.citizen_incident import CitizenIncidentDetailData, CitizenIncidentListData
+from app.schemas.deletion import AlertDeletionData
 from app.schemas.response import APIResponse
 from app.schemas.signal import (
     IncidentReportData,
@@ -19,6 +20,7 @@ from app.services.incidents import (
     list_citizen_incidents,
     report_signal_to_incident,
 )
+from app.services.cascade_delete import delete_alert_cascade
 from app.schemas.shield import IncidentDecisionData, IncidentDecisionRequest
 from app.services.shield import apply_incident_decision
 
@@ -124,4 +126,22 @@ async def read_citizen_incident(
         success=True,
         message="Detail incident citoyen recupere.",
         data=payload,
+    )
+
+
+@router.delete("/citizen/{incident_id}", response_model=APIResponse[AlertDeletionData])
+async def delete_citizen_incident(
+    incident_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _subject: str = Depends(get_current_subject),
+):
+    result = await delete_alert_cascade(
+        db=db,
+        alert_uuid=incident_id,
+        require_citizen_source=True,
+    )
+    return APIResponse(
+        success=True,
+        message="Incident citoyen supprime avec preuves, rapports et artefacts associes.",
+        data=result,
     )

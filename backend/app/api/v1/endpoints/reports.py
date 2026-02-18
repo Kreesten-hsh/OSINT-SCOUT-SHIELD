@@ -1,5 +1,9 @@
+from pathlib import Path
+import json
+
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import FileResponse, Response
 from typing import List, Any
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -10,9 +14,9 @@ from app.services.snapshot import create_alert_snapshot
 from app.services.hashing import compute_snapshot_hash
 from app.services.pdf_generator import generate_forensic_pdf
 from sqlalchemy.sql import func
-import uuid
 import os
 import logging
+import uuid
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -127,13 +131,25 @@ async def download_pdf(
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
         
-    # Path absolu dans le conteneur
-    full_path = os.path.join("/app/evidences_store/reports", report.pdf_path)
-    
-    if not os.path.exists(full_path):
+    candidate_paths: list[Path] = []
+    raw_pdf = Path(str(report.pdf_path))
+    if raw_pdf.is_absolute():
+        candidate_paths.append(raw_pdf)
+    else:
+        candidate_paths.append(Path("/app/evidences_store/reports") / raw_pdf)
+        candidate_paths.append(Path("evidences_store/reports") / raw_pdf)
+        candidate_paths.append(Path("/app/evidences_store") / raw_pdf)
+        candidate_paths.append(Path("evidences_store") / raw_pdf)
+
+    full_path = next((path for path in candidate_paths if path.exists()), None)
+    if not full_path:
         raise HTTPException(status_code=404, detail="PDF file missing on disk")
-        
-    return FileResponse(full_path, media_type="application/pdf", filename=f"report_{report.uuid}.pdf")
+
+    return FileResponse(
+        str(full_path),
+        media_type="application/pdf",
+        filename=f"report_{report.uuid}.pdf",
+    )
 
 @router.get("/{report_uuid}/download/json")
 async def download_json(
@@ -147,4 +163,11 @@ async def download_json(
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
         
-    return report.snapshot_json
+    payload = jsonable_encoder(report.snapshot_json)
+    return Response(
+        content=json.dumps(payload, ensure_ascii=False, indent=2),
+        media_type="application/json",
+        headers={
+            "Content-Disposition": f"attachment; filename=report_{report.uuid}.json"
+        },
+    )

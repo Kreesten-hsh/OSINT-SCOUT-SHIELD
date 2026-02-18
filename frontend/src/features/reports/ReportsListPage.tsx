@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { Calendar, Download, ExternalLink, FileText, Fingerprint, Loader2, RefreshCcw } from 'lucide-react';
 
 import { apiClient } from '@/api/client';
+import { useToast } from '@/components/ui/use-toast';
+import { downloadApiFile } from '@/lib/download';
 import { riskTone } from '@/lib/presentation';
 
 interface ReportListItem {
@@ -29,6 +31,7 @@ interface ReportListItem {
 
 export default function ReportsListPage() {
     const navigate = useNavigate();
+    const { toast } = useToast();
 
     const { data: reports, isLoading, isError, refetch, isFetching } = useQuery({
         queryKey: ['reports-list'],
@@ -44,8 +47,6 @@ export default function ReportsListPage() {
         const withAlert = items.filter((r) => !!r.snapshot_json?.data?.alert?.uuid).length;
         return { total, withAlert };
     }, [reports]);
-
-    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
     return (
         <div className="space-y-5">
@@ -149,13 +150,33 @@ export default function ReportsListPage() {
 
                                     <div className="flex flex-wrap items-center gap-2">
                                         <button
-                                            onClick={() => window.open(`${apiBase}/reports/${report.uuid}/download/pdf`, '_blank')}
+                                            onClick={async () => {
+                                                try {
+                                                    await downloadApiFile(`/reports/${report.uuid}/download/pdf`, `report_${report.uuid}.pdf`);
+                                                } catch {
+                                                    toast({
+                                                        title: 'Telechargement impossible',
+                                                        description: 'Le PDF du rapport est indisponible.',
+                                                        variant: 'destructive',
+                                                    });
+                                                }
+                                            }}
                                             className="inline-flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/15 px-3 py-2 text-xs font-semibold text-primary transition hover:bg-primary/25"
                                         >
                                             <Download className="h-3.5 w-3.5" /> PDF
                                         </button>
                                         <button
-                                            onClick={() => window.open(`${apiBase}/reports/${report.uuid}/download/json`, '_blank')}
+                                            onClick={async () => {
+                                                try {
+                                                    await downloadApiFile(`/reports/${report.uuid}/download/json`, `report_${report.uuid}.json`);
+                                                } catch {
+                                                    toast({
+                                                        title: 'Telechargement impossible',
+                                                        description: 'Le JSON du rapport est indisponible.',
+                                                        variant: 'destructive',
+                                                    });
+                                                }
+                                            }}
                                             className="inline-flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-xs text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
                                         >
                                             <ExternalLink className="h-3.5 w-3.5" /> JSON

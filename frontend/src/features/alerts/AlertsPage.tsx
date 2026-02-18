@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Eye, Loader2, Search } from 'lucide-react';
+import type { AxiosError } from 'axios';
+import { ChevronLeft, ChevronRight, Eye, Loader2, Search, Trash2 } from 'lucide-react';
 
 import { apiClient } from '@/api/client';
+import type { APIResponse } from '@/api/types';
 import type { Alert, AlertStatus } from '@/types';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/components/ui/use-toast';
 import {
     alertStatusLabel,
     alertStatusVariant,
@@ -32,9 +35,12 @@ const STATUS_OPTIONS: Array<{ label: string; value: '' | AlertStatus }> = [
 ];
 
 export default function AlertsPage({ title = 'Alertes techniques' }: AlertsPageProps) {
+    const queryClient = useQueryClient();
+    const { toast } = useToast();
     const [searchParams, setSearchParams] = useSearchParams();
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
+    const [deletingUuid, setDeletingUuid] = useState<string | null>(null);
 
     const statusFilter = (searchParams.get('status') || '') as '' | AlertStatus;
     const pageSize = 10;
@@ -55,6 +61,42 @@ export default function AlertsPage({ title = 'Alertes techniques' }: AlertsPageP
     });
 
     const hasNextPage = data?.length === pageSize;
+
+    const deleteMutation = useMutation<
+        APIResponse<{ alert_uuid: string }>,
+        AxiosError<{ message?: string; detail?: string }>,
+        string
+    >({
+        mutationFn: async (alertUuid) => {
+            const response = await apiClient.delete<APIResponse<{ alert_uuid: string }>>(`/alerts/${alertUuid}`);
+            return response.data;
+        },
+        onSuccess: (payload) => {
+            if (!payload.success) {
+                toast({
+                    title: 'Suppression impossible',
+                    description: payload.message || 'La suppression a echoue.',
+                    variant: 'destructive',
+                });
+                return;
+            }
+            queryClient.invalidateQueries({ queryKey: ['alerts'] });
+            queryClient.invalidateQueries({ queryKey: ['citizen-incidents'] });
+            queryClient.invalidateQueries({ queryKey: ['reports-list'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+            toast({
+                title: 'Dossier supprime',
+                description: 'Alerte, preuves et rapports associes ont ete supprimes.',
+            });
+        },
+        onError: (err) => {
+            const msg = err.response?.data?.message || err.response?.data?.detail || 'Erreur lors de la suppression.';
+            toast({ title: 'Suppression impossible', description: msg, variant: 'destructive' });
+        },
+        onSettled: () => {
+            setDeletingUuid(null);
+        },
+    });
 
     return (
         <div className="space-y-5">
@@ -161,12 +203,33 @@ export default function AlertsPage({ title = 'Alertes techniques' }: AlertsPageP
                                     <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{alert.risk_score}/100</td>
                                     <td className="px-4 py-3 text-xs text-muted-foreground">{new Date(alert.created_at).toLocaleString()}</td>
                                     <td className="px-4 py-3 text-right">
-                                        <Link
-                                            to={isCitizenSource(alert.source_type) ? `/incidents-signales/${alert.uuid}` : `/alerts/${alert.uuid}`}
-                                            className="inline-flex rounded-lg border border-input bg-background/50 p-2 text-muted-foreground transition hover:border-primary/40 hover:text-primary"
-                                        >
-                                            <Eye className="h-4 w-4" />
-                                        </Link>
+                                        <div className="inline-flex items-center gap-2">
+                                            <Link
+                                                to={isCitizenSource(alert.source_type) ? `/incidents-signales/${alert.uuid}` : `/alerts/${alert.uuid}`}
+                                                className="inline-flex rounded-lg border border-input bg-background/50 p-2 text-muted-foreground transition hover:border-primary/40 hover:text-primary"
+                                            >
+                                                <Eye className="h-4 w-4" />
+                                            </Link>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const ok = window.confirm(
+                                                        'Supprimer ce dossier va aussi supprimer les preuves, rapports et fichiers associes. Continuer ?'
+                                                    );
+                                                    if (!ok) return;
+                                                    setDeletingUuid(alert.uuid);
+                                                    deleteMutation.mutate(alert.uuid);
+                                                }}
+                                                disabled={deleteMutation.isPending}
+                                                className="inline-flex rounded-lg border border-destructive/35 bg-destructive/10 p-2 text-destructive transition hover:bg-destructive/20 disabled:opacity-50"
+                                            >
+                                                {deleteMutation.isPending && deletingUuid === alert.uuid ? (
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                ) : (
+                                                    <Trash2 className="h-4 w-4" />
+                                                )}
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { type AxiosError } from 'axios';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, CheckCircle, FileBarChart, FileText, Loader2, Send, ShieldAlert, Siren, XCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, FileBarChart, FileText, Loader2, Send, ShieldAlert, Siren, Trash2, XCircle } from 'lucide-react';
 
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
@@ -29,6 +29,12 @@ interface IncidentDecisionData {
     alert_status: string;
     decision_status: 'PENDING' | 'VALIDATED' | 'REJECTED' | 'ESCALATED' | 'EXECUTED';
     comment?: string | null;
+}
+
+interface AlertDeleteData {
+    alert_uuid: string;
+    deleted_reports_count: number;
+    deleted_evidences_count: number;
 }
 
 export default function InvestigationPage() {
@@ -121,6 +127,29 @@ export default function InvestigationPage() {
         },
     });
 
+    const deleteAlertMutation = useMutation<APIResponse<AlertDeleteData>, AxiosError<ApiErrorPayload>, void>({
+        mutationFn: async () => {
+            const res = await apiClient.delete<APIResponse<AlertDeleteData>>(`/alerts/${id}`);
+            return res.data;
+        },
+        onSuccess: (response) => {
+            if (!response.success) {
+                toast({ title: 'Suppression impossible', description: response.message, variant: 'destructive' });
+                return;
+            }
+            queryClient.invalidateQueries({ queryKey: ['alerts'] });
+            queryClient.invalidateQueries({ queryKey: ['citizen-incidents'] });
+            queryClient.invalidateQueries({ queryKey: ['reports-list'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+            toast({ title: 'Alerte supprimee', description: 'Dossier et artefacts associes supprimes.' });
+            navigate('/alerts');
+        },
+        onError: (err) => {
+            const msg = err.response?.data?.message || err.response?.data?.detail || 'Erreur suppression alerte.';
+            toast({ title: 'Suppression impossible', description: msg, variant: 'destructive' });
+        },
+    });
+
     if (isLoading) {
         return (
             <div className="flex min-h-[60vh] items-center justify-center text-muted-foreground">
@@ -205,6 +234,22 @@ export default function InvestigationPage() {
                     >
                         {generateReportMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileBarChart className="h-4 w-4" />}
                         Generer rapport
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => {
+                            const ok = window.confirm(
+                                'Supprimer cette alerte va supprimer les preuves, rapports et fichiers associes. Continuer ?'
+                            );
+                            if (!ok) return;
+                            deleteAlertMutation.mutate();
+                        }}
+                        disabled={deleteAlertMutation.isPending}
+                        className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive transition hover:bg-destructive/20 disabled:opacity-50"
+                    >
+                        {deleteAlertMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                        Supprimer
                     </button>
                 </div>
             </section>

@@ -24,3 +24,4 @@ from .citizen_incident import (
     RelatedCitizenIncident,
     CitizenIncidentDetailData,
 )
+from .deletion import AlertDeletionData
