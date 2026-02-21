@@ -24,13 +24,13 @@ interface SidebarProps {
 
 const navItems = [
     { to: '/dashboard', label: 'Pilotage SOC', icon: Gauge },
-    { to: '/incidents-signales', label: 'Incidents signales', icon: ShieldEllipsis },
-    { to: '/alerts', label: 'Alertes techniques', icon: AlertTriangle },
+    { to: '/incidents-signales', label: 'Signalements citoyens', icon: ShieldEllipsis },
+    { to: '/alerts', label: 'Alertes de surveillance', icon: AlertTriangle },
     { to: '/reports', label: 'Rapports forensiques', icon: FileText },
     { to: '/evidence', label: 'Preuves', icon: NotebookTabs },
     { to: '/analyse', label: 'Analyse', icon: LineChart },
-    { to: '/monitoring', label: 'Surveillance', icon: Globe },
-    { to: '/ingestion', label: 'Ingestion', icon: PlusCircle },
+    { to: '/monitoring', label: 'Surveillance continue', icon: Globe },
+    { to: '/ingestion', label: 'Investigation manuelle', icon: PlusCircle },
     { to: '/settings', label: 'Parametres', icon: Settings },
 ];
 

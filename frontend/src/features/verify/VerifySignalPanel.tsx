@@ -15,6 +15,7 @@ interface VerifySignalData {
   explanation: string[];
   should_report: boolean;
   matched_rules: string[];
+  recurrence_count: number;
 }
 
 interface IncidentReportData {
@@ -226,6 +227,12 @@ export default function VerifySignalPanel() {
             </span>
           </div>
 
+          {result.recurrence_count > 0 && (
+            <div className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-300">
+              ⚠ Ce numero a deja ete signale {result.recurrence_count} fois par d'autres utilisateurs.
+            </div>
+          )}
+
           <ul className="space-y-1 rounded-xl border border-border/70 bg-secondary/20 p-4 text-sm text-muted-foreground">
             {result.explanation.map((line, idx) => (
               <li key={idx} className="flex items-start gap-2">
@@ -262,4 +269,3 @@ export default function VerifySignalPanel() {
     </>
   );
 }
-

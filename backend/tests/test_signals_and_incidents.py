@@ -35,6 +35,13 @@ class FakeSession:
     async def refresh(self, _obj: Any) -> None:
         return None
 
+    async def execute(self, _query: Any):
+        class _Result:
+            def scalar_one(self) -> int:
+                return 0
+
+        return _Result()
+
     async def close(self) -> None:
         return None
 

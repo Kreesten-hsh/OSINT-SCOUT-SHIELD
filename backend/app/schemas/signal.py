@@ -21,6 +21,7 @@ class VerifySignalData(BaseModel):
     explanation: list[str]
     should_report: bool
     matched_rules: list[str]
+    recurrence_count: int = Field(default=0, ge=0)
 
 
 class VerificationSnapshot(BaseModel):
