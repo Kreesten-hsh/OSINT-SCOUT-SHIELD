@@ -8,6 +8,7 @@ import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
 import type { Alert, AlertStatus } from '@/types';
 import { Badge } from '@/components/ui/badge';
+import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/use-toast';
 import {
     alertStatusLabel,
@@ -43,6 +44,7 @@ export default function AlertsPage({ title = 'Alertes techniques', scope, readOn
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
     const [deletingUuid, setDeletingUuid] = useState<string | null>(null);
+    const [confirmDeleteAlertUuid, setConfirmDeleteAlertUuid] = useState<string | null>(null);
 
     const statusFilter = (searchParams.get('status') || '') as '' | AlertStatus;
     const pageSize = 10;
@@ -100,8 +102,15 @@ export default function AlertsPage({ title = 'Alertes techniques', scope, readOn
         },
         onSettled: () => {
             setDeletingUuid(null);
+            setConfirmDeleteAlertUuid(null);
         },
     });
+
+    const handleConfirmDeleteAlert = () => {
+        if (!confirmDeleteAlertUuid) return;
+        setDeletingUuid(confirmDeleteAlertUuid);
+        deleteMutation.mutate(confirmDeleteAlertUuid);
+    };
 
     return (
         <div className="space-y-5">
@@ -219,12 +228,7 @@ export default function AlertsPage({ title = 'Alertes techniques', scope, readOn
                                                 <button
                                                     type="button"
                                                     onClick={() => {
-                                                        const ok = window.confirm(
-                                                            'Supprimer ce dossier va aussi supprimer les preuves, rapports et fichiers associes. Continuer ?'
-                                                        );
-                                                        if (!ok) return;
-                                                        setDeletingUuid(alert.uuid);
-                                                        deleteMutation.mutate(alert.uuid);
+                                                        setConfirmDeleteAlertUuid(alert.uuid);
                                                     }}
                                                     disabled={deleteMutation.isPending}
                                                     className="inline-flex rounded-lg border border-destructive/35 bg-destructive/10 p-2 text-destructive transition hover:bg-destructive/20 disabled:opacity-50"
@@ -264,6 +268,20 @@ export default function AlertsPage({ title = 'Alertes techniques', scope, readOn
                     </div>
                 </div>
             </section>
+
+            <ConfirmDialog
+                open={!!confirmDeleteAlertUuid}
+                title="Confirmer la suppression"
+                description="Supprimer ce dossier va aussi supprimer les preuves, rapports et fichiers associes. Cette action est irreversible."
+                confirmLabel="Supprimer le dossier"
+                isLoading={deleteMutation.isPending}
+                onCancel={() => {
+                    if (!deleteMutation.isPending) {
+                        setConfirmDeleteAlertUuid(null);
+                    }
+                }}
+                onConfirm={handleConfirmDeleteAlert}
+            />
         </div>
     );
 }

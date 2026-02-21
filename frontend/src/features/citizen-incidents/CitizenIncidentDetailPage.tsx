@@ -22,6 +22,7 @@ import type { AxiosError } from 'axios';
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
 import { Badge } from '@/components/ui/badge';
+import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/use-toast';
 import type { CitizenIncidentAttachment, CitizenIncidentDetailData } from '@/types';
 import {
@@ -138,6 +139,7 @@ export default function CitizenIncidentDetailPage() {
 
     const [playbookAction, setPlaybookAction] = useState<PlaybookActionType>('BLOCK_NUMBER');
     const [decisionComment, setDecisionComment] = useState('');
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
     const { data: incident, isLoading, isError } = useQuery({
         queryKey: ['citizen-incident', id],
@@ -307,6 +309,9 @@ export default function CitizenIncidentDetailPage() {
             const msg = err.response?.data?.message || err.response?.data?.detail || 'Erreur suppression incident';
             toast({ title: 'Suppression impossible', description: msg, variant: 'destructive' });
         },
+        onSettled: () => {
+            setShowDeleteDialog(false);
+        },
     });
 
     const canDispatchShield = incident?.status === 'CONFIRMED' || incident?.status === 'BLOCKED_SIMULATED';
@@ -399,13 +404,7 @@ export default function CitizenIncidentDetailPage() {
                         </Link>
                         <button
                             type="button"
-                            onClick={() => {
-                                const ok = window.confirm(
-                                    'Supprimer cet incident va supprimer les preuves, rapports et fichiers associes. Continuer ?'
-                                );
-                                if (!ok) return;
-                                deleteIncidentMutation.mutate();
-                            }}
+                            onClick={() => setShowDeleteDialog(true)}
                             disabled={deleteIncidentMutation.isPending}
                             className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-destructive/35 bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive transition hover:bg-destructive/20 disabled:opacity-50"
                         >
@@ -620,6 +619,20 @@ export default function CitizenIncidentDetailPage() {
                     </div>
                 )}
             </section>
+
+            <ConfirmDialog
+                open={showDeleteDialog}
+                title="Confirmer la suppression"
+                description="Supprimer cet incident supprimera aussi les preuves, rapports et fichiers associes. Cette action est irreversible."
+                confirmLabel="Supprimer l'incident"
+                isLoading={deleteIncidentMutation.isPending}
+                onCancel={() => {
+                    if (!deleteIncidentMutation.isPending) {
+                        setShowDeleteDialog(false);
+                    }
+                }}
+                onConfirm={() => deleteIncidentMutation.mutate()}
+            />
         </div>
     );
 }

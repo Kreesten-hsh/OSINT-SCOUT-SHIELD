@@ -7,6 +7,7 @@ import { ArrowLeft, CheckCircle, FileBarChart, FileText, Loader2, Send, ShieldAl
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
 import { Badge } from '@/components/ui/badge';
+import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/use-toast';
 import type { Alert, AlertStatus } from '@/types';
 import { alertStatusLabel, alertStatusVariant, displayTarget, riskSeverity, sourceLabel } from '@/lib/presentation';
@@ -43,6 +44,7 @@ export default function InvestigationPage() {
     const queryClient = useQueryClient();
     const { toast } = useToast();
     const [notesDraft, setNotesDraft] = useState<string | null>(null);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
     const { data: alert, isLoading, isError } = useQuery({
         queryKey: ['alert', id],
@@ -148,6 +150,9 @@ export default function InvestigationPage() {
             const msg = err.response?.data?.message || err.response?.data?.detail || 'Erreur suppression alerte.';
             toast({ title: 'Suppression impossible', description: msg, variant: 'destructive' });
         },
+        onSettled: () => {
+            setShowDeleteDialog(false);
+        },
     });
 
     if (isLoading) {
@@ -238,13 +243,7 @@ export default function InvestigationPage() {
 
                     <button
                         type="button"
-                        onClick={() => {
-                            const ok = window.confirm(
-                                'Supprimer cette alerte va supprimer les preuves, rapports et fichiers associes. Continuer ?'
-                            );
-                            if (!ok) return;
-                            deleteAlertMutation.mutate();
-                        }}
+                        onClick={() => setShowDeleteDialog(true)}
                         disabled={deleteAlertMutation.isPending}
                         className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive transition hover:bg-destructive/20 disabled:opacity-50"
                     >
@@ -324,6 +323,20 @@ export default function InvestigationPage() {
                     <FileText className="h-4 w-4" /> Voir tous les rapports
                 </Link>
             </section>
+
+            <ConfirmDialog
+                open={showDeleteDialog}
+                title="Confirmer la suppression"
+                description="Supprimer cette alerte supprimera aussi les preuves, rapports et fichiers associes. Cette action est irreversible."
+                confirmLabel="Supprimer l'alerte"
+                isLoading={deleteAlertMutation.isPending}
+                onCancel={() => {
+                    if (!deleteAlertMutation.isPending) {
+                        setShowDeleteDialog(false);
+                    }
+                }}
+                onConfirm={() => deleteAlertMutation.mutate()}
+            />
         </div>
     );
 }

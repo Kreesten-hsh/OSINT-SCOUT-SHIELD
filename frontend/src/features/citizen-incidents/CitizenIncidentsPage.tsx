@@ -8,6 +8,7 @@ import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
 import { Badge } from '@/components/ui/badge';
+import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/use-toast';
 import type { CitizenIncidentListData, CitizenIncidentListItem } from '@/types';
 import { alertStatusLabel, alertStatusVariant, channelLabel } from '@/lib/presentation';
@@ -41,6 +42,8 @@ export default function CitizenIncidentsPage() {
     const [status, setStatus] = useState('');
     const [page, setPage] = useState(1);
     const [generatingFor, setGeneratingFor] = useState<string | null>(null);
+    const [deletingIncidentId, setDeletingIncidentId] = useState<string | null>(null);
+    const [confirmDeleteIncidentId, setConfirmDeleteIncidentId] = useState<string | null>(null);
 
     const { data, isLoading, isError, refetch } = useQuery({
         queryKey: ['citizen-incidents', page, search, status],
@@ -134,6 +137,10 @@ export default function CitizenIncidentsPage() {
             const msg = err.response?.data?.message || err.response?.data?.detail || 'Impossible de supprimer ce signalement.';
             toast({ title: 'Erreur suppression', description: msg, variant: 'destructive' });
         },
+        onSettled: () => {
+            setDeletingIncidentId(null);
+            setConfirmDeleteIncidentId(null);
+        },
     });
 
     const hasNextPage = !!data && data.skip + data.items.length < data.total;
@@ -150,6 +157,12 @@ export default function CitizenIncidentsPage() {
             highRisk: items.filter((item) => item.risk_score >= 70).length,
         };
     }, [data]);
+
+    const handleConfirmDeleteIncident = () => {
+        if (!confirmDeleteIncidentId) return;
+        setDeletingIncidentId(confirmDeleteIncidentId);
+        deleteIncidentMutation.mutate({ incidentId: confirmDeleteIncidentId });
+    };
 
     return (
         <div className="space-y-5">
@@ -346,16 +359,12 @@ export default function CitizenIncidentsPage() {
                                                 <button
                                                     type="button"
                                                     onClick={() => {
-                                                        const ok = window.confirm(
-                                                            'Supprimer ce signalement va supprimer preuves, rapports et fichiers associes. Continuer ?'
-                                                        );
-                                                        if (!ok) return;
-                                                        deleteIncidentMutation.mutate({ incidentId: item.alert_uuid });
+                                                        setConfirmDeleteIncidentId(item.alert_uuid);
                                                     }}
                                                     disabled={deleteIncidentMutation.isPending}
                                                     className="inline-flex min-h-[32px] items-center gap-1 rounded-lg border border-destructive/35 bg-destructive/10 px-2.5 py-1.5 text-xs font-semibold text-destructive transition hover:bg-destructive/20 disabled:opacity-45"
                                                 >
-                                                    {deleteIncidentMutation.isPending ? (
+                                                    {deleteIncidentMutation.isPending && deletingIncidentId === item.alert_uuid ? (
                                                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                                                     ) : (
                                                         <Trash2 className="h-3.5 w-3.5" />
@@ -391,6 +400,20 @@ export default function CitizenIncidentsPage() {
                     </div>
                 </div>
             </section>
+
+            <ConfirmDialog
+                open={!!confirmDeleteIncidentId}
+                title="Confirmer la suppression"
+                description="Supprimer ce signalement supprimera aussi les preuves, rapports et fichiers associes. Cette action est irreversible."
+                confirmLabel="Supprimer le signalement"
+                isLoading={deleteIncidentMutation.isPending}
+                onCancel={() => {
+                    if (!deleteIncidentMutation.isPending) {
+                        setConfirmDeleteIncidentId(null);
+                    }
+                }}
+                onConfirm={handleConfirmDeleteIncident}
+            />
         </div>
     );
 }
