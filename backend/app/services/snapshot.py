@@ -4,6 +4,7 @@ from sqlalchemy import select
 from app.models import Alert
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.encoders import jsonable_encoder
+from app.services.detection import score_signal
 
 SNAPSHOT_VERSION = "1.0"
 ENGINE_VERSION = "v1.0.3"
@@ -45,14 +46,31 @@ async def create_alert_snapshot(alert_id: int, db: AsyncSession) -> dict:
             })
         
     # Analysis Data
-    analysis_data = None
+    computed_detection = score_signal(
+        message=alert.reported_message or "",
+        url=alert.url,
+        phone=alert.phone_number,
+    )
+    categories_from_detection = [
+        {"name": category, "score": alert.risk_score or computed_detection["risk_score"]}
+        for category in computed_detection.get("categories_detected", [])
+    ]
+
+    analysis_data = {
+        "risk_score": alert.risk_score or computed_detection["risk_score"] or 0,
+        "categories": categories_from_detection,
+        "entities": [],
+        "factors_detected": computed_detection.get("explanation", []),
+        "matched_rules": computed_detection.get("matched_rules", []),
+        "generated_at": datetime.utcnow().isoformat(), # Approx, car pas de created_at sur analysis
+    }
+
     if alert.analysis_results:
-        analysis_data = {
-            "risk_score": alert.risk_score or 0,
-            "categories": alert.analysis_results.categories,
-            "entities": alert.analysis_results.entities,
-            "generated_at": datetime.utcnow().isoformat() # Approx, car pas de created_at sur analysis
-        }
+        existing_categories = alert.analysis_results.categories or []
+        existing_entities = alert.analysis_results.entities or []
+        if existing_categories:
+            analysis_data["categories"] = existing_categories
+        analysis_data["entities"] = existing_entities
 
     # Core Alert Data
     alert_core = {

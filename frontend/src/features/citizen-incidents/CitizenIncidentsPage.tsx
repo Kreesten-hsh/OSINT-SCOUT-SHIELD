@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import type { AxiosError } from 'axios';
 import { FileText, Loader2, Search, Trash2 } from 'lucide-react';
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
@@ -23,6 +24,13 @@ interface IncidentDeleteData {
     alert_uuid: string;
     deleted_reports_count: number;
     deleted_evidences_count: number;
+}
+
+interface CitizenTopNumbersData {
+    top_numbers: Array<{
+        phone: string;
+        count: number;
+    }>;
 }
 
 export default function CitizenIncidentsPage() {
@@ -49,6 +57,15 @@ export default function CitizenIncidentsPage() {
                 throw new Error(response.data.message || 'Erreur chargement incidents citoyens');
             }
             return response.data.data;
+        },
+    });
+    const { data: topNumbersData, isLoading: isTopNumbersLoading } = useQuery({
+        queryKey: ['citizen-incidents', 'top-numbers'],
+        queryFn: async () => {
+            const response = await apiClient.get<APIResponse<CitizenTopNumbersData>>(
+                '/incidents/citizen/stats/top-numbers?limit=5',
+            );
+            return response.data.data?.top_numbers ?? [];
         },
     });
 
@@ -120,6 +137,7 @@ export default function CitizenIncidentsPage() {
     });
 
     const hasNextPage = !!data && data.skip + data.items.length < data.total;
+    const topNumbers = topNumbersData ?? [];
 
     const summary = useMemo(() => {
         const items = data?.items ?? [];
@@ -200,7 +218,46 @@ export default function CitizenIncidentsPage() {
                 </div>
             </section>
 
-            <section className="panel overflow-hidden fade-rise-in-2">
+            <section className="panel p-5 fade-rise-in-2">
+                <h3 className="section-title">Top 5 numeros les plus signales</h3>
+                <p className="section-subtitle">Les numeros sont partiellement masques pour protection des donnees.</p>
+
+                {isTopNumbersLoading ? (
+                    <div className="mt-4 space-y-3 animate-pulse">
+                        <div className="h-4 w-1/3 rounded bg-secondary/40" />
+                        <div className="h-56 rounded-xl bg-secondary/30" />
+                    </div>
+                ) : topNumbers.length > 0 ? (
+                    <div className="mt-4 h-72 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={topNumbers}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.20)" />
+                                <XAxis dataKey="phone" stroke="#94A3B8" />
+                                <YAxis allowDecimals={false} stroke="#94A3B8" />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: '#0F172A',
+                                        border: '1px solid rgba(148,163,184,0.35)',
+                                        borderRadius: '0.75rem',
+                                        color: '#E2E8F0',
+                                    }}
+                                />
+                                <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                                    {topNumbers.map((entry) => (
+                                        <Cell key={entry.phone} fill={entry.count > 5 ? '#EF4444' : '#F59E0B'} />
+                                    ))}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                ) : (
+                    <p className="mt-4 rounded-xl border border-border/70 bg-background/50 px-3 py-6 text-sm text-muted-foreground">
+                        Aucune donnee disponible
+                    </p>
+                )}
+            </section>
+
+            <section className="panel overflow-hidden fade-rise-in-3">
                 <div className="overflow-x-auto">
                     <table className="w-full min-w-[920px] text-left text-sm">
                         <thead className="bg-secondary/35 text-xs uppercase tracking-wide text-muted-foreground">

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, text, desc
+from sqlalchemy import select, func, desc, case
 from app.core.security import require_role
 from app.database import get_db
 from app.models import Alert
@@ -8,6 +8,70 @@ from datetime import datetime, timedelta
 import pytz
 
 router = APIRouter()
+
+
+@router.get("/stats")
+async def get_dashboard_stats(
+    db: AsyncSession = Depends(get_db),
+    _principal=Depends(require_role(["ANALYST", "ADMIN"])),
+):
+    now_utc = datetime.now(pytz.utc)
+    start_date = (now_utc - timedelta(days=6)).date()
+    start_dt = datetime.combine(start_date, datetime.min.time(), tzinfo=pytz.utc)
+
+    per_day_stmt = (
+        select(
+            func.date(Alert.created_at).label("day"),
+            func.count(Alert.id).label("count"),
+        )
+        .where(Alert.created_at >= start_dt)
+        .group_by(func.date(Alert.created_at))
+        .order_by(func.date(Alert.created_at).asc())
+    )
+    per_day_rows = (await db.execute(per_day_stmt)).all()
+    day_map = {str(day): int(count) for day, count in per_day_rows}
+
+    incidents_by_day = []
+    for offset in range(7):
+        current_day = start_date + timedelta(days=offset)
+        day_key = current_day.isoformat()
+        incidents_by_day.append(
+            {
+                "date": day_key,
+                "count": day_map.get(day_key, 0),
+            }
+        )
+
+    incidents_by_risk = {"HIGH": 0, "MEDIUM": 0, "LOW": 0}
+    risk_stmt = (
+        select(
+            func.sum(case((Alert.risk_score >= 65, 1), else_=0)).label("high_count"),
+            func.sum(case(((Alert.risk_score >= 35) & (Alert.risk_score < 65), 1), else_=0)).label("medium_count"),
+            func.sum(case((Alert.risk_score < 35, 1), else_=0)).label("low_count"),
+        )
+        .select_from(Alert)
+    )
+    risk_row = (await db.execute(risk_stmt)).first()
+    if risk_row:
+        incidents_by_risk = {
+            "HIGH": int(risk_row.high_count or 0),
+            "MEDIUM": int(risk_row.medium_count or 0),
+            "LOW": int(risk_row.low_count or 0),
+        }
+
+    status_order = ["NEW", "IN_REVIEW", "CONFIRMED", "DISMISSED", "BLOCKED_SIMULATED"]
+    status_stmt = select(Alert.status, func.count(Alert.id)).group_by(Alert.status)
+    status_rows = (await db.execute(status_stmt)).all()
+    incidents_by_status = {status: 0 for status in status_order}
+    for status, count in status_rows:
+        if status in incidents_by_status:
+            incidents_by_status[status] = int(count)
+
+    return {
+        "incidents_by_day": incidents_by_day,
+        "incidents_by_risk": incidents_by_risk,
+        "incidents_by_status": incidents_by_status,
+    }
 
 @router.get("/stats/weekly")
 async def get_weekly_stats(

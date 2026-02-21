@@ -91,6 +91,32 @@ def test_verify_valid_returns_score_and_no_alert_created() -> None:
     assert fake_session.added == []
 
 
+def test_verify_recalibrated_message_returns_high_and_categories() -> None:
+    fake_session = FakeSession()
+    client = build_client(fake_session)
+
+    message = (
+        "Felicitations ! Votre compte MTN Mobile Money a ete selectionne pour recevoir 75 000 FCFA. "
+        "Pour valider votre gain, envoyez votre code OTP au +229 97 45 23 11 dans les 10 minutes. "
+        "Passe ce delai, le montant sera annule. Agent MTN Benin - Service Client"
+    )
+
+    response = client.post(
+        "/api/v1/signals/verify",
+        json={
+            "message": message,
+            "channel": "WEB_PORTAL",
+            "phone": "0169647090",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["data"]["risk_score"] >= 75
+    assert payload["data"]["risk_level"] == "HIGH"
+    assert payload["data"]["categories_detected"]
+
+
 def test_report_valid_without_url_creates_alert_and_not_queued(monkeypatch) -> None:
     fake_session = FakeSession()
     client = build_client(fake_session)
@@ -419,6 +445,39 @@ def test_citizen_incidents_list_requires_jwt() -> None:
     response = client.get("/api/v1/incidents/citizen")
 
     assert response.status_code == 401
+
+
+def test_citizen_top_numbers_requires_jwt() -> None:
+    fake_session = FakeSession()
+    client = build_client(fake_session, authenticated=False)
+
+    response = client.get("/api/v1/incidents/citizen/stats/top-numbers")
+
+    assert response.status_code == 401
+
+
+def test_citizen_top_numbers_authenticated_contract(monkeypatch) -> None:
+    fake_session = FakeSession()
+    client = build_client(fake_session, authenticated=True)
+
+    async def _fake_top_numbers(*_args, **_kwargs):
+        return [
+            {"phone": "016****090", "count": 7},
+            {"phone": "019****311", "count": 3},
+        ]
+
+    monkeypatch.setattr("app.api.v1.endpoints.incidents.get_top_reported_numbers", _fake_top_numbers)
+
+    response = client.get(
+        "/api/v1/incidents/citizen/stats/top-numbers",
+        headers=auth_headers("ANALYST"),
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["data"]["top_numbers"][0]["phone"] == "016****090"
+    assert payload["data"]["top_numbers"][0]["count"] == 7
 
 
 def test_citizen_incidents_list_authenticated_contract(monkeypatch) -> None:

@@ -363,3 +363,43 @@ async def get_citizen_incident_detail(
         ),
         related_incidents=related_incidents,
     )
+
+
+def _mask_phone(phone_number: str) -> str:
+    digits = re.sub(r"\D", "", phone_number or "")
+    if len(digits) > 10:
+        digits = digits[-10:]
+    if len(digits) < 7:
+        return phone_number or "-"
+    return f"{digits[:3]}****{digits[-3:]}"
+
+
+async def get_top_reported_numbers(
+    db: AsyncSession,
+    limit: int = 5,
+    owner_user_id: int | None = None,
+) -> list[dict[str, int | str]]:
+    filters = [
+        Alert.source_type.like("CITIZEN_%"),
+        Alert.phone_number.is_not(None),
+        Alert.phone_number != "",
+    ]
+    if owner_user_id is not None:
+        filters.append(Alert.owner_user_id == owner_user_id)
+
+    stmt = (
+        select(Alert.phone_number, func.count(Alert.id).label("total"))
+        .where(*filters)
+        .group_by(Alert.phone_number)
+        .order_by(func.count(Alert.id).desc(), Alert.phone_number.asc())
+        .limit(limit)
+    )
+    rows = (await db.execute(stmt)).all()
+    return [
+        {
+            "phone": _mask_phone(str(phone)),
+            "count": int(total),
+        }
+        for phone, total in rows
+        if phone
+    ]

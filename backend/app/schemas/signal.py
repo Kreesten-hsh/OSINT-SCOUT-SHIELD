@@ -21,6 +21,7 @@ class VerifySignalData(BaseModel):
     explanation: list[str]
     should_report: bool
     matched_rules: list[str]
+    categories_detected: list[str] = Field(default_factory=list)
     recurrence_count: int = Field(default=0, ge=0)
 
 
@@ -28,7 +29,7 @@ class VerificationSnapshot(BaseModel):
     risk_score: int = Field(ge=0, le=100)
     risk_level: RiskLevel
     should_report: bool
-    matched_rules: list[str] = []
+    matched_rules: list[str] = Field(default_factory=list)
 
 
 class IncidentReportRequest(BaseModel):

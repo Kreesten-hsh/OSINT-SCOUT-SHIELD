@@ -27,6 +27,15 @@ class CitizenIncidentListData(BaseModel):
     limit: int
 
 
+class CitizenTopNumberItem(BaseModel):
+    phone: str
+    count: int
+
+
+class CitizenTopNumbersData(BaseModel):
+    top_numbers: list[CitizenTopNumberItem]
+
+
 class CitizenIncidentAttachment(BaseModel):
     evidence_id: int
     file_path: str

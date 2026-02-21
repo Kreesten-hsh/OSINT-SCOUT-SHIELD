@@ -67,6 +67,15 @@ async def generate_report(
         
     # 2. Créer le Snapshot
     snapshot = await create_alert_snapshot(alert_id, db)
+
+    # Enrichissement: nombre de signalements similaires sur le meme numero.
+    alert_data = (snapshot.get("data") or {}).get("alert") or {}
+    phone_number = str(alert_data.get("phone_number") or "").strip()
+    recurrence_count = 0
+    if phone_number:
+        recurrence_stmt = select(func.count(Alert.id)).where(Alert.phone_number == phone_number)
+        recurrence_count = int((await db.execute(recurrence_stmt)).scalar_one() or 0)
+    alert_data["recurrence_count"] = recurrence_count
     
     # 3. Calculer le Hash global
     report_hash = compute_snapshot_hash(snapshot)

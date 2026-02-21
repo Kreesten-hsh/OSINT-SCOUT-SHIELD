@@ -23,6 +23,7 @@ from app.schemas.signal import (
 )
 from app.services.incidents import (
     get_citizen_incident_detail,
+    get_top_reported_numbers,
     list_citizen_incidents,
     report_signal_to_incident,
 )
@@ -30,6 +31,7 @@ from app.services.cascade_delete import delete_alert_cascade
 from app.schemas.shield import IncidentDecisionData, IncidentDecisionRequest
 from app.schemas.token import TokenPayload
 from app.services.shield import apply_incident_decision
+from app.schemas.citizen_incident import CitizenTopNumbersData
 
 
 router = APIRouter()
@@ -137,6 +139,27 @@ async def read_citizen_incidents(
         success=True,
         message="Liste des incidents citoyens recuperee.",
         data=payload,
+    )
+
+
+@router.get("/citizen/stats/top-numbers", response_model=APIResponse[CitizenTopNumbersData])
+async def read_citizen_top_numbers(
+    db: AsyncSession = Depends(get_db),
+    scope: str | None = Query(default=None, pattern="^me$"),
+    limit: int = Query(default=5, ge=1, le=10),
+    _subject: str = Depends(get_current_subject),
+    token_data: TokenPayload = Depends(get_current_token_payload),
+):
+    scope_owner_user_id = resolve_scope_owner_user_id(token_data, scope)
+    top_numbers = await get_top_reported_numbers(
+        db=db,
+        limit=limit,
+        owner_user_id=scope_owner_user_id,
+    )
+    return APIResponse(
+        success=True,
+        message="Top numeros recuperes.",
+        data=CitizenTopNumbersData(top_numbers=top_numbers),
     )
 
 
