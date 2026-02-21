@@ -1,13 +1,15 @@
 from typing import Any, List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError
 
+from app.core.security import get_current_token_payload, require_role, resolve_scope_owner_user_id
 from app.database import get_db
 from app.models.source import MonitoringSource, ScrapingRun
 from app.schemas.source import SourceCreate, SourceResponse, SourceUpdate, ScrapingRunResponse
 from app.schemas.response import APIResponse
+from app.schemas.token import TokenPayload
 
 router = APIRouter()
 
@@ -15,12 +17,19 @@ router = APIRouter()
 async def read_sources(
     skip: int = 0,
     limit: int = 100,
-    db: AsyncSession = Depends(get_db)
+    scope: str | None = Query(default=None, pattern="^me$"),
+    db: AsyncSession = Depends(get_db),
+    token_data: TokenPayload = Depends(get_current_token_payload),
 ):
     """
     Liste toutes les sources de monitoring configurées.
     """
-    query = select(MonitoringSource).order_by(MonitoringSource.id.desc()).offset(skip).limit(limit)
+    scope_owner_user_id = resolve_scope_owner_user_id(token_data, scope)
+
+    query = select(MonitoringSource).order_by(MonitoringSource.id.desc())
+    if scope_owner_user_id is not None:
+        query = query.where(MonitoringSource.owner_user_id == scope_owner_user_id)
+    query = query.offset(skip).limit(limit)
     result = await db.execute(query)
     sources = result.scalars().all()
     
@@ -33,7 +42,8 @@ async def read_sources(
 @router.post("/", response_model=APIResponse[SourceResponse], status_code=status.HTTP_201_CREATED)
 async def create_source(
     source_in: SourceCreate,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    token_data: TokenPayload = Depends(get_current_token_payload),
 ):
     """
     Ajoute une nouvelle source de monitoring.
@@ -42,7 +52,8 @@ async def create_source(
     # The model defines UUID as unique but URL is not unique in model definition (only UUID).
     # But logical duplicate check is good.
     
-    source = MonitoringSource(**source_in.model_dump())
+    owner_user_id = resolve_scope_owner_user_id(token_data, None)
+    source = MonitoringSource(**source_in.model_dump(), owner_user_id=owner_user_id)
     db.add(source)
     try:
         await db.commit()
@@ -104,7 +115,8 @@ async def toggle_source(
 @router.delete("/{source_id}", response_model=APIResponse[SourceResponse])
 async def delete_source(
     source_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _principal=Depends(require_role(["ANALYST", "ADMIN"])),
 ):
     """
     Supprime une source.

@@ -35,6 +35,7 @@ async def report_signal_to_incident(
     request: IncidentReportRequest,
     db: AsyncSession,
     screenshots: list[UploadFile] | None = None,
+    owner_user_id: int | None = None,
 ) -> IncidentReportData:
     normalized_phone = request.phone.strip()
     if not PHONE_PATTERN.match(normalized_phone):
@@ -60,6 +61,7 @@ async def report_signal_to_incident(
         phone_number=normalized_phone,
         reported_message=reported_message,
         citizen_channel=request.channel,
+        owner_user_id=owner_user_id,
         risk_score=max(0, min(risk_score, 100)),
         status="NEW",
         analysis_note=f"[{request.channel}] {reported_message[:250]}",
@@ -180,8 +182,11 @@ async def list_citizen_incidents(
     limit: int,
     status_filter: str | None = None,
     search: str | None = None,
+    owner_user_id: int | None = None,
 ) -> CitizenIncidentListData:
     filters = [Alert.source_type.like("CITIZEN_%")]
+    if owner_user_id is not None:
+        filters.append(Alert.owner_user_id == owner_user_id)
     if status_filter:
         filters.append(Alert.status == status_filter)
     if search:
@@ -209,11 +214,16 @@ async def list_citizen_incidents(
     phone_numbers = sorted({a.phone_number for a in alerts if a.phone_number})
     phone_report_counts: dict[str, int] = {}
     if phone_numbers:
+        phone_count_filters = [
+            Alert.source_type.like("CITIZEN_%"),
+            Alert.phone_number.in_(phone_numbers),
+        ]
+        if owner_user_id is not None:
+            phone_count_filters.append(Alert.owner_user_id == owner_user_id)
         count_stmt = (
             select(Alert.phone_number, func.count(Alert.id))
             .where(
-                Alert.source_type.like("CITIZEN_%"),
-                Alert.phone_number.in_(phone_numbers),
+                *phone_count_filters,
             )
             .group_by(Alert.phone_number)
         )

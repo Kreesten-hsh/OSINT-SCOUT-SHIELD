@@ -17,7 +17,7 @@ export default function SourceDetailPage() {
 
     const { data: sources } = useQuery({
         queryKey: ['sources'],
-        queryFn: monitoringService.getAll,
+        queryFn: () => monitoringService.getAll(),
     });
 
     const source = sources?.find((s: MonitoringSource) => s.id === sourceId);

@@ -29,14 +29,26 @@ interface ReportListItem {
     };
 }
 
-export default function ReportsListPage() {
+interface ReportsListPageProps {
+    scope?: 'me';
+    readOnly?: boolean;
+    title?: string;
+    showTransmissionNotice?: boolean;
+}
+
+export default function ReportsListPage({
+    scope,
+    title = 'Rapports forensiques',
+    showTransmissionNotice = false,
+}: ReportsListPageProps) {
     const navigate = useNavigate();
     const { toast } = useToast();
 
     const { data: reports, isLoading, isError, refetch, isFetching } = useQuery({
-        queryKey: ['reports-list'],
+        queryKey: ['reports-list', scope ?? 'all'],
         queryFn: async () => {
-            const response = await apiClient.get<ReportListItem[]>('/reports/');
+            const query = scope ? `?scope=${scope}` : '';
+            const response = await apiClient.get<ReportListItem[]>(`/reports/${query}`);
             return response.data || [];
         },
     });
@@ -53,7 +65,7 @@ export default function ReportsListPage() {
             <section className="panel p-5 fade-rise-in">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div>
-                        <h2 className="section-title text-2xl">Rapports forensiques</h2>
+                        <h2 className="section-title text-2xl">{title}</h2>
                         <p className="section-subtitle">Snapshots certifies (PDF + JSON) issus des incidents confirmes.</p>
                     </div>
                     <div className="flex items-center gap-2 text-xs">
@@ -146,6 +158,11 @@ export default function ReportsListPage() {
                                             <Fingerprint className="mr-1 inline h-3.5 w-3.5" />
                                             {report.report_hash}
                                         </p>
+                                        {showTransmissionNotice && (
+                                            <p className="text-xs font-medium text-primary">
+                                                Ce rapport est transmissible a bjCSIRT / OCRC
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="flex flex-wrap items-center gap-2">

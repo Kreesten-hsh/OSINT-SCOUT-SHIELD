@@ -9,10 +9,11 @@ from sqlalchemy.orm import selectinload
 
 from app.database import get_db
 from app.models import Alert
-from app.core.security import get_current_subject
+from app.core.security import get_current_token_payload, require_role, resolve_scope_owner_user_id
 from app.schemas import AlertResponse, AlertUpdate
 from app.schemas.deletion import AlertDeletionData
 from app.schemas.response import APIResponse
+from app.schemas.token import TokenPayload
 from app.services.cascade_delete import delete_alert_cascade
 
 
@@ -81,6 +82,8 @@ async def read_alerts(
     skip: int = 0,
     limit: int = 100,
     status: str | None = Query(default=None, description="Filter by status (NEW, IN_REVIEW, ... )"),
+    scope: str | None = Query(default=None, pattern="^me$"),
+    token_data: TokenPayload = Depends(get_current_token_payload),
 ):
     query = (
         select(Alert)
@@ -93,6 +96,9 @@ async def read_alerts(
 
     if status:
         query = query.where(Alert.status == status)
+    scope_owner_user_id = resolve_scope_owner_user_id(token_data, scope)
+    if scope_owner_user_id is not None:
+        query = query.where(Alert.owner_user_id == scope_owner_user_id)
 
     result = await db.execute(query.offset(skip).limit(limit))
     alerts = result.scalars().all()
@@ -163,7 +169,7 @@ async def update_alert(
 async def delete_alert(
     alert_uuid: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    _subject: str = Depends(get_current_subject),
+    _principal=Depends(require_role(["ANALYST", "ADMIN"])),
 ):
     result = await delete_alert_cascade(
         db=db,

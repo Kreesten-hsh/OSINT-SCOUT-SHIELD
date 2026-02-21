@@ -4,7 +4,13 @@ import json
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security import get_current_subject
+from app.core.security import (
+    get_current_subject,
+    get_optional_current_user,
+    get_current_token_payload,
+    require_role,
+    resolve_scope_owner_user_id,
+)
 from app.database import get_db
 from app.schemas.citizen_incident import CitizenIncidentDetailData, CitizenIncidentListData
 from app.schemas.deletion import AlertDeletionData
@@ -22,6 +28,7 @@ from app.services.incidents import (
 )
 from app.services.cascade_delete import delete_alert_cascade
 from app.schemas.shield import IncidentDecisionData, IncidentDecisionRequest
+from app.schemas.token import TokenPayload
 from app.services.shield import apply_incident_decision
 
 
@@ -32,8 +39,14 @@ router = APIRouter()
 async def report_incident(
     request: IncidentReportRequest,
     db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_optional_current_user),
 ):
-    incident = await report_signal_to_incident(request=request, db=db)
+    owner_user_id = current_user.id if current_user and current_user.role == "SME" else None
+    incident = await report_signal_to_incident(
+        request=request,
+        db=db,
+        owner_user_id=owner_user_id,
+    )
     return APIResponse(
         success=True,
         message="Incident cree avec succes.",
@@ -50,6 +63,7 @@ async def report_incident_with_media(
     verification: str | None = Form(default=None),
     screenshots: list[UploadFile] | None = File(default=None),
     db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_optional_current_user),
 ):
     verification_snapshot: VerificationSnapshot | None = None
     if verification:
@@ -69,7 +83,13 @@ async def report_incident_with_media(
         url=url,
         verification=verification_snapshot,
     )
-    incident = await report_signal_to_incident(request=request, db=db, screenshots=screenshots or [])
+    owner_user_id = current_user.id if current_user and current_user.role == "SME" else None
+    incident = await report_signal_to_incident(
+        request=request,
+        db=db,
+        screenshots=screenshots or [],
+        owner_user_id=owner_user_id,
+    )
     return APIResponse(
         success=True,
         message="Incident cree avec succes.",
@@ -82,7 +102,7 @@ async def decide_incident(
     incident_id: uuid.UUID,
     request: IncidentDecisionRequest,
     db: AsyncSession = Depends(get_db),
-    _subject: str = Depends(get_current_subject),
+    _principal=Depends(require_role(["ANALYST", "ADMIN"])),
 ):
     decision = await apply_incident_decision(incident_id=incident_id, request=request, db=db)
     return APIResponse(
@@ -99,14 +119,19 @@ async def read_citizen_incidents(
     limit: int = Query(default=50, ge=1, le=100),
     status: str | None = Query(default=None),
     q: str | None = Query(default=None),
+    scope: str | None = Query(default=None, pattern="^me$"),
     _subject: str = Depends(get_current_subject),
+    token_data: TokenPayload = Depends(get_current_token_payload),
 ):
+    scope_owner_user_id = resolve_scope_owner_user_id(token_data, scope)
+
     payload = await list_citizen_incidents(
         db=db,
         skip=skip,
         limit=limit,
         status_filter=status,
         search=q,
+        owner_user_id=scope_owner_user_id,
     )
     return APIResponse(
         success=True,
@@ -133,7 +158,7 @@ async def read_citizen_incident(
 async def delete_citizen_incident(
     incident_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    _subject: str = Depends(get_current_subject),
+    _principal=Depends(require_role(["ANALYST", "ADMIN"])),
 ):
     result = await delete_alert_cascade(
         db=db,

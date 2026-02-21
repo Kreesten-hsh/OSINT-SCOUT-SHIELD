@@ -1,4 +1,4 @@
-import { useState } from 'react';
+ï»¿import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Globe, List, Loader2, Plus, Power, PowerOff, RefreshCw } from 'lucide-react';
@@ -7,19 +7,26 @@ import { monitoringService, MonitoringSource } from '@/services/monitoringServic
 import { Badge } from '@/components/ui/badge';
 import AddSourceDialog from './AddSourceDialog';
 
-export default function MonitoringPage() {
+interface MonitoringPageProps {
+    scope?: 'me';
+    readOnly?: boolean;
+}
+
+export default function MonitoringPage({ scope }: MonitoringPageProps) {
     const queryClient = useQueryClient();
     const [isAddOpen, setIsAddOpen] = useState(false);
 
+    const queryKey = ['sources', scope ?? 'all'];
+
     const { data: sources, isLoading, isError } = useQuery({
-        queryKey: ['sources'],
-        queryFn: monitoringService.getAll,
+        queryKey,
+        queryFn: () => monitoringService.getAll(scope),
     });
 
     const toggleMutation = useMutation({
         mutationFn: monitoringService.toggle,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['sources'] });
+            queryClient.invalidateQueries({ queryKey });
         },
     });
 
@@ -33,7 +40,7 @@ export default function MonitoringPage() {
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                     <div>
                         <h2 className="font-display text-2xl font-semibold tracking-tight">Surveillance automatique</h2>
-                        <p className="text-sm text-muted-foreground">Gestion des sources monitorées et de la cadence de collecte.</p>
+                        <p className="text-sm text-muted-foreground">Gestion des sources monitorees et de la cadence de collecte.</p>
                     </div>
                     <button
                         onClick={() => setIsAddOpen(true)}
@@ -154,7 +161,7 @@ export default function MonitoringPage() {
                 isOpen={isAddOpen}
                 onClose={() => setIsAddOpen(false)}
                 onSuccess={() => {
-                    queryClient.invalidateQueries({ queryKey: ['sources'] });
+                    queryClient.invalidateQueries({ queryKey });
                 }}
             />
         </div>

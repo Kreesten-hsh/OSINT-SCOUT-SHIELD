@@ -33,8 +33,9 @@ export interface ScrapingRun {
 }
 
 export const monitoringService = {
-    getAll: async () => {
-        const response = await api.get<APIResponse<MonitoringSource[]>>('/sources/');
+    getAll: async (scope?: 'me') => {
+        const query = scope ? `?scope=${scope}` : '';
+        const response = await api.get<APIResponse<MonitoringSource[]>>(`/sources/${query}`);
         return response.data.data || [];
     },
 

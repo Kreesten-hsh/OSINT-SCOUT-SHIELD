@@ -9,6 +9,7 @@ import uuid
 import json
 import redis.asyncio as redis
 from app.core.config import settings
+from app.core.security import require_role
 import logging
 
 router = APIRouter()
@@ -24,7 +25,8 @@ from app.schemas.response import APIResponse
 @router.post("/manual", response_model=APIResponse[AlertResponse], status_code=status.HTTP_201_CREATED)
 async def manual_ingestion(
     request: IngestionRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _principal=Depends(require_role(["ANALYST", "ADMIN"])),
 ):
     """
     Ingestion manuelle d'une URL ou source.

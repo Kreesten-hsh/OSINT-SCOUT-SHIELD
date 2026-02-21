@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, text, desc
+from app.core.security import require_role
 from app.database import get_db
 from app.models import Alert
 from datetime import datetime, timedelta
@@ -9,7 +10,10 @@ import pytz
 router = APIRouter()
 
 @router.get("/stats/weekly")
-async def get_weekly_stats(db: AsyncSession = Depends(get_db)):
+async def get_weekly_stats(
+    db: AsyncSession = Depends(get_db),
+    _principal=Depends(require_role(["ANALYST", "ADMIN"])),
+):
     """
     Returns alert created counts for the last 7 days vs previous 7 days.
     """
@@ -44,7 +48,8 @@ async def get_weekly_stats(db: AsyncSession = Depends(get_db)):
 @router.get("/stats/critical-threats")
 async def get_critical_threats(
     threshold: int = Query(85, ge=0, le=100),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _principal=Depends(require_role(["ANALYST", "ADMIN"])),
 ):
     """
     Returns count and top 3 critical alerts (risk_score >= threshold).
@@ -85,7 +90,10 @@ async def get_critical_threats(
     }
 
 @router.get("/stats/sources-active")
-async def get_active_sources(db: AsyncSession = Depends(get_db)):
+async def get_active_sources(
+    db: AsyncSession = Depends(get_db),
+    _principal=Depends(require_role(["ANALYST", "ADMIN"])),
+):
     """
     Returns the count of active monitoring sources (is_active=True).
     """
@@ -98,7 +106,10 @@ async def get_active_sources(db: AsyncSession = Depends(get_db)):
     return {"count": count}
 
 @router.get("/stats/reports-count")
-async def get_reports_count(db: AsyncSession = Depends(get_db)):
+async def get_reports_count(
+    db: AsyncSession = Depends(get_db),
+    _principal=Depends(require_role(["ANALYST", "ADMIN"])),
+):
     """
     Returns the total count of generated reports.
     """

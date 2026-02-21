@@ -7,6 +7,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 import os
 from app.core.config import settings
+from app.core.security import require_role
 from app.database import get_db
 from app.models import Evidence
 from app.schemas.alert import EvidenceResponse
@@ -21,7 +22,8 @@ EVIDENCE_DIR = "/app/evidences_store"
 async def read_evidences(
     db: AsyncSession = Depends(get_db),
     skip: int = 0,
-    limit: int = 100
+    limit: int = 100,
+    _principal=Depends(require_role(["ANALYST", "ADMIN"])),
 ):
     """
     Récupère la liste globale des preuves (Evidences).

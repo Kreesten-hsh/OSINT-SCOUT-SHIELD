@@ -25,7 +25,7 @@ export default function LoginPage() {
             const response = await apiClient.post<LoginResponse>('/auth/login', { username: email, password });
             const { access_token, token_type, user } = response.data;
             login({ access_token, token_type }, user);
-            navigate('/dashboard');
+            navigate(user.role === 'SME' ? '/business/verify' : '/dashboard');
         } catch (err: unknown) {
             if (axios.isAxiosError(err)) {
                 setError(err.response?.data?.message || err.response?.data?.detail || 'Echec de connexion.');

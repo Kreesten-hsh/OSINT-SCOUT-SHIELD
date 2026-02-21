@@ -9,6 +9,11 @@ import { Toaster } from '@/components/ui/toaster';
 const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
 const VerifyPage = lazy(() => import('@/features/verify/VerifyPage'));
 const DashboardLayout = lazy(() => import('@/layouts/DashboardLayout'));
+const BusinessLayout = lazy(() => import('@/layouts/BusinessLayout'));
+const BusinessVerifyPage = lazy(() => import('@/features/business/BusinessVerifyPage'));
+const BusinessMonitoringPage = lazy(() => import('@/features/business/BusinessMonitoringPage'));
+const BusinessAlertsPage = lazy(() => import('@/features/business/BusinessAlertsPage'));
+const BusinessReportsPage = lazy(() => import('@/features/business/BusinessReportsPage'));
 const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'));
 const AlertsPage = lazy(() => import('@/features/alerts/AlertsPage'));
 const InvestigationPage = lazy(() => import('@/features/investigation/InvestigationPage'));
@@ -95,9 +100,37 @@ function RouteFallback() {
 
 // --- Auth Guard ---
 
-const RequireAuth = () => {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  return isAuthenticated ? <DashboardLayout /> : <Navigate to="/login" replace />;
+const RequireAnalyst = () => {
+  const { isAuthenticated, user } = useAuthStore();
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  if (user?.role === 'SME') {
+    return <Navigate to="/business/verify" replace />;
+  }
+  return <DashboardLayout />;
+};
+
+const RequireSME = () => {
+  const { isAuthenticated, user } = useAuthStore();
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  if (user?.role !== 'SME') {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <BusinessLayout />;
+};
+
+const RootRedirect = () => {
+  const { isAuthenticated, user } = useAuthStore();
+  if (!isAuthenticated) {
+    return <Navigate to="/verify" replace />;
+  }
+  if (user?.role === 'SME') {
+    return <Navigate to="/business/verify" replace />;
+  }
+  return <Navigate to="/dashboard" replace />;
 };
 
 // --- App ---
@@ -111,7 +144,8 @@ function App() {
             <Routes>
               <Route path="/verify" element={<VerifyPage />} />
               <Route path="/login" element={<LoginPage />} />
-              <Route element={<RequireAuth />}>
+              <Route path="/" element={<RootRedirect />} />
+              <Route element={<RequireAnalyst />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/monitoring" element={<MonitoringPage />} />
                 <Route path="/monitoring/:id" element={<SourceDetailPage />} />
@@ -125,7 +159,13 @@ function App() {
                 <Route path="/incidents-signales/:id" element={<CitizenIncidentDetailPage />} />
                 <Route path="/evidence" element={<EvidencePage />} />
                 <Route path="/settings" element={<SettingsPage />} />
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              </Route>
+              <Route element={<RequireSME />}>
+                <Route path="/business/verify" element={<BusinessVerifyPage />} />
+                <Route path="/business/monitoring" element={<BusinessMonitoringPage />} />
+                <Route path="/business/alerts" element={<BusinessAlertsPage />} />
+                <Route path="/business/reports" element={<BusinessReportsPage />} />
+                <Route path="/business" element={<Navigate to="/business/verify" replace />} />
               </Route>
             </Routes>
           </Suspense>

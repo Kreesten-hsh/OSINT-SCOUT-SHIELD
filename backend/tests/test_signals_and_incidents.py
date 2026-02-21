@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from app.database import get_db
 from app.main import app
 from app.core.config import settings
-from app.core.security import get_current_subject
+from app.core.security import create_access_token, get_current_subject
 from app.schemas.shield import (
     IncidentDecisionData,
     OperatorActionStatusData,
@@ -50,6 +50,15 @@ def build_client(fake_session: FakeSession, authenticated: bool = False) -> Test
     if authenticated:
         app.dependency_overrides[get_current_subject] = lambda: "analyst@local.test"
     return TestClient(app)
+
+
+def auth_headers(role: str = "ANALYST") -> dict[str, str]:
+    token = create_access_token(
+        subject=f"{role.lower()}@local.test",
+        uid=1,
+        role=role,
+    )
+    return {"Authorization": f"Bearer {token}"}
 
 
 def test_verify_valid_returns_score_and_no_alert_created() -> None:
@@ -200,6 +209,7 @@ def test_incident_decision_authenticated_returns_contract(monkeypatch) -> None:
     response = client.patch(
         f"/api/v1/incidents/{incident_id}/decision",
         json={"decision": "CONFIRM", "comment": "ok"},
+        headers=auth_headers("ANALYST"),
     )
 
     assert response.status_code == 200
@@ -253,6 +263,7 @@ def test_shield_dispatch_authenticated_returns_contract(monkeypatch) -> None:
             "reason": "test",
             "auto_callback": True,
         },
+        headers=auth_headers("ANALYST"),
     )
 
     assert response.status_code == 200
@@ -417,7 +428,10 @@ def test_citizen_incidents_list_authenticated_contract(monkeypatch) -> None:
 
     monkeypatch.setattr("app.api.v1.endpoints.incidents.list_citizen_incidents", _fake_list)
 
-    response = client.get("/api/v1/incidents/citizen")
+    response = client.get(
+        "/api/v1/incidents/citizen",
+        headers=auth_headers("ANALYST"),
+    )
 
     assert response.status_code == 200
     payload = response.json()
@@ -488,7 +502,7 @@ def test_alert_delete_authenticated_returns_contract(monkeypatch) -> None:
 
     monkeypatch.setattr("app.api.v1.endpoints.alerts.delete_alert_cascade", _fake_delete)
 
-    response = client.delete(f"/api/v1/alerts/{alert_id}")
+    response = client.delete(f"/api/v1/alerts/{alert_id}", headers=auth_headers("ANALYST"))
 
     assert response.status_code == 200
     payload = response.json()
@@ -524,7 +538,10 @@ def test_citizen_incident_delete_authenticated_returns_contract(monkeypatch) -> 
 
     monkeypatch.setattr("app.api.v1.endpoints.incidents.delete_alert_cascade", _fake_delete)
 
-    response = client.delete(f"/api/v1/incidents/citizen/{incident_id}")
+    response = client.delete(
+        f"/api/v1/incidents/citizen/{incident_id}",
+        headers=auth_headers("ANALYST"),
+    )
 
     assert response.status_code == 200
     payload = response.json()

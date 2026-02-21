@@ -14,6 +14,7 @@ class MonitoringSource(Base):
     name = Column(String, index=True)
     url = Column(String) # The target URL or Search Query
     source_type = Column(String, default="WEB") # SEARCH_ENGINE, MARKETPLACE, SOCIAL, WEB
+    owner_user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=True)
     
     frequency_minutes = Column(Integer, default=1440) # Default daily (24h)
     is_active = Column(Boolean, default=True)

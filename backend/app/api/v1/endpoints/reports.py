@@ -1,7 +1,7 @@
 from pathlib import Path
 import json
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse, Response
 from typing import List, Any
@@ -10,6 +10,8 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models import Alert, Report
+from app.core.security import get_current_token_payload, resolve_scope_owner_user_id
+from app.schemas.token import TokenPayload
 from app.services.snapshot import create_alert_snapshot
 from app.services.hashing import compute_snapshot_hash
 from app.services.pdf_generator import generate_forensic_pdf
@@ -25,12 +27,19 @@ logger = logging.getLogger(__name__)
 async def list_reports(
     skip: int = 0,
     limit: int = 100,
-    db: AsyncSession = Depends(get_db)
+    scope: str | None = Query(default=None, pattern="^me$"),
+    db: AsyncSession = Depends(get_db),
+    token_data: TokenPayload = Depends(get_current_token_payload),
 ):
     """
     Liste les rapports générés (Table 'reports').
     """
-    query = select(Report).offset(skip).limit(limit).order_by(Report.generated_at.desc())
+    scope_owner_user_id = resolve_scope_owner_user_id(token_data, scope)
+
+    query = select(Report)
+    if scope_owner_user_id is not None:
+        query = query.join(Alert, Report.alert_id == Alert.id).where(Alert.owner_user_id == scope_owner_user_id)
+    query = query.offset(skip).limit(limit).order_by(Report.generated_at.desc())
     result = await db.execute(query)
     return result.scalars().all()
 

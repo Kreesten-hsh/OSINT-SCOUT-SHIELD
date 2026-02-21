@@ -19,6 +19,8 @@ import {
 
 interface AlertsPageProps {
     title?: string;
+    scope?: 'me';
+    readOnly?: boolean;
 }
 
 function isCitizenSource(sourceType: string): boolean {
@@ -34,7 +36,7 @@ const STATUS_OPTIONS: Array<{ label: string; value: '' | AlertStatus }> = [
     { label: 'Bloque (simule)', value: 'BLOCKED_SIMULATED' },
 ];
 
-export default function AlertsPage({ title = 'Alertes techniques' }: AlertsPageProps) {
+export default function AlertsPage({ title = 'Alertes techniques', scope, readOnly = false }: AlertsPageProps) {
     const queryClient = useQueryClient();
     const { toast } = useToast();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -46,7 +48,7 @@ export default function AlertsPage({ title = 'Alertes techniques' }: AlertsPageP
     const pageSize = 10;
 
     const { data, isLoading, isError } = useQuery({
-        queryKey: ['alerts', page, search, statusFilter],
+        queryKey: ['alerts', scope ?? 'all', page, search, statusFilter],
         queryFn: async () => {
             const params = new URLSearchParams({
                 skip: ((page - 1) * pageSize).toString(),
@@ -54,11 +56,14 @@ export default function AlertsPage({ title = 'Alertes techniques' }: AlertsPageP
             });
             if (search.trim()) params.append('q', search.trim());
             if (statusFilter) params.append('status', statusFilter);
+            if (scope) params.append('scope', scope);
 
             const response = await apiClient.get<Alert[]>(`/alerts?${params.toString()}`);
             return response.data;
         },
     });
+
+    const columnCount = readOnly ? 6 : 7;
 
     const hasNextPage = data?.length === pageSize;
 
@@ -155,13 +160,13 @@ export default function AlertsPage({ title = 'Alertes techniques' }: AlertsPageP
                                 <th className="px-4 py-3">Statut</th>
                                 <th className="px-4 py-3">Risque</th>
                                 <th className="px-4 py-3">Date</th>
-                                <th className="px-4 py-3 text-right">Action</th>
+                                {!readOnly && <th className="px-4 py-3 text-right">Action</th>}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border/70">
                             {isLoading && (
                                 <tr>
-                                    <td colSpan={7} className="px-4 py-14 text-center text-muted-foreground">
+                                    <td colSpan={columnCount} className="px-4 py-14 text-center text-muted-foreground">
                                         <Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin" />
                                         Chargement des alertes...
                                     </td>
@@ -170,7 +175,7 @@ export default function AlertsPage({ title = 'Alertes techniques' }: AlertsPageP
 
                             {isError && !isLoading && (
                                 <tr>
-                                    <td colSpan={7} className="px-4 py-14 text-center text-destructive">
+                                    <td colSpan={columnCount} className="px-4 py-14 text-center text-destructive">
                                         Erreur de chargement des alertes.
                                     </td>
                                 </tr>
@@ -178,7 +183,7 @@ export default function AlertsPage({ title = 'Alertes techniques' }: AlertsPageP
 
                             {!isLoading && !isError && data?.length === 0 && (
                                 <tr>
-                                    <td colSpan={7} className="px-4 py-14 text-center text-muted-foreground">
+                                    <td colSpan={columnCount} className="px-4 py-14 text-center text-muted-foreground">
                                         Aucun dossier trouve pour ce filtre.
                                     </td>
                                 </tr>
@@ -202,35 +207,37 @@ export default function AlertsPage({ title = 'Alertes techniques' }: AlertsPageP
                                     </td>
                                     <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{alert.risk_score}/100</td>
                                     <td className="px-4 py-3 text-xs text-muted-foreground">{new Date(alert.created_at).toLocaleString()}</td>
-                                    <td className="px-4 py-3 text-right">
-                                        <div className="inline-flex items-center gap-2">
-                                            <Link
-                                                to={isCitizenSource(alert.source_type) ? `/incidents-signales/${alert.uuid}` : `/alerts/${alert.uuid}`}
-                                                className="inline-flex rounded-lg border border-input bg-background/50 p-2 text-muted-foreground transition hover:border-primary/40 hover:text-primary"
-                                            >
-                                                <Eye className="h-4 w-4" />
-                                            </Link>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    const ok = window.confirm(
-                                                        'Supprimer ce dossier va aussi supprimer les preuves, rapports et fichiers associes. Continuer ?'
-                                                    );
-                                                    if (!ok) return;
-                                                    setDeletingUuid(alert.uuid);
-                                                    deleteMutation.mutate(alert.uuid);
-                                                }}
-                                                disabled={deleteMutation.isPending}
-                                                className="inline-flex rounded-lg border border-destructive/35 bg-destructive/10 p-2 text-destructive transition hover:bg-destructive/20 disabled:opacity-50"
-                                            >
-                                                {deleteMutation.isPending && deletingUuid === alert.uuid ? (
-                                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                                ) : (
-                                                    <Trash2 className="h-4 w-4" />
-                                                )}
-                                            </button>
-                                        </div>
-                                    </td>
+                                    {!readOnly && (
+                                        <td className="px-4 py-3 text-right">
+                                            <div className="inline-flex items-center gap-2">
+                                                <Link
+                                                    to={isCitizenSource(alert.source_type) ? `/incidents-signales/${alert.uuid}` : `/alerts/${alert.uuid}`}
+                                                    className="inline-flex rounded-lg border border-input bg-background/50 p-2 text-muted-foreground transition hover:border-primary/40 hover:text-primary"
+                                                >
+                                                    <Eye className="h-4 w-4" />
+                                                </Link>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const ok = window.confirm(
+                                                            'Supprimer ce dossier va aussi supprimer les preuves, rapports et fichiers associes. Continuer ?'
+                                                        );
+                                                        if (!ok) return;
+                                                        setDeletingUuid(alert.uuid);
+                                                        deleteMutation.mutate(alert.uuid);
+                                                    }}
+                                                    disabled={deleteMutation.isPending}
+                                                    className="inline-flex rounded-lg border border-destructive/35 bg-destructive/10 p-2 text-destructive transition hover:bg-destructive/20 disabled:opacity-50"
+                                                >
+                                                    {deleteMutation.isPending && deletingUuid === alert.uuid ? (
+                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        <Trash2 className="h-4 w-4" />
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </td>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>

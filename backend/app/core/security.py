@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from dataclasses import dataclass
 import hmac
+from collections.abc import Sequence
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -16,6 +17,10 @@ from app.models import User
 from app.schemas.token import TokenPayload
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login/access-token")
+oauth2_scheme_optional = OAuth2PasswordBearer(
+    tokenUrl="/api/v1/auth/login/access-token",
+    auto_error=False,
+)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ALLOWED_ROLES = {"ADMIN", "ANALYST", "SME"}
 
@@ -86,7 +91,11 @@ async def authenticate_user(
     return None
 
 
-async def get_current_subject(token: str = Depends(oauth2_scheme)) -> str:
+async def get_current_token_payload(token: str = Depends(oauth2_scheme)) -> TokenPayload:
+    return _decode_token_or_raise(token)
+
+
+def _decode_token_or_raise(token: str) -> TokenPayload:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -108,4 +117,71 @@ async def get_current_subject(token: str = Depends(oauth2_scheme)) -> str:
 
     if not token_data.sub:
         raise credentials_exception
+
+    token_data.role = normalize_role(token_data.role)
+    return token_data
+
+
+async def get_optional_current_user(
+    token: str | None = Depends(oauth2_scheme_optional),
+) -> AuthenticatedPrincipal | None:
+    if token is None:
+        return None
+
+    token_data = _decode_token_or_raise(token)
+    if token_data.uid is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return AuthenticatedPrincipal(
+        id=int(token_data.uid),
+        email=token_data.sub,
+        role=normalize_role(token_data.role),
+    )
+
+
+def require_role(allowed_roles: Sequence[str]):
+    normalized_allowed_roles = {normalize_role(role) for role in allowed_roles}
+
+    async def _require_role(
+        token_data: TokenPayload = Depends(get_current_token_payload),
+    ) -> TokenPayload:
+        if normalize_role(token_data.role) not in normalized_allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions",
+            )
+        return token_data
+
+    return _require_role
+
+
+def resolve_scope_owner_user_id(
+    token_data: TokenPayload,
+    scope: str | None,
+) -> int | None:
+    role = normalize_role(token_data.role)
+    if role == "SME" or scope == "me":
+        if token_data.uid is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        return int(token_data.uid)
+    return None
+
+
+async def get_current_subject(
+    token_data: TokenPayload = Depends(get_current_token_payload),
+) -> str:
+    if not token_data.sub:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     return token_data.sub
