@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     AUTH_ADMIN_EMAIL: str = "admin@osint.com"
     AUTH_ADMIN_PASSWORD: str = "CHANGE_ME_ADMIN_PASSWORD"
+    AUTH_ANALYST_EMAIL: str = "analyst@osint.com"
+    AUTH_ANALYST_PASSWORD: str = "CHANGE_ME_ANALYST_PASSWORD"
+    AUTH_SME_EMAIL: str = "sme@osint.com"
+    AUTH_SME_PASSWORD: str = "CHANGE_ME_SME_PASSWORD"
 
     # Security
     BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000"]

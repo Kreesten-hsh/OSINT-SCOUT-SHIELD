@@ -14,6 +14,8 @@ from sqlalchemy import text
 from app.api.v1.api import api_router
 from app.core.config import settings
 from app.core.logging import setup_logging
+from app.database import AsyncSessionLocal
+from app.services.auth_bootstrap import ensure_default_auth_users
 
 
 setup_logging(json_logs=settings.LOG_JSON, log_level=settings.LOG_LEVEL)
@@ -31,13 +33,20 @@ if settings.SENTRY_DSN:
 async def lifespan(app: FastAPI):
     """Startup/shutdown lifecycle."""
     from app.database import Base, engine
-    from app.models import Alert, Evidence, MonitoringSource, Report  # noqa: F401
+    from app.models import Alert, Evidence, MonitoringSource, Report, User  # noqa: F401
     from app.workers.result_consumer import start_result_consumer
 
     if settings.AUTO_CREATE_TABLES:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         logger.warning("AUTO_CREATE_TABLES is enabled; use Alembic migrations in production")
+
+    try:
+        async with AsyncSessionLocal() as session:
+            await ensure_default_auth_users(session)
+        logger.info("Default auth users ensured")
+    except Exception as exc:
+        logger.warning("Skipped auth user bootstrap", error=str(exc))
 
     background_tasks: list[asyncio.Task] = []
     if settings.ENABLE_RESULT_CONSUMER:

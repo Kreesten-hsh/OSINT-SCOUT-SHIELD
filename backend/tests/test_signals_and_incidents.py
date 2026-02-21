@@ -29,6 +29,9 @@ class FakeSession:
     async def commit(self) -> None:
         return None
 
+    async def flush(self) -> None:
+        return None
+
     async def refresh(self, _obj: Any) -> None:
         return None
 

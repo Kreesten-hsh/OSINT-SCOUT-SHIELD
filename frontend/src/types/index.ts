@@ -7,10 +7,16 @@ export interface Token {
     token_type: string;
 }
 
+export type UserRole = 'ADMIN' | 'ANALYST' | 'SME';
+
 export interface User {
+    id: number;
     email: string;
-    role: 'admin' | 'analyst';
-    full_name?: string;
+    role: UserRole;
+}
+
+export interface LoginResponse extends Token {
+    user: User;
 }
 
 // --- EVIDENCE TYPES ---

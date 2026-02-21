@@ -5,7 +5,7 @@ import { AlertCircle, Loader2, LockKeyhole, Mail, ShieldCheck } from 'lucide-rea
 
 import { apiClient } from '@/api/client';
 import { useAuthStore } from '@/store/auth-store';
-import type { Token } from '@/types';
+import type { LoginResponse } from '@/types';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -22,9 +22,9 @@ export default function LoginPage() {
         setError(null);
 
         try {
-            const response = await apiClient.post<Token>('/auth/login', { username: email, password });
-            const token = response.data;
-            login(token, { email, role: 'analyst' });
+            const response = await apiClient.post<LoginResponse>('/auth/login', { username: email, password });
+            const { access_token, token_type, user } = response.data;
+            login({ access_token, token_type }, user);
             navigate('/dashboard');
         } catch (err: unknown) {
             if (axios.isAxiosError(err)) {
