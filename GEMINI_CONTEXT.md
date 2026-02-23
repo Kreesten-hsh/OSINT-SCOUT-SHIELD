@@ -1,106 +1,115 @@
-﻿# GEMINI_CONTEXT — OSINT-SCOUT & SHIELD
+# GEMINI_CONTEXT - BENIN CYBER SHIELD
 
-Dernière mise à jour : 13 février 2026
-Statut global : Stabilisation, durcissement sécurité et préparation production
+Derniere mise a jour: 2026-02-23
+Statut global: Refonte v2.1 active, prototype L3 operationnel (roles + canaux + rapports + SHIELD simule)
 
-Ce fichier est la source de vérité opérationnelle pour les agents IA collaborant sur le projet.
+Ce fichier est la source de verite operationnelle pour les agents IA qui travaillent sur ce repo.
 
 ## 1) Mission produit
 
-OSINT-SCOUT & SHIELD est une plateforme SaaS de renseignement opérationnel orientée investigation.
-Objectif : transformer des signaux web bruts en alertes exploitables, preuves traçables et rapports structurés.
+BENIN CYBER SHIELD (OSINT-SCOUT & SHIELD) est un prototype L3 qui couvre tout le flux:
 
-## 2) Principes non négociables
+1. verification citoyenne
+2. creation d'incident
+3. collecte OSINT et preuves
+4. decision SOC
+5. action operateur simulee
+6. generation rapport PDF/JSON
 
-- Zéro secret dans le dépôt Git (`.env`, clés, tokens)
-- Décisions de risque basées sur des règles explicables
-- Intégrité de preuve (horodatage, hash, traçabilité)
-- Routes métier protégées par authentification JWT
-- Aucun faux jeu de données en environnement de production
+Objectif soutenance: demonstrer un flux bout-en-bout fiable, lisible et reproductible.
 
-## 3) Référentiel technique actuel
+## 2) Scope reel actuel
 
-- Backend : FastAPI, SQLAlchemy Async, Pydantic Settings
-- Frontend : React 19, TypeScript, TanStack Query
-- Queue : Redis (`osint_to_scan`, `osint_results`)
-- Worker : Playwright scraper
-- Stockage : PostgreSQL + `evidences_store`
-- Observabilité : `/health`, `/metrics`, Sentry optionnel
+### Canaux utilisateurs actifs
+- Interface web citoyenne (`/verify`)
+- Experience PWA (meme interface detectee en mode standalone)
 
-## 4) Flux métier de référence
+### Espaces applicatifs
+- Public (sans login): `/verify`
+- SOC Analyst/Admin: `/dashboard` + modules SOC
+- PME (role SME): `/business/verify`, `/business/monitoring`, `/business/alerts`, `/business/reports`
 
-1. Ingestion (monitoring automatique ou saisie manuelle URL)
-2. Publication du job vers `osint_to_scan`
-3. Scraping et collecte de preuves
-4. Retour résultat vers `osint_results`
-5. Consumer backend vers base PostgreSQL
-6. Traitement analyste : note, transition d’état, génération rapport
+### Hors scope actuel
+- Integration operateur telecom reelle
+- Bot WhatsApp production
+- Federation nationale multi-operateurs
 
-## 5) Contrat d’API (à respecter)
+## 3) Architecture technique de reference
 
-- Préfixe API : `/api/v1`
-- Auth : `/api/v1/auth/login`
-- Sources : `/api/v1/sources`
-- Alertes : `/api/v1/alerts`
-- Rapports : `/api/v1/reports`
-- Dashboard : `/api/v1/dashboard/*`
-- Santé/metrics : `/health`, `/metrics`
+- Backend: FastAPI + SQLAlchemy async + Alembic
+- Frontend: React 19 + TypeScript + TanStack Query + Recharts
+- DB: PostgreSQL 15
+- Queue: Redis
+- Scraper worker: Playwright
+- Fichiers probatoires: `evidences_store`
+- Observabilite: `/health`, `/metrics`, Sentry optionnel
 
-Règle : toute évolution backend doit vérifier le contrat côté frontend avant merge.
+## 4) Contrats API structurants
 
-## 6) Standards d’ingénierie attendus
+Endpoints coeur a considerer stables:
 
-### Backend
+- `POST /api/v1/auth/login` (retourne `user.role`)
+- `POST /api/v1/auth/change-password`
+- `POST /api/v1/signals/verify`
+- `POST /api/v1/incidents/report`
+- `POST /api/v1/incidents/report-with-media`
+- `GET /api/v1/incidents/citizen`
+- `GET /api/v1/incidents/citizen/{id}`
+- `PATCH /api/v1/incidents/{id}/decision`
+- `POST /api/v1/shield/actions/dispatch`
+- `POST /api/v1/operators/callbacks/action-status`
+- `GET /api/v1/sources` (`scope=me`)
+- `GET /api/v1/alerts` (`scope=me`)
+- `GET /api/v1/reports` (`scope=me`)
+- `GET /api/v1/dashboard/stats`
 
-- Pas de valeurs sensibles hardcodées
-- Migrations Alembic obligatoires pour tout changement de schéma
-- Gestion d’erreurs explicite avec messages API cohérents
-- Logs structurés exploitables en production
+## 5) Regles produit et securite non negociables
 
-### Frontend
+- Zero secret dans Git
+- Migrations Alembic obligatoires pour changements schema
+- Pas de fake data en production demo
+- RBAC obligatoire pour actions critiques
+- SHA-256 conserve sur preuves/rapports
+- Decision legale finale reste humaine
 
-- Typage strict TypeScript
-- États UI synchronisés avec mutations API (sans rechargement manuel)
-- Gestion d’erreur utilisateur claire (toasts, fallback)
-- Pages critiques : Dashboard, Alertes, Investigation, Rapports
+## 6) RBAC actuel (a respecter)
 
-### DevOps
+Blocage `SME` (403) sur:
 
-- Déploiement reproductible via Docker Compose
-- Healthchecks services obligatoires
-- Variables prod via `.env` hors dépôt
-- Sauvegardes DB et evidences documentées
+- `PATCH /api/v1/incidents/{id}/decision`
+- `POST /api/v1/shield/actions/dispatch`
+- Tous les DELETE critiques (`alerts`, `incidents/citizen`, `sources`)
+- Endpoints SOC sensibles (`dashboard`, `evidence`, `ingestion/manual`)
 
-### Sécurité
+`ANALYST` et `ADMIN` gardent le comportement historique.
 
-- Rotation périodique des secrets
-- CORS strict selon domaines autorisés
-- Ports DB/Redis non exposés publiquement en prod
-- Trafic HTTP protégé par TLS côté proxy
+## 7) Ownership / filtrage donnees
 
-## 7) Priorités projet (ordre d’exécution)
+- Colonnes `owner_user_id` sur `monitoring_sources` et `alerts`
+- `scope=me` supporte sur listes (`sources`, `alerts`, `reports`, `incidents/citizen`)
+- Pour role `SME`, le scope personnel est force cote backend
 
-- P0 : pipeline CI (lint, typecheck, tests, smoke)
-- P0 : stratégie migration-first et contrôle drift schéma
-- P1 : hardening réseau + reverse proxy TLS
-- P1 : supervision incident + politique de backup/restore
-- P2 : couverture E2E des parcours premium
+## 8) UX et demonstration
 
-## 8) Protocole de collaboration IA (Codex + Agent Antigravity)
+- `/verify` sans jargon technique cote citoyen
+- Numero citoyen valide cote front au format beninois `0XXXXXXXXX`
+- Confirmation de signalement via modal
+- Ecran de succes citoyen non technique
+- Dialogues de confirmation centralises via `ConfirmDialog`
 
-- Partager une source unique de vérité (ce fichier + docs déploiement)
-- Vérifier les impacts croisés front/back avant toute correction
-- Documenter chaque changement structurel dans `DEPLOYMENT.md` et `README.md`
-- Exécuter les vérifications locales avant déclaration “ready”
-- Ne pas modifier les fichiers de politique/consignes sans demande explicite utilisateur
+## 9) Priorites d'execution (ordre)
 
-## 9) Critères “Release Ready”
+1. Stabilite fonctionnelle (pas de regression)
+2. Coherence documentaire (README/PRD/Plan/Deployment)
+3. Fiabilite demo soutenance
+4. Extensions de canaux (WhatsApp) et integrations externes
 
-Une release est considérée prête uniquement si :
+## 10) Definition "ready soutenance"
 
-- aucune régression fonctionnelle sur les parcours critiques
-- build frontend valide
-- API saine (`/health`) avec DB + Redis à `ok`
-- authentification et autorisations testées
-- génération et consultation de rapports validées
-- documentation projet à jour
+Une version est prete si:
+
+- parcours citoyen -> SOC -> SHIELD -> rapport fonctionne sans patch manuel
+- frontend build OK
+- backend tests OK
+- `/health` indique db=ok et redis=ok
+- docs locales et page Notion sont alignees avec le code reel

@@ -1,110 +1,184 @@
-﻿# OSINT-SCOUT & SHIELD
+# BENIN CYBER SHIELD
 
-![Statut](https://img.shields.io/badge/Statut-D%C3%A9veloppement%20actif-0A84FF?style=for-the-badge)
-![Docker Compose](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?style=for-the-badge&logo=fastapi&logoColor=white)
-![React](https://img.shields.io/badge/React-19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
-![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=for-the-badge&logo=redis&logoColor=white)
-![Playwright](https://img.shields.io/badge/Playwright-Worker-2EAD33?style=for-the-badge&logo=playwright&logoColor=white)
+<p align="left">
+  <img src="https://img.shields.io/badge/Version-v2.1_L3-0f172a?style=for-the-badge" alt="version"/>
+  <img src="https://img.shields.io/badge/Status-Functional_Prototype-0ea5e9?style=for-the-badge" alt="status"/>
+  <img src="https://img.shields.io/badge/Architecture-Detect_%7C_Scout_%7C_Shield-1d4ed8?style=for-the-badge" alt="architecture"/>
+  <img src="https://img.shields.io/badge/Roles-CITIZEN_%7C_SME_%7C_SOC-334155?style=for-the-badge" alt="roles"/>
+</p>
 
-Prototype L3 de plateforme intelligente de détection, investigation OSINT et réponse simulée contre les cyber-arnaques mobiles.
+Plateforme intelligente de detection, investigation OSINT et reponse simulee contre les cyber-arnaques mobiles.
 
-## 1) Vision produit
+Ce repository contient un prototype **L3 operationnel** qui demontre un flux complet:
 
-OSINT-SCOUT & SHIELD centralise tout le cycle d’investigation :
+`Verification citoyenne -> Incident -> Investigation -> Decision SOC -> Action SHIELD simulee -> Rapport PDF/JSON`
 
-- surveillance continue de sources ciblées
-- ingestion manuelle de cas urgents
-- scoring et catégorisation orientés règles
-- gestion complète du cycle de vie des alertes
-- collecte de preuves techniques
-- génération de rapports d’analyse
+---
 
-Le produit est conçu pour des environnements exigeants : fiabilité opérationnelle, traçabilité et qualité de restitution.
+## 1) C'est quoi ce projet ?
 
-## 2) Fonctionnalités clés
+**BENIN CYBER SHIELD** est une solution logicielle orientee cyberdefense civile qui vise a:
 
-- Canal citoyen public (mobile PWA + interface web) via `/verify`
-- Contrat API citoyen séparé :
-  - `POST /api/v1/signals/verify` (analyse seule, numero obligatoire)
-  - `POST /api/v1/incidents/report` (création incident)
-  - `POST /api/v1/incidents/report-with-media` (création incident + captures)
-- Espace SOC "Incidents signalés" :
-  - `GET /api/v1/incidents/citizen`
-  - `GET /api/v1/incidents/citizen/{id}`
-- Orchestration SHIELD simulée :
-  - `PATCH /api/v1/incidents/{id}/decision`
-  - `POST /api/v1/shield/actions/dispatch`
-  - `GET /api/v1/shield/incidents/{id}/actions`
-  - `POST /api/v1/operators/callbacks/action-status`
-- Cycle d’alerte complet : `NEW -> IN_REVIEW -> CONFIRMED | DISMISSED | BLOCKED_SIMULATED`
-- Notes analyste et transitions d’état synchronisées en temps réel UI/API
-- Gestion des sources de monitoring (`/api/v1/sources`)
-- Pipeline asynchrone Redis + Worker Playwright
-- Gestion de preuves et artefacts de rapport
-- Dashboard de pilotage (indicateurs métier)
-- Endpoints d’observabilité (`/health`, `/metrics`)
+- aider les citoyens a verifier un message suspect avant de se faire arnaquer
+- outiller les analystes SOC pour qualifier et traiter les incidents
+- fournir aux PME un espace dedie avec leurs donnees filtrees
+- produire des preuves exploitables (captures, hash, rapports)
 
-## 3) Architecture de référence
+Le projet suit la logique produit:
+
+- **Detect**: detecter et scorer le risque
+- **Scout**: collecter/croiser les preuves
+- **Shield**: orchestrer une reponse operateur simulee
+
+---
+
+## 2) Probleme cible et solution proposee
+
+### Probleme
+
+Les arnaques mobiles (phishing, faux agents, demandes OTP, urgence artificielle) provoquent des pertes rapides et une reponse tardive.
+
+### Solution
+
+BENIN CYBER SHIELD propose une architecture modulaire qui transforme un simple signal utilisateur en dossier d'incident exploitable:
+
+1. verification immediate du signal
+2. creation incident structuree
+3. collecte OSINT asynchrone
+4. decision SOC tracee
+5. action SHIELD simulee
+6. generation rapport forensique
+
+---
+
+## 3) Valeur par acteur
+
+| Acteur | Valeur cle |
+|---|---|
+| Citoyen | Verification preventive + signalement simplifie |
+| PME | Vues personnelles (`scope=me`) sur alertes/sources/rapports |
+| Analyste SOC | Pilotage incident, decision, orchestration SHIELD |
+| Autorite (demo) | Rapport PDF/JSON avec hash d'integrite |
+
+---
+
+## 4) Modules fonctionnels
+
+### Detect
+
+- `POST /api/v1/signals/verify`
+- scoring explicable (OTP, urgence, usurpation, etc.)
+- compteur de recurrence sur numero deja signale
+
+### Scout
+
+- queue Redis (`osint_to_scan`, `osint_results`)
+- worker Playwright pour collecte
+- stockage preuves dans `evidences_store`
+
+### Shield (simulation operateur)
+
+- `PATCH /api/v1/incidents/{id}/decision`
+- `POST /api/v1/shield/actions/dispatch`
+- `POST /api/v1/operators/callbacks/action-status`
+
+### Reporting
+
+- `POST /api/v1/reports/generate/{alert_uuid}`
+- telechargement PDF et JSON
+- hash SHA-256 conserve
+
+---
+
+## 5) Architecture as-built
 
 ```text
-[Sources surveillées / Ingestion manuelle]
-                  |
-                  v
-           API FastAPI (ingestion)
-                  |
-                  v
-          Redis queue: osint_to_scan
-                  |
-                  v
-        Worker Playwright (scraping)
-                  |
-                  v
-          Redis queue: osint_results
-                  |
-                  v
-       Consumer backend (normalisation)
-                  |
-                  v
-      PostgreSQL + evidences_store (fichiers)
-                  |
-                  v
-   Frontend Analyste (Dashboard/Alertes/Rapports)
+Canaux utilisateur (verify public + espaces SOC/PME)
+                         |
+                         v
+                FastAPI (/api/v1)
+                         |
+        +----------------+----------------+
+        |                                 |
+        v                                 v
+   PostgreSQL                        Redis queues
+(alerts, sources, reports, users)   (osint_to_scan/results)
+        |                                 |
+        +----------------+----------------+
+                         |
+                         v
+                   Worker Playwright
+                         |
+                         v
+               evidences_store (files)
 ```
 
-## 4) Stack technique
+---
 
-- Backend : FastAPI, SQLAlchemy Async, Pydantic v2
-- Frontend : React 19, TypeScript, Vite, TanStack Query
-- Données : PostgreSQL 15
-- Queue/Cache : Redis 7
-- Scraping : Playwright
-- Packaging : Docker Compose
-- Observabilité : Prometheus metrics + Sentry (optionnel)
+## 6) Espaces front et acces
 
-## 5) Démarrage rapide (Docker)
+| Espace | Auth | Routes principales |
+|---|---|---|
+| Citoyen | Public | `/verify` |
+| SOC | `ANALYST` / `ADMIN` | `/dashboard`, `/alerts`, `/incidents-signales`, `/reports`, `/monitoring`, `/ingestion`, `/settings` |
+| PME | `SME` | `/business/verify`, `/business/monitoring`, `/business/alerts`, `/business/reports` |
 
-### 5.1 Préparer l’environnement
+Regles de redirection:
+
+- non connecte -> `/verify`
+- SME connecte -> `/business/verify`
+- ANALYST/ADMIN connecte -> `/dashboard`
+
+---
+
+## 7) Etat d'avancement v2.1
+
+### Deja livre
+
+- separation stricte `verify` vs `report`
+- RBAC backend cible + guards frontend par role
+- ownership `owner_user_id` + filtres `scope=me`
+- dashboard analytique (graphiques Recharts)
+- incidents citoyens (liste/detail/stats)
+- suppressions en cascade (incident/alerte + preuves + rapports)
+- UX citoyenne sans jargon technique
+
+### Non livre (volontaire)
+
+- bot WhatsApp production
+- integration operateur telecom reelle
+- federation nationale multi-operateurs
+
+---
+
+## 8) Stack technique
+
+| Couche | Technologies |
+|---|---|
+| Backend | FastAPI, SQLAlchemy Async, Alembic, Pydantic |
+| Frontend | React 19, TypeScript, Vite, TanStack Query, Recharts |
+| Data | PostgreSQL 15 |
+| Messaging | Redis 7 |
+| OSINT Worker | Playwright |
+| Infra | Docker Compose, Render Blueprint |
+
+---
+
+## 9) Quickstart local
+
+### 9.1 Preparer l'environnement
 
 ```bash
 cp .env.example .env
 ```
 
-Sous PowerShell :
-
-```powershell
-Copy-Item .env.example .env
-```
-
-### 5.2 Lancer la stack
+### 9.2 Lancer la stack
 
 ```bash
 docker compose up -d --build
 ```
 
-### 5.3 Vérifier l’état
+### 9.3 Verifier la sante
 
 ```bash
 docker compose ps
@@ -112,121 +186,67 @@ curl http://localhost:8000/health
 curl http://localhost:8000/metrics
 ```
 
-### 5.4 Migrations DB
+### 9.4 URLs utiles
 
-Le service `api` applique automatiquement `alembic upgrade head` au demarrage.
+- Frontend: `http://localhost:5173`
+- Verify citoyen: `http://localhost:5173/verify`
+- Login: `http://localhost:5173/login`
+- API docs: `http://localhost:8000/docs`
 
-Commande de secours (si besoin uniquement) :
+---
 
-```bash
-docker compose exec api alembic upgrade head
-```
-
-### 5.5 Accéder aux interfaces
-
-- Vérification citoyenne (mobile/web) : `http://localhost:5173/verify`
-- Dashboard analyste (auth) : `http://localhost:5173/login`
-- API Docs : `http://localhost:8000/docs`
-
-## 6) Variables d’environnement critiques
-
-Avant toute exposition non locale, renseigner impérativement :
-
-- `SECRET_KEY`
-- `AUTH_ADMIN_EMAIL`
-- `AUTH_ADMIN_PASSWORD`
-- `SHIELD_OPERATOR_SHARED_SECRET` (callback operateur simule)
-- `POSTGRES_PASSWORD`
-- `BACKEND_CORS_ORIGINS`
-- `VITE_API_URL`
-- `SENTRY_DSN` (recommandé)
-
-Règle stricte : ne jamais committer `.env`.
-
-## 7) Surface API principale
-
-- `POST /api/v1/auth/login`
-- `POST /api/v1/signals/verify`
-- `POST /api/v1/incidents/report`
-- `POST /api/v1/incidents/report-with-media`
-- `GET /api/v1/incidents/citizen`
-- `GET /api/v1/incidents/citizen/{id}`
-- `PATCH /api/v1/incidents/{id}/decision`
-- `POST /api/v1/shield/actions/dispatch`
-- `GET /api/v1/shield/incidents/{id}/actions`
-- `POST /api/v1/operators/callbacks/action-status`
-- `GET /api/v1/dashboard/stats/*`
-- `GET|PATCH /api/v1/alerts/*`
-- `POST /api/v1/ingestion/manual`
-- `GET /api/v1/analysis/*`
-- `GET|POST|PATCH|DELETE /api/v1/sources/*`
-- `GET|POST /api/v1/reports/*`
-- `GET /health`
-- `GET /metrics`
-
-## 8) Démo Sprint 1 (flux E2E)
-
-### 8.1 Smoke API semi-auto (T7)
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/demo_sprint1_smoke.ps1
-```
-
-Le script valide:
-- `POST /api/v1/signals/verify` (analyse seule)
-- `POST /api/v1/incidents/report` sans URL (`queued_for_osint=false`)
-- `POST /api/v1/incidents/report` avec URL (`queued_for_osint=true`)
-- login + lecture incidents citoyens + generation rapport (si credentials disponibles)
-
-### 8.2 Parcours UI soutenance (manuel)
-
-1. Ouvrir `http://localhost:5173/verify`.
-2. Saisir message suspect + numero suspect (obligatoire), ajouter URL/capture si besoin.
-3. Cliquer `Verifier`, puis `Signaler cet incident`.
-4. Noter l'UUID incident retourne.
-5. Se connecter sur `http://localhost:5173/login`.
-6. Ouvrir `http://localhost:5173/incidents-signales`.
-7. Ouvrir le detail incident et appliquer une decision SOC.
-8. Generer le rapport depuis `Incidents signales` ou le detail incident.
-9. Verifier le rapport dans `http://localhost:5173/reports`.
-
-## 9) Qualité et standards de livraison
-
-Checklist avant release :
-
-- lint frontend propre
-- build frontend valide
-- API démarrée sans erreur
-- `/health` au vert (DB + Redis)
-- parcours critiques testés : login, alertes, transitions, rapport
-- documentation mise à jour
-
-## 10) Sécurité et conformité opérationnelle
-
-- Authentification JWT pour routes métier
-- Gestion des secrets via variables d’environnement
-- Healthchecks infra pour readiness
-- Logs structurés (`LOG_JSON`) en production
-- Sentry possible pour traçage incident
-- Politique de backup DB + evidences obligatoire
-
-## 11) Arborescence du dépôt
+## 10) API highlights
 
 ```text
-backend/          API, modèles, logique métier, workers backend
-frontend/         Interface React TypeScript
-scrapers/         Worker Playwright
-evidences_store/  Preuves et rapports générés
+POST /api/v1/auth/login
+POST /api/v1/auth/change-password
+POST /api/v1/signals/verify
+POST /api/v1/incidents/report
+POST /api/v1/incidents/report-with-media
+GET  /api/v1/incidents/citizen
+GET  /api/v1/incidents/citizen/{id}
+PATCH /api/v1/incidents/{id}/decision
+POST /api/v1/shield/actions/dispatch
+POST /api/v1/operators/callbacks/action-status
+GET  /api/v1/reports
+POST /api/v1/reports/generate/{alert_uuid}
+GET  /api/v1/dashboard/stats
+GET  /health
+GET  /metrics
 ```
 
-## 12) Déploiement et exploitation
+---
 
-Le guide opérationnel complet est disponible dans :
+## 11) Deploiement
 
+Le blueprint Render est deja versionne dans `render.yaml`:
+
+- API (docker)
+- worker scraper (docker)
+- frontend static
+- PostgreSQL + Redis manages
+
+Procedure detaillee: voir `DEPLOYMENT.md`.
+
+---
+
+## 12) Documentation projet
+
+- `docs/PRD_BENIN_CYBER_SHIELD_v1.md`
+- `docs/BENIN_CYBER_SHIELD_PLAN_INTEGRATION.md`
+- `GEMINI_CONTEXT.md`
 - `DEPLOYMENT.md`
 
-## 13) Collaboration IA
+---
 
-Le contexte projet et les règles de collaboration agents sont maintenus dans :
+## 13) Vision roadmap
 
-- `GEMINI_CONTEXT.md`
+- Stabilisation finale soutenance (qualite + robustesse)
+- Extension canal WhatsApp (phase dediee budget minimal)
+- Extension IOC/STIX selon fenetre planning
+
+---
+
+## 14) Licence et usage
+
+Prototype academique L3. Usage pedagogique et demonstration.

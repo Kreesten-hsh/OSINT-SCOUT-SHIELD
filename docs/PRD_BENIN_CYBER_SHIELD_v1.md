@@ -1,271 +1,212 @@
 # PRD - BENIN CYBER SHIELD (Licence 3)
 
-Version: 1.1-L3  
-Date: 2026-02-15  
-Statut: Ready for Development  
-Produit: BENIN CYBER SHIELD - Prototype fonctionnel Detect, Scout, Shield
+Version: 2.1-L3
+Date: 2026-02-23
+Statut: En execution (MVP fonctionnel, optimisation continue)
+Produit: BENIN CYBER SHIELD - Detect, Scout, Shield
 
 ## 1. Product Summary
 
-BENIN CYBER SHIELD est un prototype academique de plateforme anti-cyber-arnaques mobiles.
+BENIN CYBER SHIELD est un prototype academique L3 qui detecte les signaux de cyber-arnaque, structure une investigation OSINT, puis orchestre une reponse operateur simulee.
 
-Perimetre L3:
-- canaux citoyens Sprint 1: app mobile (PWA) + interface web
-- Dashboard SaaS (PME + analyste SOC)
-- API centrale FastAPI
-- moteur IA leger + regles explicables
-- pipeline OSINT et gestion de preuves
-- orchestration SHIELD avec operateur simule
+Le produit est maintenant organise en 3 espaces:
 
-## 2. Problem To Solve
+- Canal citoyen public (`/verify`)
+- Console SOC (ANALYST/ADMIN)
+- Console PME (SME) avec vues filtrees
 
-Les utilisateurs sont exposes a:
-- arnaques SMS et messages frauduleux web/social
-- usurpation d identite d agents services financiers
-- fraudes transactionnelles simples
+## 2. Problem Statement
 
-Le systeme doit permettre:
-- verification rapide d un signal suspect
-- creation et traitement d incidents
-- collecte de preuves tracees
-- reponse automatisee simulee
+Contexte cible (Benin):
 
-## 3. Product Goals (L3)
+- arnaques frequentes SMS/web social engineering
+- usurpation d'identite d'agents operateurs
+- faible verification preventive cote utilisateurs
+- besoin de dossier probatoire clair pour traitement SOC
+
+Le systeme doit:
+
+- verifier rapidement un signal suspect
+- convertir ce signal en incident exploitable
+- enrichir avec preuves techniques
+- permettre une action SOC puis SHIELD simulee
+- produire un rapport telechargeable (PDF + JSON)
+
+## 3. Product Goals
 
 ### 3.1 Goal principal
-Livrer un flux complet demonstrable en live: signal suspect -> decision analyste -> action SHIELD simulee -> rapport probatoire.
+Demontrer en live un flux E2E stable:
+`verify -> report -> SOC decision -> SHIELD dispatch -> report`.
 
 ### 3.2 Goals secondaires
-- garantir explicabilite du score IA
-- stabiliser la latence de verification
-- offrir une UX claire pour citoyen et analyste
+
+- separation nette des roles (Citoyen, SME, Analyst/Admin)
+- zero ambiguite API entre analyse (`verify`) et creation (`report`)
+- UX citoyenne sans jargon technique
+- tracabilite probatoire (hash + rapport)
 
 ## 4. Personas
 
-1. Citoyen
-- verifier un message suspect via app mobile ou interface web
-- signaler une arnaque depuis l un des 2 canaux
-
-2. PME (compte SaaS)
-- consulter alertes liees a son espace
-- voir simulation risque transactionnel
-
-3. Analyste SOC (demo academique)
-- prioriser incidents
-- valider/rejeter
-- lancer SHIELD
-
-4. Operateur simule
-- recevoir action
-- appliquer changement etat
-- renvoyer callback
+1. Citoyen (public): verifie et signale.
+2. PME (SME): surveille ses propres signaux/sources/rapports.
+3. Analyste SOC (ANALYST/ADMIN): qualifie incidents et declenche SHIELD.
+4. Operateur simule: execute action et callback.
 
 ## 5. Scope
 
-### 5.1 In Scope (MVP L3)
-- verification + signalement citoyens via 2 canaux (app mobile, web)
-- scoring IA texte (regles + modele leger)
-- queue Redis et worker Playwright
-- stockage incidents/preuves PostgreSQL + evidences_store
-- dashboard incidents/preuves/decisions
-- playbooks SHIELD simules
-- export rapport PDF
+### 5.1 In Scope (actuel)
 
-### 5.2 Out of Scope (L3)
-- integration reelle telecom nationale
-- federation multi-operateurs
-- haute disponibilite production
-- automatisation legale sans humain
+- verification citoyenne web/PWA
+- signalement avec captures ecran
+- scoring explicable et recurrence count
+- gestion incidents citoyens (liste/detail/stats)
+- decision SOC et timeline SHIELD
+- reports PDF/JSON telechargeables
+- dashboard analytique avec graphiques
+- espace PME en scope `me`
 
-## 6. Product Principles
+### 5.2 Out of Scope (phase actuelle)
 
-- Demonstration d abord (E2E prioritaire)
-- Simplicite technique et clarte du code
-- Explicabilite IA obligatoire
-- Traçabilite probatoire obligatoire
-- Actions critiques validees par humain
+- bot WhatsApp en production
+- integration telecom reelle MTN/Moov
+- federation nationale multi-operateurs
+- infra HA enterprise
 
-## 7. User Flows
+## 6. Current User Flows
 
-## 7.1 Citizen verify flow
-1. Citizen soumet message/lien/numero via app mobile ou web.
-2. API calcule score.
-3. UI affiche niveau risque + explication.
-4. Citizen peut signaler en incident.
+### 6.1 Citizen flow
+1. Utilisateur ouvre `/verify`.
+2. Soumet message + numero suspect (obligatoire).
+3. Recoit score + explications + recurrence.
+4. Confirme le signalement en modal.
+5. Incident cree (avec media optionnel).
 
-## 7.2 Incident investigation flow
-1. Incident cree.
-2. Job envoye dans Redis.
-3. Worker collecte preuve via Playwright.
-4. Evidence et hash stockes.
-5. Incident enrichi visible dans dashboard.
+### 6.2 SOC flow
+1. Analyste consulte `/incidents-signales`.
+2. Ouvre detail dossier, captures, stats numero.
+3. Prend une decision SOC (confirm/reject/escalate).
+4. Declenche une action SHIELD simulee.
+5. Genere un rapport forensique.
 
-## 7.3 SOC to SHIELD flow
-1. Analyste ouvre incident.
-2. Analyste valide menace.
-3. SHIELD dispatch action vers operateur simule.
-4. Operateur simule applique `blocked_simulated`.
-5. Callback met a jour statut incident.
-6. Rapport PDF exportable.
+### 6.3 SME flow
+1. SME se connecte.
+2. Est redirige vers `/business/verify`.
+3. Consulte uniquement ses donnees (`scope=me`).
+4. Telecharge ses rapports.
 
-## 8. Functional Requirements
+## 7. Functional Requirements
 
-## 8.1 Canaux citoyens
-- FR-CH-1: app mobile (PWA) pour verifier message suspect.
-- FR-CH-2: interface web pour verifier et signaler.
-- FR-CH-3: historique personnel cross-canal (compte utilisateur).
-- FR-CH-4: recommandations de securite selon score.
+### 7.1 Verification / signalement citoyen
+- FR-CIT-1: `POST /api/v1/signals/verify` sans ecriture DB.
+- FR-CIT-2: `POST /api/v1/incidents/report` pour creation incident.
+- FR-CIT-3: `POST /api/v1/incidents/report-with-media` pour captures.
+- FR-CIT-4: recurrence count visible si > 0.
 
-## 8.2 API Detect
-- FR-DET-1: `POST /api/v1/signals/verify`.
-- FR-DET-2: score 0-100 + categorie probable.
-- FR-DET-3: explication score (keywords/regles).
-- FR-DET-4: endpoint simulation anomalie transaction PME.
+### 7.2 SOC
+- FR-SOC-1: consultation incidents citoyens.
+- FR-SOC-2: decision incident (`CONFIRM|REJECT|ESCALATE`).
+- FR-SOC-3: dispatch SHIELD simule.
+- FR-SOC-4: suppression en cascade dossier complet.
 
-## 8.3 SCOUT
-- FR-SCT-1: enqueue job apres signalement.
-- FR-SCT-2: scraping evidence.
-- FR-SCT-3: hash SHA-256 et metadata.
-- FR-SCT-4: lien evidence -> incident.
-- FR-SCT-5: generation rapport PDF.
+### 7.3 PME
+- FR-SME-1: espace dedie 4 pages business.
+- FR-SME-2: filtres server-side `scope=me`.
+- FR-SME-3: lecture seule sur alertes business.
 
-## 8.4 Dashboard SaaS
-- FR-DASH-1: liste incidents (filtres statut/severite/date).
-- FR-DASH-2: detail score, preuves, historique.
-- FR-DASH-3: action decisionnelle analyste.
-- FR-DASH-4: vue PME simplifiee.
+### 7.4 Reporting
+- FR-REP-1: generation snapshot + hash SHA-256.
+- FR-REP-2: PDF structure professionnelle (5 sections).
+- FR-REP-3: telechargement JSON/PDF depuis UI.
 
-## 8.5 SHIELD simule
-- FR-SHD-1: endpoint dispatch action.
-- FR-SHD-2: API operateur simulee.
-- FR-SHD-3: callback statut execution.
-- FR-SHD-4: journal d actions complet.
+## 8. API Contracts (Current)
 
-## 9. API Contracts (Target)
-
-| Endpoint | Methode | Resultat attendu |
+| Endpoint | Methode | Statut |
 |---|---|---|
-| `/api/v1/signals/verify` | POST | score + explication + severite |
-| `/api/v1/incidents/report` | POST | incident cree + id |
-| `/api/v1/detect/transactions/analyze` | POST | score transaction + statut |
-| `/api/v1/incidents/{id}/decision` | PATCH | decision mise a jour |
-| `/api/v1/shield/actions/dispatch` | POST | action lancee |
-| `/api/v1/operators/callbacks/action-status` | POST | incident/action sync |
-| `/api/v1/reports/generate/{incident_id}` | POST | rapport genere |
+| `/api/v1/auth/login` | POST | Implemented |
+| `/api/v1/auth/change-password` | POST | Implemented |
+| `/api/v1/signals/verify` | POST | Implemented |
+| `/api/v1/incidents/report` | POST | Implemented |
+| `/api/v1/incidents/report-with-media` | POST | Implemented |
+| `/api/v1/incidents/citizen` | GET | Implemented |
+| `/api/v1/incidents/citizen/{id}` | GET | Implemented |
+| `/api/v1/incidents/{id}/decision` | PATCH | Implemented |
+| `/api/v1/shield/actions/dispatch` | POST | Implemented |
+| `/api/v1/operators/callbacks/action-status` | POST | Implemented |
+| `/api/v1/reports/generate/{alert_uuid}` | POST | Implemented |
 
-## 10. Data Model (Simplified)
+## 9. Data Model (Current)
 
-- `Signal`
-- `Incident`
-- `DetectionResult`
-- `Evidence`
-- `ShieldAction`
-- `OperatorCallback`
-- `Report`
+Entites principales:
+
+- `users` (role: ADMIN | ANALYST | SME)
+- `alerts` (inclut `owner_user_id`, `phone_number`, `citizen_channel`)
+- `analysis_results`
+- `evidences`
+- `reports`
+- `monitoring_sources` (inclut `owner_user_id`)
+- `scraping_runs`
+
+## 10. Security and RBAC
+
+- JWT obligatoire pour espaces prives
+- RBAC backend via `require_role(["ANALYST", "ADMIN"])` sur endpoints critiques
+- SME interdit sur decision SHIELD/SOC sensibles
+- Secrets via variables d'environnement
 
 ## 11. Non-Functional Requirements
 
 ### 11.1 Performance
-- P95 verify <= 5s.
-- P95 opening incident detail <= 2s (hors image lourde).
+- Verify percu fluide cote UI (loader + etapes)
+- Dashboard lisible avec skeleton loaders
 
 ### 11.2 Reliability
-- pipeline queue robuste en demo locale
-- recovery simple sur redemarrage services
+- queue Redis + worker asynchrone
+- rapport telechargeable meme apres regeneration
 
-### 11.3 Security
-- auth JWT
-- roles minimum: CITIZEN, SME, ANALYST, ADMIN
-- logs d actions sensibles
-- validation du canal source (`MOBILE_APP`, `WEB_PORTAL`)
+### 11.3 Observability
+- `/health` pour DB/Redis
+- `/metrics` pour instrumentation
 
 ### 11.4 Evidence integrity
-- hash SHA-256 pour chaque evidence
-- lien evidence/report immutable dans base
+- hash SHA-256 sur fichiers/preuves
+- snapshot JSON associe au PDF
 
-## 12. IA Requirements (L3-credible)
+## 12. KPI (Targets L3)
 
-Obligatoire:
-- modele texte leger ou heuristique avancée
-- explication du score
-- seuils ajustables
-
-Facultatif:
-- isolation forest pour scenario transactionnel
-
-Non necessaire:
-- deep learning complexe
-- federation
-- XAI avancee multi-modeles
-
-## 13. KPI And Acceptance Targets
-
-| KPI | Cible L3 |
+| KPI | Cible |
 |---|---|
-| TPR | >= 80% |
-| FPR | <= 15% |
-| Latence verify | <= 5s |
-| E2E detect->shield simule | <= 60s |
-| Incidents avec evidence hash | 100% critiques |
-| Disponibilite demo | 100% en soutenance |
+| Latence verification | <= 5 s |
+| Flux E2E verify -> report -> SOC -> SHIELD | <= 60 s en demo |
+| Integrite preuves (hash present) | 100% incidents critiques |
+| Reussite generation rapport PDF/JSON | 100% dossiers eligibles |
+| Faux positifs | Reduction iterative par calibration |
 
-## 14. Demo Script (Mandatory)
+## 13. Acceptance Criteria
 
-1. Soumettre message suspect via app mobile ou web.
-2. Afficher score IA + explication.
-3. Signaler incident.
-4. Declencher collecte OSINT.
-5. Afficher preuve stockee + hash.
-6. Ouvrir dashboard analyste.
-7. Valider incident.
-8. Lancer playbook SHIELD.
-9. Voir statut `blocked_simulated`.
-10. Exporter rapport PDF.
+Le lot est valide si:
 
-## 15. Milestones (6-8 semaines)
+1. `/verify` fonctionne sans login.
+2. signalement cree un incident exploitable SOC.
+3. detail incident affiche preuves/stats/timeline.
+4. decision + dispatch SHIELD fonctionnent sans erreur.
+5. rapport PDF et JSON se telechargent correctement.
+6. role SME reste cantonne a `/business/*`.
+7. aucune regression sur routes existantes analyste/admin.
 
-### M1 - Setup + cadrage (Semaine 1)
-- structure repo, conventions, seeds demo
-
-### M2 - PWA + API verify/report (Semaine 2-3)
-- verification et signalement operationnels sur 2 canaux (mobile + web)
-
-### M3 - SCOUT + preuves + PDF (Semaine 4-5)
-- pipeline queue complet
-
-### M4 - Dashboard + SHIELD simule (Semaine 6-7)
-- decision analyste + callback operateur simule
-
-### M5 - stabilisation soutenance (Semaine 8)
-- tests E2E et script demo final
-
-## 16. Risks And Mitigations
+## 14. Risks and Mitigation
 
 | Risque | Impact | Mitigation |
 |---|---|---|
-| Scope creep | retard | backlog strict MVP |
-| Demo fragile | echec soutenance | rehearsal + seed data |
-| faux positifs | perte credibilite | calibration seuils |
-| bugs queue/worker | flux casse | tests E2E quotidiens |
-| dette UX | incomprehension jury | simplifier parcours |
+| Scope creep | Retard soutenance | Gel strict des canaux et backlog phase suivante |
+| Integration externe indisponible | Blocage demo | Operateur simule maintenu en local |
+| Regressions UI/UX | Demo fragile | Validation manuelle parcours critique a chaque lot |
+| Derive documentaire | Incoherence jury | Sync README + PRD + Plan + Notion a chaque milestone |
 
-## 17. Definition Of Done (MVP L3)
+## 15. Roadmap Next Steps
 
-Le MVP est termine si:
-- endpoints critiques implementes et testes
-- 2 canaux citoyens (mobile + web) et dashboard couvrent le flux demo
-- preuve et rapport fonctionnent
-- SHIELD simule fonctionne avec callback
-- demo complete executee sans intervention manuelle cachée
+### Phase suivante (post-v2.1)
 
-## 18. Next Step After PRD
-
-Produire un plan Sprint 1 detaille avec tickets:
-- backend API
-- frontend app mobile/web
-- frontend dashboard
-- worker OSINT
-- test E2E demo
-
-Roadmap canal additionnel:
-- bot WhatsApp reporte en Sprint 2 (hors scope Sprint 1)
+1. Stabilisation finale soutenance (perf + polish + checks)
+2. Canal WhatsApp (prototype budget zero) en phase dediee
+3. Extensibilite `IOCs/STIX` si fenetre temporelle disponible
+4. Durcissement operations (backup/restore/script demo automatises)

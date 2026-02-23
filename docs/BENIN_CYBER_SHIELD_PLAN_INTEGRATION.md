@@ -1,244 +1,227 @@
-# Plan d Integration Strategique - BENIN CYBER SHIELD (Version Licence 3)
+# Plan d Integration Strategique - BENIN CYBER SHIELD
 
-Version: v1.1-L3  
-Date: 2026-02-15  
-Portee: Prototype academique realiste, demonstrable, sans surdimensionnement institutionnel
+Version: v2.1-L3 (as-built)
+Date: 2026-02-23
+Portee: Etat reel du projet + feuille de route d'achevement soutenance
 
-## Resume Executif
+## Resume executif
 
-Ce plan definit l integration de BENIN CYBER SHIELD en version Licence 3:
-- application mobile citoyenne (PWA)
-- interface web citoyenne
-- dashboard SaaS (PME + analyste SOC)
-- API centrale FastAPI
-- orchestration SHIELD via operateur simule
+Ce document aligne la vision BENIN CYBER SHIELD avec l'etat reel du code actuellement en branche `vision-benin-cyber-shield`.
 
-Objectif pedagogique: demonstrer un flux complet Detect -> Scout -> Shield en environnement controle.
+Le socle est operationnel pour un prototype L3 complet:
 
-Objectif de soutenance: prouver une architecture logicielle solide, moderne et coherente, sans pretendre a un deploiement national reel.
+- Detect: verification/scoring citoyen
+- Scout: collecte OSINT et gestion de preuves
+- Shield: orchestration operateur simulee
+- Gouvernance: role-based access + decision humaine SOC
 
-## 1. Contexte Et Probleme Cible
+## 1. Contexte et probleme cible
 
-Le projet repond aux cyber-arnaques mobiles frequentes au Benin:
-- faux messages Mobile Money
-- usurpation d identite (faux agents)
-- arnaques SMS et web social engineering
-- tentatives de fraude transactionnelle
+Le projet traite les cyber-arnaques mobiles et social engineering frequents au Benin, avec une approche pragmatique L3:
 
-Probleme a resoudre en L3:
-- verifier rapidement un signal suspect
-- transformer le signal en incident structurÃ©
-- produire des preuves tracables
-- declencher une reponse automatisee simulee
+- verification rapide cote citoyen
+- qualification SOC outillee
+- production de preuves exploitables
+- action simulee demonstrable sans dependance operateur reelle
 
-## 2. Vision Produit L3
+## 2. Objectifs strategiques mesurables
 
-BENIN CYBER SHIELD est un prototype operationnel de plateforme intelligente de detection et reponse aux cyber-arnaques mobiles.
+1. Flux E2E demonstrable en soutenance sans intervention cachee.
+2. Contrat API stable: `verify` (analyse) separe de `report` (creation).
+3. Separation des espaces utilisateurs par role.
+4. Rapport forensique telechargeable (PDF/JSON) avec hash.
+5. UX lisible et professionnelle pour jury et parties prenantes.
 
-La vision nationale est conservee comme perspective long terme, mais la livraison L3 reste:
-- simple
-- demonstrable en live
-- faisable techniquement dans un cadre academique
+## 3. Positionnement plateforme (etat actuel)
 
-## 3. Positionnement Simplifie
+### 3.1 Detect
+- `POST /api/v1/signals/verify`
+- scoring explicable et categories detectees
+- recurrence count sur numero signale
 
-Le projet combine 4 blocs:
-- `DETECT`: scoring IA leger + regles explicables
-- `SCOUT`: investigation OSINT + preuves
-- `SHIELD`: orchestration d actions via operateur simule
-- `SOC`: validation humaine et supervision via dashboard
+### 3.2 Scout
+- pipeline Redis/Playwright actif
+- preuves stockees dans `evidences_store`
+- captures citoyennes hashées (SHA-256)
 
-Ce n est ni une simple app de verification, ni un simple scraper, ni un simple modele ML.
+### 3.3 Shield
+- decision incident (`CONFIRM|REJECT|ESCALATE`)
+- dispatch action operateur simule
+- callback statut avec secret partage
 
-## 4. Architecture Cible L3 (Controlee)
+### 3.4 Gouvernance
+- roles JWT: `ADMIN`, `ANALYST`, `SME`
+- guards frontend et RBAC backend
+- decision critique reste humaine
+
+## 4. Architecture cible as-built
 
 ```text
-Canaux utilisateur Sprint 1
-(App mobile PWA / Interface web)
-      |
-      v
-API Centrale (FastAPI)
-      |
-      v
-Moteur IA (regles + ML leger)
-      |
-      v
-Redis queue
-      |
-      v
-Module OSINT (Playwright)
-      |
-      v
-PostgreSQL + evidences_store
-      |
-      v
-Dashboard SaaS (React)
-      |
-      v
-Module SHIELD (operateur simule + callback)
+PWA/Web Citoyen + Dashboard SOC + Espace PME
+                     |
+                     v
+             FastAPI (/api/v1)
+                     |
+       +-------------+-------------+
+       |                           |
+       v                           v
+ PostgreSQL                    Redis queues
+(alerts/sources/reports)   (osint_to_scan/results)
+       |                           |
+       +-------------+-------------+
+                     |
+                     v
+               Worker Playwright
+                     |
+                     v
+            evidences_store (preuves/rapports)
 ```
 
-Principes:
-- reutiliser au maximum l existant du repo
-- evoluer sans casser les routes actuelles
-- garder une stack unique, lisible et maintenable
+## 5. Role detaille des blocs
 
-## 5. Role Detaille Des Blocs
+### Bloc A - Detection temps reel
 
-### Bloc A - DETECT
-- verification d un message/lien/numero suspect
-- score de risque 0-100
-- explication simple du score (regles + indices)
-- detection simple d anomalie transactionnelle (simulation PME)
+- verification message/url/numero
+- regles ponderees pour OTP, urgence, usurpation, gain inattendu
+- seuils de risque: LOW/MEDIUM/HIGH
 
-### Bloc B - SCOUT
-- collecte automatique de contenu cible (Playwright)
-- extraction d indices techniques
-- creation de preuves (capture + metadata + hash)
-- liaison evidence <-> incident
-- generation rapport PDF probatoire
+### Bloc B - Investigation OSINT
 
-### Bloc C - SHIELD (Simule)
-- execution de playbooks automatiques
-- API operateur simulee (pas d integration MTN/Moov reelle)
-- changement d etat numero/compte en "blocked_simulated"
-- callback vers API centrale
+- enqueue url crawlable vers Redis
+- capture et normalisation preuve
+- lien incident <-> evidence <-> report
 
-### Bloc D - Dashboard SaaS (PME + SOC)
-- vue incidents et alertes
-- details score IA et preuves
-- decision analyste (valider/rejeter/escalader)
-- declenchement action SHIELD
+### Bloc C - Reponse automatisee (simulee)
 
-## 6. User Flow Consolide L3
+- transitions statut incident
+- playbooks operateur simules
+- historique des actions SHIELD
 
-| Acteur | Reel ou Simule | Role dans le prototype |
-|---|---|---|
-| Citoyen | Reel (app mobile + web) | Verifier et signaler |
-| PME | Reel (SaaS) | Voir alertes et simulation risque transaction |
-| Analyste SOC | Reel (SaaS) | Qualifier incidents et lancer SHIELD |
-| Operateur | Simule | Executer action et callback |
-| Autorite judiciaire | Simule | Exploiter rapport PDF exporte |
+### Bloc D - Gouvernance et conformite
 
-## 7. Role Reel De L IA En L3
+- ownership des donnees (`owner_user_id`)
+- scope `me` pour vues PME
+- suppression en cascade traçable
 
-IA utilisee pour:
-- classification phishing texte
-- score heuristique explicable
-- detection simple anomalie transactionnelle
-- similarite de messages (recurrence)
-- aide a priorisation
+## 6. User-flow multi-acteurs consolide
 
-IA non requise en L3:
-- deep learning complexe
-- federation multi-sites
-- orchestration adaptative avancee
+| Acteur | Entree | Traitement | Sortie |
+|---|---|---|---|
+| Citoyen | Message suspect | Verify + report | Incident cree + score lisible |
+| Analyste SOC | Incident citoyen | Decision + action SHIELD | Statut confirme/rejete/bloque simule |
+| PME | Espace business | Consultation scope=me | Alertes/sources/rapports personnels |
+| Operateur simule | Dispatch SHIELD | Callback execution | Incident mis a jour |
 
-## 8. Ce Qui Est Obligatoire En Soutenance
+## 7. IA: role reel et limites
 
-Demonstration live bout en bout:
-1. Message suspect soumis
-2. Analyse IA lancee
-3. Score affiche
-4. Scraping OSINT declenche
-5. Preuve stockee et hash calcule
-6. Incident cree
-7. Analyste valide incident
-8. Playbook SHIELD declenche
-9. Statut numero passe en bloque (simule)
-10. Rapport PDF exporte
+### IA active
+- scoring explicable par regles ponderees
+- categories detectees retournees API
+- recurrence via comptage historique
 
-## 9. Exigences De Conformite Et Securite L3
+### Limites
+- pas de decision legale automatique
+- pas de federated learning en phase actuelle
+- pas de modele lourd multi-langue en production demo
 
-- authentification JWT pour routes metier
-- journalisation des actions critiques
-- integrite des preuves via SHA-256
-- separation des roles (citoyen, PME, analyste)
-- conservation des logs necessaires a la demo
+## 8. Gouvernance SOC et responsabilites
 
-## 10. Feuille De Route L3 (Realiste)
+| Activite | SOC | PME | Citoyen | Operateur simule |
+|---|---|---|---|---|
+| Verification initiale | I | I | R | I |
+| Qualification incident | A/R | I | I | I |
+| Action SHIELD | A/R | I | I | R |
+| Rapport probatoire | A/R | C (scope me) | I | I |
 
-### Phase 0 - Cadrage technique (1 semaine)
-- verrouiller scope L3
-- valider UX de demo
-- definir jeux de donnees de test
+## 9. Traçabilite probatoire et conformite
 
-### Phase 1 - Canaux citoyens (1-2 semaines)
-- ecran app mobile (PWA) de verification message suspect
-- interface web de verification/signalement
-- historique personnel minimal
+- hash SHA-256 sur preuves et snapshots
+- rapports PDF/JSON telechargeables
+- chaines de suppression nettoient artefacts associes
+- logs et controles d'acces par role
 
-### Phase 2 - API Detect + Incident (1-2 semaines)
-- endpoint verify
-- endpoint report incident
-- moteur score explicable
+## 10. Feuille de route de deploiement
 
-### Phase 3 - SCOUT + preuve + PDF (1-2 semaines)
-- enchainement queue -> worker -> evidence
-- hash et metadata
-- generation PDF
+### Phase A - termine (v2.1)
+- separation roles frontend/backend
+- espaces business operationnels
+- UX verify citizen stabilisee
+- rapports PDF v2 + telechargements
 
-### Phase 4 - Dashboard PME/SOC + SHIELD simule (1-2 semaines)
-- vue incidents
-- decision analyste
-- dispatch playbook et callback simule
+### Phase B - en cours
+- finalisation soutenance (polish/perf)
+- validation integrale des parcours demo
+- stabilisation operationnelle locale/cloud
 
-### Phase 5 - Hardening demo (1 semaine)
-- tests de scenario soutenance
-- correction UX et messages
-- script de demo final
+### Phase C - suivante
+- canal WhatsApp (prototype budget zero)
+- extension IOC/STIX (si fenetre planning)
 
-## 11. KPI Cibles L3
+## 11. KPI cibles
 
 | KPI | Cible prototype |
 |---|---|
-| TPR detection basique | >= 80% sur dataset de test |
-| FPR | <= 15% sur dataset de test |
-| Latence verification message | <= 5 s |
-| Temps de cycle detect->shield simule | <= 60 s |
-| Disponibilite demo locale | 100% pendant soutenance |
-| Integrite preuve | 100% des incidents critiques avec hash |
+| Latence verify | <= 5s |
+| Flux detect->shield simule | <= 60s |
+| Rapports telechargeables | 100% dossiers eligibles |
+| Incidents critiques avec hash | 100% |
+| Regressions front/back | 0 sur routes critiques |
 
-## 12. Risques L3 Et Mitigation
+## 12. Risques et mitigation
 
-| Risque | Mitigation |
-|---|---|
-| Scope trop ambitieux | Gel strict du perimetre L3 |
-| Temps insuffisant | Prioriser flux E2E avant features secondaires |
-| Faux positifs elevÃ©s | Ajuster seuils + jeux de test representatifs |
-| Demo instable | Script de demo pre-valide + data seed |
-| Dependance externe | Operateur 100% simule localement |
-
-## 13. Interfaces Et APIs Cibles L3
-
-| Domaine | Endpoint cible | But |
+| Risque | Impact | Mitigation |
 |---|---|---|
-| Verification citoyen multi-canal | `POST /api/v1/signals/verify` | score + explication (MOBILE_APP/WEB_PORTAL) |
-| Signalement | `POST /api/v1/incidents/report` | creer incident |
-| Decision analyste | `PATCH /api/v1/incidents/{id}/decision` | valider/rejeter |
-| SHIELD dispatch | `POST /api/v1/shield/actions/dispatch` | declencher action simulee |
-| Callback simule | `POST /api/v1/operators/callbacks/action-status` | retour execution |
-| Export PDF/JSON | `GET /api/v1/reports/*` | preuve soutenance |
+| Scope creep | retard | gel perimetre canaux et backlog phase suivante |
+| Instabilite demo | echec soutenance | checklist runbook + seed + smoke script |
+| Incoherence docs/code | confusion jury | sync README/PRD/Plan/Notion a chaque lot |
+| Dependances externes | blocage execution | simulation operateur locale maintenue |
 
-## 14. Definition De Reussite L3
+## 13. Plan pilote operateur beninois (mode simulation)
 
-Le projet est considere reussi si:
-- le flux complet est fonctionnel et demonstrable
-- le score IA est explicable
-- la preuve est tracee et rapportable
-- l orchestration SHIELD simulee marche avec callback
-- le jury voit un prototype maitrise, realiste et coherent
+- API callback signee (`X-Operator-Secret`)
+- statut execution (`SENT`, `EXECUTED`, `FAILED`)
+- demonstration blocage simule sur incident confirme
+- timeline d'actions visible dans detail incident
 
-## 15. Positionnement Final Pour Soutenance
+## 14. Modele economique (projection)
 
-Titre recommande:
+- B2G: cellule SOC nationale et outillage decisionnel
+- B2B: espace PME surveille + reporting probatoire
+- approche progressive: prototype L3 -> pilote institutionnel
 
-**BENIN CYBER SHIELD - Prototype fonctionnel de plateforme intelligente de detection et reponse aux cyber-arnaques mobiles**
+## 15. Criteres de succes vers pilote institutionnel
 
-Message cle:
-- vision ambitieuse
-- implementation L3 realiste
-- demonstration technique complete
+1. Flux E2E stable en demo.
+2. Separation des roles prouvee.
+3. Rapports probatoires fiables.
+4. Documentation technique coherente.
+5. Transition roadmap claire vers canal WhatsApp et integrations externes.
 
-Note roadmap:
-- bot WhatsApp planifie en Sprint 2, hors scope Sprint 1
+## Annexe A - APIs et types effectifs
+
+### Endpoints effectifs
+
+- `POST /api/v1/signals/verify`
+- `POST /api/v1/incidents/report`
+- `POST /api/v1/incidents/report-with-media`
+- `GET /api/v1/incidents/citizen`
+- `GET /api/v1/incidents/citizen/stats/top-numbers`
+- `PATCH /api/v1/incidents/{id}/decision`
+- `POST /api/v1/shield/actions/dispatch`
+- `POST /api/v1/operators/callbacks/action-status`
+- `GET /api/v1/reports`
+- `POST /api/v1/reports/generate/{alert_uuid}`
+
+### Types effectifs
+
+- `SignalChannel`: `MOBILE_APP | WEB_PORTAL`
+- `UserRole`: `ADMIN | ANALYST | SME`
+- `AlertStatus`: `NEW | IN_REVIEW | CONFIRMED | DISMISSED | BLOCKED_SIMULATED`
+- `PlaybookActionType`: `BLOCK_NUMBER | SUSPEND_WALLET | ENFORCE_MFA | BLACKLIST_ADD | USER_NOTIFY`
+
+## Annexe B - References internes
+
+- `README.md`
+- `DEPLOYMENT.md`
+- `docs/PRD_BENIN_CYBER_SHIELD_v1.md`
+- `render.yaml`
