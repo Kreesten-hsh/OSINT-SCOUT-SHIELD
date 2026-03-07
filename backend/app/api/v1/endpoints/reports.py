@@ -10,7 +10,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models import Alert, Report
-from app.core.security import get_current_token_payload, resolve_scope_owner_user_id
+from app.core.security import get_current_token_payload, require_role, resolve_scope_owner_user_id
 from app.schemas.token import TokenPayload
 from app.services.snapshot import create_alert_snapshot
 from app.services.hashing import compute_snapshot_hash
@@ -22,6 +22,31 @@ import uuid
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+
+def _candidate_report_paths(report: Report) -> list[Path]:
+    raw_pdf = Path(str(report.pdf_path))
+    if raw_pdf.is_absolute():
+        return [raw_pdf]
+    return [
+        Path("/app/evidences_store/reports") / raw_pdf,
+        Path("evidences_store/reports") / raw_pdf,
+        Path("/app/evidences_store") / raw_pdf,
+        Path("evidences_store") / raw_pdf,
+    ]
+
+
+def _resolve_report_pdf_path(report: Report) -> Path | None:
+    candidates = _candidate_report_paths(report)
+    return next((path for path in candidates if path.exists()), None)
+
+
+def _risk_level_from_score(score: int) -> str:
+    if score >= 65:
+        return "HIGH"
+    if score >= 35:
+        return "MEDIUM"
+    return "LOW"
 
 @router.get("/")
 async def list_reports(
@@ -89,15 +114,22 @@ async def generate_report(
     os.makedirs(output_dir, exist_ok=True)
     pdf_path = os.path.join(output_dir, filename)
     
+    report_uuid_value = uuid.uuid4()
+
     try:
-        generate_forensic_pdf(snapshot, pdf_path, report_hash)
+        generate_forensic_pdf(
+            snapshot,
+            pdf_path,
+            report_hash,
+            report_uuid=str(report_uuid_value),
+        )
     except Exception as e:
         logger.exception("PDF generation failed", extra={"alert_uuid": str(alert_uuid)})
         raise HTTPException(status_code=500, detail=f"PDF Generation failed: {e}")
     
     # 5b. Sauvegarder en Base
     new_report = Report(
-        uuid=uuid.uuid4(),
+        uuid=report_uuid_value,
         alert_id=alert_id,
         snapshot_json=snapshot,
         report_hash=report_hash,
@@ -148,18 +180,8 @@ async def download_pdf(
     
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
-        
-    candidate_paths: list[Path] = []
-    raw_pdf = Path(str(report.pdf_path))
-    if raw_pdf.is_absolute():
-        candidate_paths.append(raw_pdf)
-    else:
-        candidate_paths.append(Path("/app/evidences_store/reports") / raw_pdf)
-        candidate_paths.append(Path("evidences_store/reports") / raw_pdf)
-        candidate_paths.append(Path("/app/evidences_store") / raw_pdf)
-        candidate_paths.append(Path("evidences_store") / raw_pdf)
 
-    full_path = next((path for path in candidate_paths if path.exists()), None)
+    full_path = _resolve_report_pdf_path(report)
     if not full_path:
         raise HTTPException(status_code=404, detail="PDF file missing on disk")
 
@@ -187,5 +209,88 @@ async def download_json(
         media_type="application/json",
         headers={
             "Content-Disposition": f"attachment; filename=report_{report.uuid}.json"
+        },
+    )
+
+
+@router.get("/{report_uuid}/download/case-bundle")
+async def download_case_bundle(
+    report_uuid: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _: TokenPayload = Depends(require_role(["ANALYST", "ADMIN"])),
+):
+    query = select(Report).options(selectinload(Report.alert)).where(Report.uuid == report_uuid)
+    result = await db.execute(query)
+    report = result.scalars().first()
+
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    alert = report.alert
+    if not alert:
+        raise HTTPException(status_code=404, detail="Associated alert not found")
+
+    candidate_paths = _candidate_report_paths(report)
+    target_path = _resolve_report_pdf_path(report) or candidate_paths[0]
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        generate_forensic_pdf(
+            report.snapshot_json or {},
+            str(target_path),
+            str(report.report_hash or ""),
+            report_uuid=str(report.uuid),
+        )
+    except Exception as exc:
+        logger.exception("Case bundle PDF generation failed", extra={"report_uuid": str(report_uuid)})
+        raise HTTPException(status_code=500, detail=f"PDF Generation failed: {exc}")
+
+    if not target_path.exists():
+        raise HTTPException(status_code=404, detail="PDF file missing on disk")
+
+    pdf_bytes = target_path.read_bytes()
+
+    incident_data = {
+        "id": str(alert.id),
+        "uuid": str(alert.uuid) if alert.uuid else None,
+        "phone_number": alert.phone_number,
+        "reported_message": alert.reported_message,
+        "url": alert.url,
+        "source_type": alert.source_type,
+        "citizen_channel": alert.citizen_channel,
+        "region": alert.region,
+        "risk_score": alert.risk_score,
+        "risk_level": _risk_level_from_score(int(alert.risk_score or 0)),
+        "soc_decision": alert.status,
+        "status": alert.status,
+        "analysis_note": alert.analysis_note,
+        "created_at": str(alert.created_at),
+        "updated_at": str(alert.updated_at),
+    }
+    report_data = {
+        "id": str(report.id),
+        "uuid": str(report.uuid) if report.uuid else None,
+        "alert_id": str(report.alert_id),
+        "report_hash": report.report_hash,
+        "snapshot_hash_sha256": report.snapshot_hash_sha256,
+        "snapshot_version": report.snapshot_version,
+        "generated_by": report.generated_by,
+        "pdf_path": report.pdf_path,
+        "created_at": str(report.generated_at),
+    }
+
+    from app.services.case_bundle import generate_case_bundle
+
+    zip_bytes = await generate_case_bundle(
+        incident_data,
+        report_data,
+        pdf_bytes,
+    )
+    uuid_short = str(report.id)[:8]
+    return Response(
+        content=zip_bytes,
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f"attachment; filename=dossier_criet_{uuid_short}.zip",
         },
     )

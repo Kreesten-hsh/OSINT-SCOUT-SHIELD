@@ -224,6 +224,25 @@ export default function ReportDetailPage() {
                             <button
                                 onClick={async () => {
                                     try {
+                                        await downloadApiFile(
+                                            `/reports/${activeReport.uuid}/download/case-bundle`,
+                                            `dossier_criet_${activeReport.id}.zip`,
+                                        );
+                                    } catch {
+                                        toast({
+                                            title: 'Telechargement impossible',
+                                            description: 'Le dossier CRIET est indisponible.',
+                                            variant: 'destructive',
+                                        });
+                                    }
+                                }}
+                                className="inline-flex items-center gap-1 rounded bg-indigo-700 px-3 py-1.5 text-sm text-white transition-colors hover:bg-indigo-600"
+                            >
+                                ⚖️ Dossier CRIET
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    try {
                                         await downloadApiFile(`/reports/${activeReport.uuid}/download/json`, `report_${activeReport.uuid}.json`);
                                     } catch {
                                         toast({
