@@ -4,6 +4,7 @@ import { AlertTriangle, CheckCircle2, Loader2, ShieldAlert, UploadCloud } from '
 
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
+import HighlightedMessage from '@/features/verify/HighlightedMessage';
 
 type SignalChannel = 'MOBILE_APP' | 'WEB_PORTAL';
 type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
@@ -16,6 +17,16 @@ interface VerifySignalData {
   matched_rules: string[];
   categories_detected?: string[];
   recurrence_count: number;
+  highlighted_spans?: Array<{
+    start: number;
+    end: number;
+    rule: string;
+    label: string;
+    color: string;
+  }>;
+  recommendations?: string[];
+  citizen_advice?: string[];
+  fon_alert?: string | null;
 }
 
 interface IncidentReportData {
@@ -290,6 +301,31 @@ export default function VerifySignalPanel() {
             <div className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-300">
               ⚠ Ce numero a deja ete signale {result.recurrence_count} fois par d'autres utilisateurs.
             </div>
+          )}
+
+          <div className="rounded-xl border border-border/70 bg-slate-900/40 p-4">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Message analyse</p>
+            <HighlightedMessage text={message.trim()} spans={result.highlighted_spans ?? []} />
+          </div>
+
+          {(result.citizen_advice?.length ?? 0) > 0 && (
+            <div className="mt-4 rounded-lg border border-slate-700 bg-slate-800/50 p-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Que faire maintenant</p>
+              <ul className="space-y-1">
+                {result.citizen_advice?.map((advice, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-slate-200">
+                    <span className="mt-0.5 flex-shrink-0 text-green-400">✅</span>
+                    <span>{advice}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {result.fon_alert && (
+            <p className="mt-2 text-xs italic text-amber-400">
+              {result.fon_alert}
+            </p>
           )}
 
           <ul className="space-y-1 rounded-xl border border-border/70 bg-secondary/20 p-4 text-sm text-muted-foreground">

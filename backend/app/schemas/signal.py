@@ -15,6 +15,14 @@ class VerifySignalRequest(BaseModel):
     create_incident: bool | None = None
 
 
+class HighlightedSpan(BaseModel):
+    start: int
+    end: int
+    rule: str
+    label: str
+    color: str
+
+
 class VerifySignalData(BaseModel):
     risk_score: int
     risk_level: RiskLevel
@@ -23,6 +31,10 @@ class VerifySignalData(BaseModel):
     matched_rules: list[str]
     categories_detected: list[str] = Field(default_factory=list)
     recurrence_count: int = Field(default=0, ge=0)
+    highlighted_spans: list[HighlightedSpan] = Field(default_factory=list)
+    recommendations: list[str] = Field(default_factory=list)
+    citizen_advice: list[str] = Field(default_factory=list)
+    fon_alert: str | None = None
 
 
 class VerificationSnapshot(BaseModel):

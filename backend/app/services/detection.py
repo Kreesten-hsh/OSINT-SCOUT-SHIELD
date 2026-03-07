@@ -1,5 +1,9 @@
-﻿import re
+import logging
+import re
 from collections.abc import Callable
+
+
+logger = logging.getLogger(__name__)
 
 
 SIGNAL_WEIGHTS = {
@@ -38,6 +42,62 @@ EXPLANATION_MAPPING = {
     "threat_of_loss": "Le message menace une perte ou un blocage si vous ne reagissez pas.",
     "phone_number_in_message": "Le message contient un numero de telephone de contact potentiellement frauduleux.",
     "suspicious_url": "Le lien fourni est non officiel ou techniquement suspect.",
+}
+
+RECOMMENDATION_MAPPING = {
+    "otp_request": (
+        "Ne communiquez JAMAIS un code recu par SMS. "
+        "Aucun service officiel ne vous le demandera."
+    ),
+    "urgency": (
+        "L'urgence est la principale arme des arnaqueurs. "
+        "Un vrai service vous laisse toujours le temps de verifier."
+    ),
+    "unexpected_gain": (
+        "Aucun gain legitime ne necessite un paiement prealable "
+        "ou votre code secret."
+    ),
+    "operator_impersonation": (
+        "MTN et Moov ne vous contacteront jamais par SMS "
+        "pour demander un transfert ou votre code PIN."
+    ),
+    "threat_of_loss": (
+        "Les menaces de blocage sont de fausses urgences. "
+        "Appelez directement votre operateur pour verifier."
+    ),
+    "phone_number_in_message": (
+        "Ce numero n'appartient pas a votre operateur officiel. "
+        "Ne le rappelez pas."
+    ),
+    "suspicious_url": (
+        "Ne cliquez jamais sur un lien recu par SMS. "
+        "Tapez toujours l'adresse officielle de votre service."
+    ),
+}
+
+FON_ALERTS = {
+    "HIGH": "⚠️ Wɛ — Nyanya wɛ ɖo ali bo na xò wɛ!",
+    "MEDIUM": "⚠️ Ðó wantɔ ɖagbe — Kpɔ nú enɛ jɛ nukɔn",
+}
+
+RULE_KEYWORDS = {
+    "otp_request": ["otp", "code", "secret", "pin", "mot de passe"],
+    "urgency": ["urgent", "immediatement", "maintenant", "vite", "minutes", "heures", "bloque", "suspendu"],
+    "unexpected_gain": ["gagne", "felicitations", "cadeau", "gratuit", "recompense"],
+    "operator_impersonation": ["mtn", "moov", "agent", "service client", "orange"],
+    "threat_of_loss": ["suspendu", "bloque", "desactive", "cloture", "ferme"],
+    "suspicious_url": ["http", "www", ".xyz", ".tk", "cliquez", "lien"],
+    "phone_number_in_message": ["appel", "rappel", "contactez", "numero"],
+}
+
+COLOR_MAP = {
+    "otp_request": "red",
+    "operator_impersonation": "red",
+    "threat_of_loss": "red",
+    "suspicious_url": "red",
+    "urgency": "orange",
+    "phone_number_in_message": "orange",
+    "unexpected_gain": "amber",
 }
 
 SUSPICIOUS_LINK_PATTERNS = (
@@ -144,11 +204,48 @@ def _match_suspicious_url(normalized_url: str) -> bool:
     return any(pattern in normalized_url for pattern in SUSPICIOUS_LINK_PATTERNS)
 
 
+def _find_spans(text: str, matched_rules: list[str]) -> list[dict]:
+    try:
+        text_lower = text.lower()
+        spans: list[dict] = []
+
+        for rule in matched_rules:
+            for keyword in RULE_KEYWORDS.get(rule, []):
+                start = 0
+                while True:
+                    pos = text_lower.find(keyword, start)
+                    if pos == -1:
+                        break
+                    spans.append(
+                        {
+                            "start": pos,
+                            "end": pos + len(keyword),
+                            "rule": rule,
+                            "label": CATEGORY_LABELS.get(rule, rule),
+                            "color": COLOR_MAP.get(rule, "orange"),
+                        }
+                    )
+                    start = pos + 1
+
+        spans.sort(key=lambda item: item["start"])
+        merged: list[dict] = []
+        for span in spans:
+            if not merged or span["start"] >= merged[-1]["end"]:
+                merged.append(span.copy())
+            else:
+                merged[-1]["end"] = max(merged[-1]["end"], span["end"])
+        return merged
+    except Exception as exc:
+        logger.warning("Failed to compute highlighted spans: %s", exc)
+        return []
+
+
 def score_signal(message: str, url: str | None = None, phone: str | None = None) -> dict:
     """
     Rule-based scoring tuned for the L3 phishing/mobile-money context.
     """
-    text = (message or "").strip().lower()
+    raw_text = (message or "").strip()
+    text = raw_text.lower()
     normalized_url = (url or "").strip().lower()
     _normalized_phone = (phone or "").strip()
 
@@ -164,6 +261,7 @@ def score_signal(message: str, url: str | None = None, phone: str | None = None)
 
     score = 0
     matched_rules: list[str] = []
+    matched_signal_rules: list[str] = []
     explanation: list[str] = []
     categories_detected: list[str] = []
 
@@ -172,6 +270,7 @@ def score_signal(message: str, url: str | None = None, phone: str | None = None)
             continue
         score += SIGNAL_WEIGHTS[signal_name]
         matched_rules.append(RULE_MAPPING[signal_name])
+        matched_signal_rules.append(signal_name)
         explanation.append(EXPLANATION_MAPPING[signal_name])
         if signal_name in CATEGORY_LABELS:
             categories_detected.append(CATEGORY_LABELS[signal_name])
@@ -190,6 +289,12 @@ def score_signal(message: str, url: str | None = None, phone: str | None = None)
     if not explanation:
         explanation.append("Aucun indicateur critique detecte.")
 
+    recommendations = [
+        RECOMMENDATION_MAPPING[rule]
+        for rule in matched_signal_rules
+        if rule in RECOMMENDATION_MAPPING
+    ]
+
     return {
         "risk_score": score,
         "risk_level": risk_level,
@@ -197,4 +302,8 @@ def score_signal(message: str, url: str | None = None, phone: str | None = None)
         "matched_rules": matched_rules,
         "should_report": should_report,
         "categories_detected": categories_detected,
+        "highlighted_spans": _find_spans(raw_text, matched_signal_rules),
+        "recommendations": recommendations,
+        "citizen_advice": recommendations[:3],
+        "fon_alert": FON_ALERTS.get(risk_level),
     }
