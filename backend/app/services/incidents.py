@@ -98,23 +98,55 @@ async def report_signal_to_incident(
 
         logging.getLogger(__name__).warning("ThreatIndicator upsert failed: %s", _e)
 
+    redis_client = None
+
+    # ── UPGRADE U2 v3.0 : Détection campagnes coordonnées ──
+    try:
+        from app.services.campaign_detector import (
+            register_signal, create_or_update_campaign
+        )
+        _rules = categories_detected or []
+        _region = getattr(alert, "region", None)
+        if _rules:
+            if redis_client is None:
+                redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
+            _campaign_data = await register_signal(
+                redis_client=redis_client,
+                incident_id=str(alert.id),
+                matched_rules=_rules,
+                region=_region,
+            )
+            if _campaign_data.get("campaign_detected"):
+                await create_or_update_campaign(db, _campaign_data, _region)
+    except Exception as _e:
+        import logging
+
+        logging.getLogger(__name__).warning(
+            "Campaign detection failed: %s", _e
+        )
+
     queued_for_osint = False
     if request.url and request.url.lower().startswith(("http://", "https://")):
         try:
-            client = redis.from_url(settings.REDIS_URL, decode_responses=True)
+            if redis_client is None:
+                redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
             task_payload = {
                 "id": str(alert.uuid),
                 "url": request.url.strip(),
                 "source_type": source_type,
             }
-            await client.rpush("osint_to_scan", json.dumps(task_payload))
-            await client.aclose()
+            await redis_client.rpush("osint_to_scan", json.dumps(task_payload))
             queued_for_osint = True
         except Exception:
             logger.exception(
                 "Failed to enqueue incident report task",
                 extra={"alert_uuid": str(alert.uuid)},
             )
+    if redis_client is not None:
+        try:
+            await redis_client.aclose()
+        except Exception:
+            logger.warning("Failed to close Redis client after incident processing")
 
     return IncidentReportData(
         alert_uuid=alert.uuid,

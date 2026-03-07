@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import require_role
 from app.database import get_db
-from app.models import ThreatIndicator
+from app.models import CampaignAlert, ThreatIndicator
 
 
 router = APIRouter()
@@ -200,4 +200,32 @@ async def export_threat_intel(
             }
             for indicator in indicators
         ],
+    }
+
+
+@router.get("/dashboard/intel/summary")
+async def get_campaign_summary(
+    db: AsyncSession = Depends(get_db),
+    _principal=Depends(require_role(["ANALYST", "ADMIN"])),
+) -> dict:
+    """Return active coordinated campaign alerts for analyst dashboard banner."""
+    stmt = (
+        select(CampaignAlert)
+        .where(CampaignAlert.status == "ACTIVE")
+        .order_by(CampaignAlert.incident_count.desc())
+        .limit(10)
+    )
+    campaigns = (await db.execute(stmt)).scalars().all()
+    return {
+        "active_campaigns": [
+            {
+                "id": str(campaign.id),
+                "type": campaign.campaign_type,
+                "count": int(campaign.incident_count or 0),
+                "region": campaign.dominant_region,
+                "first_seen": campaign.first_seen.isoformat() if campaign.first_seen else None,
+                "last_seen": campaign.last_seen.isoformat() if campaign.last_seen else None,
+            }
+            for campaign in campaigns
+        ]
     }
