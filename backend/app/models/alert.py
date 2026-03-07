@@ -18,6 +18,7 @@ class Alert(Base):
     reported_message = Column(Text, nullable=True)
     citizen_channel = Column(String, index=True, nullable=True)
     owner_user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=True)
+    region = Column(String(50), nullable=True, index=True)
     
     risk_score = Column(Integer, index=True) # Index pour tri/filtre performant
     status = Column(String, default="NEW", index=True) # NEW, IN_REVIEW, CONFIRMED, DISMISSED, BLOCKED_SIMULATED

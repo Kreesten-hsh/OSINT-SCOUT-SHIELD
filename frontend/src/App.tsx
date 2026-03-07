@@ -8,6 +8,7 @@ import { Toaster } from '@/components/ui/toaster';
 
 const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
 const VerifyPage = lazy(() => import('@/features/verify/VerifyPage'));
+const LivePage = lazy(() => import('@/features/live/LivePage'));
 const DashboardLayout = lazy(() => import('@/layouts/DashboardLayout'));
 const BusinessLayout = lazy(() => import('@/layouts/BusinessLayout'));
 const BusinessVerifyPage = lazy(() => import('@/features/business/BusinessVerifyPage'));
@@ -15,6 +16,7 @@ const BusinessMonitoringPage = lazy(() => import('@/features/business/BusinessMo
 const BusinessAlertsPage = lazy(() => import('@/features/business/BusinessAlertsPage'));
 const BusinessReportsPage = lazy(() => import('@/features/business/BusinessReportsPage'));
 const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'));
+const ThreatMapPage = lazy(() => import('@/features/threat-map/ThreatMapPage'));
 const AlertsPage = lazy(() => import('@/features/alerts/AlertsPage'));
 const InvestigationPage = lazy(() => import('@/features/investigation/InvestigationPage'));
 const CitizenIncidentsPage = lazy(() => import('@/features/citizen-incidents/CitizenIncidentsPage'));
@@ -144,9 +146,11 @@ function App() {
             <Routes>
               <Route path="/verify" element={<VerifyPage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/live" element={<LivePage />} />
               <Route path="/" element={<RootRedirect />} />
               <Route element={<RequireAnalyst />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/threat-map" element={<ThreatMapPage />} />
                 <Route path="/monitoring" element={<MonitoringPage />} />
                 <Route path="/monitoring/:id" element={<SourceDetailPage />} />
                 <Route path="/ingestion" element={<IngestionPage />} />

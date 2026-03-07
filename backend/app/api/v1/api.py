@@ -12,6 +12,7 @@ from app.api.v1.endpoints import (
     incidents,
     shield,
     operators,
+    threat_intel,
 )
 from app.core.security import get_current_subject
 
@@ -63,3 +64,4 @@ api_router.include_router(
     tags=["dashboard"],
     dependencies=[Depends(get_current_subject)],
 )
+api_router.include_router(threat_intel.router, tags=["threat-intel"])

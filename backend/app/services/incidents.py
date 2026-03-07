@@ -44,11 +44,13 @@ async def report_signal_to_incident(
             detail="phone must be a valid number (8 to 15 digits, optional leading +)",
         )
 
+    categories_detected: list[str] = []
     if request.verification:
         risk_score = request.verification.risk_score
     else:
         detection = score_signal(message=request.message, url=request.url, phone=normalized_phone)
         risk_score = int(detection["risk_score"])
+        categories_detected = detection.get("categories_detected", []) or []
 
     source_type = f"CITIZEN_{request.channel}"
     target_url = (request.url or "").strip() or "citizen://text-signal"
@@ -74,6 +76,27 @@ async def report_signal_to_incident(
 
     await db.commit()
     await db.refresh(alert)
+
+    # ── UPGRADE U1 v3.0 : ThreatIndicator + région ──
+    try:
+        from app.services.intel_aggregator import upsert_threat_indicator
+
+        _phone = getattr(alert, "phone_number", None)
+        _score = float(risk_score) if risk_score else 0.0
+        _cats = categories_detected or []
+        if _phone:
+            _indicator = await upsert_threat_indicator(
+                db=db,
+                phone=_phone,
+                danger_score=_score,
+                dominant_category=_cats[0] if _cats else None,
+            )
+            alert.region = _indicator.region
+            await db.commit()
+    except Exception as _e:
+        import logging
+
+        logging.getLogger(__name__).warning("ThreatIndicator upsert failed: %s", _e)
 
     queued_for_osint = False
     if request.url and request.url.lower().startswith(("http://", "https://")):

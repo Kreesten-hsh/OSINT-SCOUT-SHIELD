@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
     AlertTriangle,
+    ChartBar,
     FileText,
     Gauge,
     Globe,
@@ -24,6 +25,7 @@ interface SidebarProps {
 
 const navItems = [
     { to: '/dashboard', label: 'Pilotage SOC', icon: Gauge },
+    { to: '/threat-map', label: 'Intelligence nationale', icon: ChartBar },
     { to: '/incidents-signales', label: 'Signalements citoyens', icon: ShieldEllipsis },
     { to: '/alerts', label: 'Alertes de surveillance', icon: AlertTriangle },
     { to: '/reports', label: 'Rapports forensiques', icon: FileText },

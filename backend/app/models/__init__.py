@@ -3,3 +3,4 @@ from .evidence import Evidence
 from .source import MonitoringSource, ScrapingRun
 from .report import Report
 from .user import User
+from .threat_indicator import ThreatIndicator
