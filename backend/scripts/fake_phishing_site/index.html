@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MTN Mobile Money - Validation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #1a1a1a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 40px;
+      width: 360px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .logo {
+      background: #ffcb00;
+      color: #000000;
+      font-weight: bold;
+      font-size: 24px;
+      text-align: center;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+    }
+
+    h2 {
+      color: #333333;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    p {
+      color: #666666;
+      text-align: center;
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #dddddd;
+      border-radius: 6px;
+      font-size: 15px;
+      margin-bottom: 16px;
+      box-sizing: border-box;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #ffcb00;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .warn {
+      color: #e74c3c;
+      font-size: 12px;
+      text-align: center;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">MTN MoMo</div>
+    <h2>Validation de Transfert</h2>
+    <p>
+      Un transfert a ete recu sur votre compte.<br>
+      Entrez votre code secret pour confirmer.
+    </p>
+    <input type="tel" placeholder="Numero de telephone">
+    <input type="password" placeholder="Code secret MoMo">
+    <button onclick="alert('Validation en cours...')">Valider</button>
+    <p class="warn">
+      Attention: ce site est un exemple de phishing pour la demonstration
+      BENIN CYBER SHIELD.
+    </p>
+  </div>
+</body>
+</html>
