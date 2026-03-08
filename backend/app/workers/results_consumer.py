@@ -1,3 +1,4 @@
+# OBSOLETE - non utilise, voir backend/app/workers/result_consumer.py
 import asyncio
 import json
 import logging

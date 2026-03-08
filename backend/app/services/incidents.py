@@ -125,7 +125,36 @@ async def report_signal_to_incident(
             "Campaign detection failed: %s", _e
         )
 
-    queued_for_osint = False
+    queued_for_osint_u5 = False
+
+    # -- UPGRADE U5 v3.0 : Forensic Preservation automatique --
+    try:
+        import re as _re
+
+        _categories_u5 = categories_detected or []
+        _message_u5 = reported_message or ""
+        if "suspicious_url" in _categories_u5:
+            _urls = _re.findall(r"https?://[^\s]+", _message_u5)
+            if _urls:
+                if redis_client is None:
+                    redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
+                _scan_job = {
+                    "id": str(alert.uuid),
+                    "url": _urls[0],
+                    "alert_id": str(alert.id),
+                    "trigger": "suspicious_url_auto_v3",
+                    "priority": "HIGH",
+                    "source_type": source_type,
+                }
+                await redis_client.lpush(
+                    "osint_to_scan",
+                    json.dumps(_scan_job),
+                )
+                queued_for_osint_u5 = True
+    except Exception as _e:
+        logger.warning("Forensic preservation push failed: %s", _e)
+
+    queued_for_osint = queued_for_osint_u5
     if request.url and request.url.lower().startswith(("http://", "https://")):
         try:
             if redis_client is None:

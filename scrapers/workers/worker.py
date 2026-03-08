@@ -81,8 +81,11 @@ def build_failed_report(
 ) -> dict:
     report = {
         "task_id": str(task_data.get("id", "")),
+        "alert_id": task_data.get("alert_id"),
         "url": str(task_data.get("url", "")),
         "source_type": str(task_data.get("source_type", "AUTOMATIC_SCRAPING")),
+        "trigger": str(task_data.get("trigger") or ""),
+        "priority": str(task_data.get("priority") or ""),
         "timestamp": utc_now_iso(),
         "status": "FAILED",
         "risk_score": 0,
@@ -156,8 +159,11 @@ async def process_task(scout: OsintScout, analyzer: FraudAnalyzer, task_data: di
 
     return {
         "task_id": str(task_data.get("id")),
+        "alert_id": task_data.get("alert_id"),
         "url": target_url,
         "source_type": str(task_data.get("source_type", "AUTOMATIC_SCRAPING")),
+        "trigger": str(task_data.get("trigger") or ""),
+        "priority": str(task_data.get("priority") or ""),
         "timestamp": evidence.get("timestamp_utc"),
         "status": "COMPLETED",
         "evidence_hash": evidence.get("proof_sha256"),

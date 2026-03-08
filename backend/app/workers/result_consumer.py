@@ -73,6 +73,16 @@ async def process_result(result_data: dict) -> None:
 
     error = str(result_data.get("error") or "").strip()
     error_code = str(result_data.get("error_code") or "").strip()
+    raw_alert_id = result_data.get("alert_id")
+    resolved_alert_id: int | None = None
+    if raw_alert_id not in (None, ""):
+        try:
+            resolved_alert_id = int(raw_alert_id)
+        except Exception:
+            logger.warning(
+                "Invalid alert_id on osint result",
+                extra={"task_id": str(task_id), "alert_id": raw_alert_id},
+            )
 
     evidence_hash = result_data.get("evidence_hash")
     evidence_file_path = result_data.get("evidence_file_path")
@@ -81,6 +91,19 @@ async def process_result(result_data: dict) -> None:
         try:
             alert_stmt = select(Alert).where(Alert.uuid == task_uuid)
             alert = (await db.execute(alert_stmt)).scalars().first()
+            if alert is None and resolved_alert_id is not None:
+                try:
+                    fallback_alert_stmt = select(Alert).where(Alert.id == resolved_alert_id)
+                    alert = (await db.execute(fallback_alert_stmt)).scalars().first()
+                except Exception as exc:
+                    logger.warning(
+                        "Failed to resolve alert_id on osint result",
+                        extra={
+                            "task_id": str(task_uuid),
+                            "alert_id": resolved_alert_id,
+                            "error": str(exc),
+                        },
+                    )
 
             run_stmt = select(ScrapingRun).where(ScrapingRun.uuid == task_uuid)
             scraping_run = (await db.execute(run_stmt)).scalars().first()
