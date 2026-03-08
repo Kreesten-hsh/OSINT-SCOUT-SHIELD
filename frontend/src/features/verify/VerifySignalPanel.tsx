@@ -76,6 +76,21 @@ export default function VerifySignalPanel() {
   const [result, setResult] = useState<VerifySignalData | null>(null);
   const [incident, setIncident] = useState<IncidentReportData | null>(null);
 
+  const buildWhatsAppMessage = (riskLevel: string, targetPhone: string, reportId: string): string => {
+    const emoji = riskLevel === 'HIGH' ? '🔴 DANGER' : '🟡 Suspect';
+    const msg = [
+      '⚠️ Alerte BENIN CYBER SHIELD',
+      '',
+      `${emoji} : Ce numero (${targetPhone}) est signale comme arnaque.`,
+      '',
+      'Ne communiquez JAMAIS votre code OTP ou PIN.',
+      '',
+      'Verifiez vous-meme : https://benincybershield.bj/verify',
+      `Rapport n° ${reportId.slice(0, 8)}`,
+    ].join('\n');
+    return encodeURIComponent(msg);
+  };
+
   const normalizedPhone = useMemo(() => phone.trim(), [phone]);
   const isPhoneValid = isValidBeninPhone(normalizedPhone);
   const phoneError = phoneTouched && !isPhoneValid ? BENIN_PHONE_ERROR : null;
@@ -296,6 +311,21 @@ export default function VerifySignalPanel() {
               {result.risk_level} - Score {result.risk_score}/100
             </span>
           </div>
+
+          {(result.risk_level === 'HIGH' || result.risk_level === 'MEDIUM') && (
+            <a
+              href={`https://wa.me/?text=${buildWhatsAppMessage(
+                result.risk_level,
+                normalizedPhone,
+                incident?.alert_uuid ?? '',
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex items-center gap-2 rounded-lg bg-green-700 px-4 py-2 text-sm text-white transition-colors hover:bg-green-600"
+            >
+              📲 Prévenir ma famille sur WhatsApp
+            </a>
+          )}
 
           {result.recurrence_count > 0 && (
             <div className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-300">
