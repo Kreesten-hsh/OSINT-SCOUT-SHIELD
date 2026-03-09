@@ -43,5 +43,9 @@ async def verify_signal(
             matched_rules=result["matched_rules"],
             categories_detected=result.get("categories_detected", []),
             recurrence_count=recurrence_count,
+            highlighted_spans=result.get("highlighted_spans", []),
+            recommendations=result.get("recommendations", []),
+            citizen_advice=result.get("citizen_advice", []),
+            fon_alert=result.get("fon_alert"),
         ),
     )

@@ -1,11 +1,10 @@
-import { useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useParams } from 'react-router-dom';
+import { useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
-import { CheckCircle2, Download, ExternalLink, FileText, Fingerprint, Loader2, Shield, TriangleAlert } from 'lucide-react';
+import { CheckCircle2, Download, ExternalLink, Fingerprint, Loader2, Shield } from 'lucide-react';
 
 import { apiClient } from '@/api/client';
-import type { APIResponse } from '@/api/types';
 import type { Alert } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
@@ -28,16 +27,6 @@ interface ReportListItem {
     };
 }
 
-interface GeneratedReportData {
-    id: number;
-    uuid: string;
-    report_hash: string;
-    snapshot_hash_sha256: string;
-    snapshot_version: string;
-    generated_at: string;
-    pdf_path: string;
-}
-
 function riskBadge(score: number): 'destructive' | 'warning' | 'outline' {
     if (score >= 80) return 'destructive';
     if (score >= 50) return 'warning';
@@ -46,10 +35,9 @@ function riskBadge(score: number): 'destructive' | 'warning' | 'outline' {
 
 export default function ReportDetailPage() {
     const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
     const { toast } = useToast();
     const queryClient = useQueryClient();
-
-    const [lastGeneratedReport, setLastGeneratedReport] = useState<GeneratedReportData | null>(null);
 
     const { data: alert, isLoading: isLoadingAlert, isError: isAlertError } = useQuery({
         queryKey: ['alert-detail', id],
@@ -73,41 +61,7 @@ export default function ReportDetailPage() {
         return items.find((r) => r.snapshot_json?.data?.alert?.uuid === id) ?? null;
     }, [reports, id]);
 
-    const generateMutation = useMutation({
-        mutationFn: async () => {
-            if (!id) {
-                throw new Error('Incident introuvable');
-            }
-            const response = await apiClient.post<APIResponse<GeneratedReportData>>(`/reports/generate/${id}`);
-            return response.data;
-        },
-        onSuccess: (response) => {
-            if (!response.success || !response.data) {
-                toast({
-                    title: 'Erreur generation rapport',
-                    description: response.message || 'Impossible de generer le rapport.',
-                    variant: 'destructive',
-                });
-                return;
-            }
-
-            setLastGeneratedReport(response.data);
-            queryClient.invalidateQueries({ queryKey: ['reports-list'] });
-            toast({
-                title: 'Rapport forensique genere',
-                description: 'Le rapport est disponible et telechargeable.',
-            });
-        },
-        onError: () => {
-            toast({
-                title: 'Erreur generation rapport',
-                description: 'Impossible de generer le rapport pour cet incident.',
-                variant: 'destructive',
-            });
-        },
-    });
-
-    const activeReport = lastGeneratedReport ?? existingReport;
+    const activeReport = existingReport;
 
     if (isLoadingAlert) {
         return (
@@ -125,7 +79,30 @@ export default function ReportDetailPage() {
         );
     }
 
-    const canGenerate = alert.status === 'CONFIRMED' || alert.status === 'BLOCKED_SIMULATED';
+    const handleDelete = async () => {
+        if (!activeReport?.uuid) {
+            return;
+        }
+        if (!window.confirm('Supprimer ce rapport définitivement ?')) {
+            return;
+        }
+        try {
+            await apiClient.delete(`/reports/${activeReport.uuid}/delete`);
+            await queryClient.invalidateQueries({ queryKey: ['reports-list'] });
+            toast({
+                title: 'Rapport supprime',
+                description: 'Le rapport a ete retire avec succes.',
+            });
+            navigate('/reports');
+        } catch (err) {
+            console.error('Suppression echouee', err);
+            toast({
+                title: 'Suppression impossible',
+                description: 'Le rapport n a pas pu etre supprime.',
+                variant: 'destructive',
+            });
+        }
+    };
 
     return (
         <div className="mx-auto max-w-5xl space-y-5">
@@ -146,18 +123,10 @@ export default function ReportDetailPage() {
             <section className="panel p-5 fade-rise-in-1">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h2 className="section-title text-base">Generation forensique</h2>
-                        <p className="text-sm text-muted-foreground">Snapshot certifie (hash SHA-256) + PDF telechargeable.</p>
+                        <h2 className="section-title text-base">Actions du rapport</h2>
+                        <p className="text-sm text-muted-foreground">Consultation, export et suppression du dossier forensique.</p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => generateMutation.mutate()}
-                            disabled={generateMutation.isPending || !canGenerate}
-                            className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-primary/30 bg-primary/15 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/25 disabled:opacity-50"
-                        >
-                            {generateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
-                            Generer rapport
-                        </button>
                         <Link
                             to="/reports"
                             className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-input px-3 py-2 text-sm text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
@@ -167,12 +136,16 @@ export default function ReportDetailPage() {
                     </div>
                 </div>
 
-                {!canGenerate && (
-                    <div className="mt-3 inline-flex items-center gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
-                        <TriangleAlert className="h-3.5 w-3.5" />
-                        Le dossier doit etre confirme ou bloque (simule) avant generation.
+                {activeReport ? (
+                    <div className="mt-3">
+                        <button
+                            onClick={handleDelete}
+                            className="inline-flex items-center gap-2 rounded-lg border border-red-700 bg-red-900/60 px-4 py-2 text-sm text-red-200 transition-colors hover:bg-red-800"
+                        >
+                            🗑️ Supprimer ce rapport
+                        </button>
                     </div>
-                )}
+                ) : null}
             </section>
 
             <section className="panel p-5 fade-rise-in-2">

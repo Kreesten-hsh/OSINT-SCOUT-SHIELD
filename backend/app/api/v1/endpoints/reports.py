@@ -294,3 +294,19 @@ async def download_case_bundle(
             "Content-Disposition": f"attachment; filename=dossier_criet_{uuid_short}.zip",
         },
     )
+
+
+@router.delete("/{report_uuid}/delete")
+async def delete_report(
+    report_uuid: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _: TokenPayload = Depends(require_role(["ANALYST", "ADMIN"])),
+):
+    result = await db.execute(select(Report).where(Report.uuid == report_uuid))
+    report = result.scalar_one_or_none()
+    if report is None:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    await db.delete(report)
+    await db.commit()
+    return {"deleted": True, "id": str(report_uuid)}

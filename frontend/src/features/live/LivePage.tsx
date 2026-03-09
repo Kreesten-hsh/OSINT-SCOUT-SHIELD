@@ -138,8 +138,11 @@ export default function LivePage() {
       zoomControl: true,
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution:
+        '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 19,
     }).addTo(map);
 
     const layer = L.layerGroup().addTo(map);
@@ -188,10 +191,10 @@ export default function LivePage() {
         <p className="mt-1 text-sm text-slate-400">Observatoire national de threat intelligence</p>
         <div className="mt-3 flex flex-wrap gap-3 text-sm">
           <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5">
-            total_high: <span className="font-semibold text-red-300">{totals.totalHigh}</span>
+            Menaces actives: <span className="font-semibold text-red-300">{totals.totalHigh}</span>
           </div>
           <div className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5">
-            total_incidents: <span className="font-semibold">{totals.totalIncidents}</span>
+            Signalements recus: <span className="font-semibold">{totals.totalIncidents}</span>
           </div>
         </div>
       </header>

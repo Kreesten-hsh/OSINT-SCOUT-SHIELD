@@ -3,15 +3,12 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, FileBarChart, Link2, ShieldCheck, Signal, Siren, Wifi } from 'lucide-react';
 import {
-  Bar,
-  BarChart,
   CartesianGrid,
-  Cell,
   Legend,
   Line,
   LineChart,
-  Pie,
-  PieChart,
+  RadialBar,
+  RadialBarChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -66,14 +63,6 @@ const RISK_COLORS = {
   HIGH: '#EF4444',
   MEDIUM: '#F59E0B',
   LOW: '#10B981',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  NEW: 'NEW',
-  IN_REVIEW: 'IN_REVIEW',
-  CONFIRMED: 'CONFIRMED',
-  DISMISSED: 'DISMISSED',
-  BLOCKED_SIMULATED: 'BLOCKED_SIMULATED',
 };
 
 function ChartSkeleton() {
@@ -154,6 +143,17 @@ export default function DashboardPage() {
     },
   });
 
+  const confirmedCount = dashboardStats?.incidents_by_status?.CONFIRMED ?? 0;
+  const totalStatusIncidents = useMemo(() => {
+    const status = dashboardStats?.incidents_by_status;
+    if (!status) {
+      return 0;
+    }
+    return Object.values(status).reduce((total, value) => total + value, 0);
+  }, [dashboardStats?.incidents_by_status]);
+  const confirmRate = totalStatusIncidents > 0 ? ((confirmedCount / totalStatusIncidents) * 100).toFixed(1) : '0.0';
+  const confirmRateTone = parseFloat(confirmRate) > 50 ? 'text-emerald-300' : 'text-amber-300';
+
   const cards = useMemo(
     () => [
       {
@@ -187,8 +187,15 @@ export default function DashboardPage() {
         icon: FileBarChart,
         tone: 'text-primary',
       },
+      {
+        label: 'Taux de validation SOC',
+        value: `${confirmRate}%`,
+        extra: 'des signalements confirmes',
+        icon: ShieldCheck,
+        tone: confirmRateTone,
+      },
     ],
-    [criticalThreats?.count, reportsData?.count, sourcesData?.count, weeklyStats],
+    [confirmRate, confirmRateTone, criticalThreats?.count, reportsData?.count, sourcesData?.count, weeklyStats],
   );
 
   const lineData = useMemo(
@@ -200,7 +207,7 @@ export default function DashboardPage() {
     [dashboardStats?.incidents_by_day],
   );
 
-  const pieData = useMemo(
+  const riskData = useMemo(
     () => [
       { name: 'HIGH', value: dashboardStats?.incidents_by_risk?.HIGH ?? 0, color: RISK_COLORS.HIGH },
       { name: 'MEDIUM', value: dashboardStats?.incidents_by_risk?.MEDIUM ?? 0, color: RISK_COLORS.MEDIUM },
@@ -209,20 +216,8 @@ export default function DashboardPage() {
     [dashboardStats?.incidents_by_risk],
   );
 
-  const statusData = useMemo(() => {
-    const status = dashboardStats?.incidents_by_status;
-    return [
-      { status: STATUS_LABELS.NEW, value: status?.NEW ?? 0 },
-      { status: STATUS_LABELS.IN_REVIEW, value: status?.IN_REVIEW ?? 0 },
-      { status: STATUS_LABELS.CONFIRMED, value: status?.CONFIRMED ?? 0 },
-      { status: STATUS_LABELS.DISMISSED, value: status?.DISMISSED ?? 0 },
-      { status: STATUS_LABELS.BLOCKED_SIMULATED, value: status?.BLOCKED_SIMULATED ?? 0 },
-    ];
-  }, [dashboardStats?.incidents_by_status]);
-
   const hasLineData = lineData.some((item) => item.incidents > 0);
-  const hasPieData = pieData.some((item) => item.value > 0);
-  const hasStatusData = statusData.some((item) => item.value > 0);
+  const hasRiskData = riskData.some((item) => item.value > 0);
 
   return (
     <div className="space-y-6">
@@ -244,7 +239,7 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 fade-rise-in-1">
+      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5 fade-rise-in-1">
         {cards.map((card) => (
           <article key={card.label} className="panel interactive-row p-4">
             <div className="flex items-start justify-between gap-3">
@@ -262,7 +257,7 @@ export default function DashboardPage() {
       </section>
 
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-12 fade-rise-in-2">
-        <article className="panel p-5 xl:col-span-6">
+        <article className="panel p-5 xl:col-span-8">
           <h3 className="section-title mb-4">Evolution des incidents (7 jours)</h3>
           {isStatsLoading ? (
             <ChartSkeleton />
@@ -270,6 +265,12 @@ export default function DashboardPage() {
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={lineData}>
+                  <defs>
+                    <linearGradient id="gradientHigh" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.25)" />
                   <XAxis dataKey="date" stroke="#94A3B8" />
                   <YAxis stroke="#94A3B8" allowDecimals={false} />
@@ -281,7 +282,7 @@ export default function DashboardPage() {
                       color: '#E2E8F0',
                     }}
                   />
-                  <Line type="monotone" dataKey="incidents" stroke="#4F46E5" strokeWidth={3} dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="incidents" stroke="url(#gradientHigh)" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -292,60 +293,35 @@ export default function DashboardPage() {
           )}
         </article>
 
-        <article className="panel p-5 xl:col-span-3">
+        <article className="panel p-5 xl:col-span-4">
           <h3 className="section-title mb-4">Repartition du risque</h3>
           {isStatsLoading ? (
             <ChartSkeleton />
-          ) : hasPieData ? (
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={pieData} dataKey="value" nameKey="name" innerRadius={55} outerRadius={85} paddingAngle={2}>
-                    {pieData.map((entry) => (
-                      <Cell key={entry.name} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#0F172A',
-                      border: '1px solid rgba(148,163,184,0.35)',
-                      borderRadius: '0.75rem',
-                      color: '#E2E8F0',
-                    }}
-                  />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <p className="rounded-xl border border-border/70 bg-background/50 px-3 py-6 text-sm text-muted-foreground">
-              Aucune donnee disponible
-            </p>
-          )}
-        </article>
-
-        <article className="panel p-5 xl:col-span-3">
-          <h3 className="section-title mb-4">Incidents par statut</h3>
-          {isStatsLoading ? (
-            <ChartSkeleton />
-          ) : hasStatusData ? (
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={statusData} layout="vertical" margin={{ top: 6, right: 8, left: 8, bottom: 6 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.20)" />
-                  <XAxis type="number" stroke="#94A3B8" allowDecimals={false} />
-                  <YAxis type="category" dataKey="status" stroke="#94A3B8" width={110} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#0F172A',
-                      border: '1px solid rgba(148,163,184,0.35)',
-                      borderRadius: '0.75rem',
-                      color: '#E2E8F0',
-                    }}
-                  />
-                  <Bar dataKey="value" fill="#0D93F2" radius={[0, 6, 6, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+          ) : hasRiskData ? (
+            <div className="flex h-64 w-full items-center justify-center">
+              <RadialBarChart
+                width={300}
+                height={200}
+                innerRadius="30%"
+                outerRadius="90%"
+                data={riskData.map((item) => ({
+                  name: item.name,
+                  value: item.value,
+                  fill: item.color,
+                }))}
+                startAngle={180}
+                endAngle={0}
+              >
+                <RadialBar dataKey="value" cornerRadius={4} label={false} />
+                <Legend
+                  iconSize={10}
+                  formatter={(value) => <span className="text-xs text-slate-400">{value}</span>}
+                />
+                <Tooltip
+                  contentStyle={{ background: '#1e293b', border: '1px solid #334155' }}
+                  labelStyle={{ color: '#94a3b8' }}
+                />
+              </RadialBarChart>
             </div>
           ) : (
             <p className="rounded-xl border border-border/70 bg-background/50 px-3 py-6 text-sm text-muted-foreground">

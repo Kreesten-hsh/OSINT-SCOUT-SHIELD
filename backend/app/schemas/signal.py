@@ -42,6 +42,7 @@ class VerificationSnapshot(BaseModel):
     risk_level: RiskLevel
     should_report: bool
     matched_rules: list[str] = Field(default_factory=list)
+    categories_detected: list[str] = Field(default_factory=list)
 
 
 class IncidentReportRequest(BaseModel):

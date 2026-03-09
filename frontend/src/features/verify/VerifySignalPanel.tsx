@@ -176,6 +176,7 @@ export default function VerifySignalPanel() {
           risk_level: result.risk_level,
           should_report: result.should_report,
           matched_rules: result.matched_rules,
+          categories_detected: result.categories_detected ?? [],
         }),
       );
 

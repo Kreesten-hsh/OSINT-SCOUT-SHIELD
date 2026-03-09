@@ -44,13 +44,13 @@ async def report_signal_to_incident(
             detail="phone must be a valid number (8 to 15 digits, optional leading +)",
         )
 
-    categories_detected: list[str] = []
+    detection = score_signal(message=request.message, url=request.url, phone=normalized_phone)
+    categories_detected = detection.get("categories_detected", []) or []
     if request.verification:
         risk_score = request.verification.risk_score
+        categories_detected = request.verification.categories_detected or categories_detected
     else:
-        detection = score_signal(message=request.message, url=request.url, phone=normalized_phone)
         risk_score = int(detection["risk_score"])
-        categories_detected = detection.get("categories_detected", []) or []
 
     source_type = f"CITIZEN_{request.channel}"
     target_url = (request.url or "").strip() or "citizen://text-signal"

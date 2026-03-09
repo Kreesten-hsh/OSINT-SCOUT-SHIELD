@@ -52,6 +52,18 @@ export function Topbar({ onMenuToggle }: TopbarProps) {
                     >
                         Tester canal citoyen
                     </Link>
+                    <a
+                        href="/live"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-full border border-red-700 bg-red-900/60 px-3 py-1.5 text-xs text-red-200 transition-colors hover:bg-red-800"
+                    >
+                        <span className="relative flex h-2 w-2">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                            <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                        </span>
+                        Live
+                    </a>
                     <div className="hidden items-center gap-2 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[11px] text-emerald-300 sm:inline-flex">
                         <ShieldCheck className="h-3.5 w-3.5" />
                         Systeme operationnel
