@@ -1,0 +1,64 @@
+import { useEffect, useState } from 'react'
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+}
+
+export function InstallPWA() {
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null)
+  const [dismissed, setDismissed] = useState(false)
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      event.preventDefault()
+      setDeferredPrompt(event as BeforeInstallPromptEvent)
+    }
+
+    window.addEventListener('beforeinstallprompt', handler)
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler)
+    }
+  }, [])
+
+  if (!deferredPrompt || dismissed) {
+    return null
+  }
+
+  return (
+    <div className="fixed bottom-4 right-4 z-50 flex max-w-xs items-center gap-3 rounded-xl border border-slate-600 bg-slate-800 px-4 py-3 text-slate-200 shadow-2xl">
+      <span className="text-2xl">📲</span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-white">
+          Installer l&apos;application
+        </p>
+        <p className="truncate text-xs text-slate-400">
+          BENIN CYBER SHIELD
+        </p>
+      </div>
+      <div className="flex flex-col gap-1">
+        <button
+          onClick={async () => {
+            if (!deferredPrompt) return
+            await deferredPrompt.prompt()
+            const { outcome } = await deferredPrompt.userChoice
+            if (outcome === 'accepted') {
+              setDeferredPrompt(null)
+            }
+          }}
+          className="whitespace-nowrap rounded-lg bg-red-700 px-3 py-1 text-xs text-white transition-colors hover:bg-red-600"
+        >
+          Installer
+        </button>
+        <button
+          onClick={() => setDismissed(true)}
+          className="px-3 py-1 text-xs text-slate-500 transition-colors hover:text-slate-300"
+        >
+          Plus tard
+        </button>
+      </div>
+    </div>
+  )
+}

@@ -4,6 +4,7 @@ import { Component, Suspense, lazy, type ErrorInfo, type ReactNode } from 'react
 import { Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 
+import { InstallPWA } from '@/components/InstallPWA';
 import { Toaster } from '@/components/ui/toaster';
 
 const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
@@ -173,6 +174,7 @@ function App() {
               </Route>
             </Routes>
           </Suspense>
+          <InstallPWA />
         </BrowserRouter>
         <Toaster />
       </QueryClientProvider>
