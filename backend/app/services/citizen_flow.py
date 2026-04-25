@@ -25,7 +25,9 @@ from app.models import (
     SuspectNumber,
 )
 from app.schemas.signal import IncidentReportData, IncidentReportRequest, VerifySignalData, VerifySignalRequest
+from app.services.campaign_detector import create_or_update_campaign, register_signal
 from app.services.detection import score_signal
+from app.services.external_transmissions import schedule_external_transmissions_for_report
 from app.services.hashing import compute_snapshot_hash
 from app.services.legacy_memory_bridge import build_legacy_analysis_payload
 from app.services.phone_privacy import derive_phone_hash, encrypt_phone, normalize_phone
@@ -193,8 +195,20 @@ async def create_citizen_report(
         url=(request.url or "").strip() or None,
     )
 
+    campaign_detected = await _register_campaign_detection(
+        db=db,
+        report=formal_report,
+        matched_rules=[str(rule) for rule in matched_rules],
+    )
+
     await db.commit()
     await db.refresh(formal_report)
+    if formal_report.id is not None:
+        await schedule_external_transmissions_for_report(
+            db=db,
+            report_id=int(formal_report.id),
+            campaign_detected=campaign_detected,
+        )
 
     return IncidentReportData(
         alert_uuid=legacy_alert.uuid if legacy_alert else formal_report.uuid,
@@ -382,6 +396,39 @@ async def _mirror_legacy_alert(
 
     await db.flush()
     return legacy_alert
+
+
+async def _register_campaign_detection(
+    *,
+    db: AsyncSession,
+    report: FormalReport,
+    matched_rules: list[str],
+) -> bool:
+    if not matched_rules:
+        return False
+
+    redis_client = None
+    try:
+        redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
+        campaign_data = await register_signal(
+            redis_client=redis_client,
+            incident_id=str(report.uuid),
+            matched_rules=matched_rules,
+            region=None,
+        )
+        if campaign_data.get("campaign_detected"):
+            await create_or_update_campaign(db=db, campaign_data=campaign_data, dominant_region=None)
+            return True
+        return False
+    except Exception:
+        logger.exception("Failed to register campaign detection for report", extra={"report_uuid": str(report.uuid)})
+        return False
+    finally:
+        if redis_client is not None:
+            try:
+                await redis_client.aclose()
+            except Exception:
+                logger.warning("Failed to close Redis client after campaign detection")
 
 
 async def _enqueue_forensic_capture(

@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { FileText, Gauge, LogOut, ShieldCheck, ShieldEllipsis, X } from 'lucide-react';
+import { Building2, FileText, Gauge, LogOut, RadioTower, ShieldCheck, ShieldEllipsis, X } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
@@ -11,8 +11,11 @@ interface SidebarProps {
 
 const navItems = [
   { to: '/admin/dashboard', label: 'Tableau de bord national', icon: Gauge },
+  { to: '/admin/pme', label: 'Gestion des PME', icon: Building2 },
   { to: '/admin/signalements', label: 'Signalements citoyens', icon: ShieldEllipsis },
   { to: '/admin/dossiers', label: 'Dossiers probatoires', icon: FileText },
+  { to: '/admin/transmissions', label: 'Transmissions externes', icon: RadioTower },
+  { to: '/admin/exports', label: 'Exports', icon: FileText },
 ];
 
 export function Sidebar({ mobileOpen, onClose }: SidebarProps) {

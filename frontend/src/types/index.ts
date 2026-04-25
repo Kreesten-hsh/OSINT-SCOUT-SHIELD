@@ -9,6 +9,7 @@ export interface Token {
 
 export type UserRole = 'ADMIN' | 'SME';
 export type UserStatus = 'PENDING_APPROVAL' | 'ACTIVE' | 'REJECTED' | 'DISABLED';
+export type BusinessValidationStatus = UserStatus;
 
 export interface User {
     id: number;
@@ -19,6 +20,27 @@ export interface User {
 
 export interface LoginResponse extends Token {
     user: User;
+}
+
+export interface PmeRegistrationData {
+    business_uuid: UUID;
+    email: string;
+    official_name: string;
+    validation_status: BusinessValidationStatus;
+    created_at: ISOString;
+}
+
+export interface PmeProfileData {
+    business_uuid: UUID;
+    user_email: string;
+    official_name: string;
+    keywords: string[];
+    legit_numbers: string[];
+    contact_email?: string | null;
+    contact_phone?: string | null;
+    validation_status: BusinessValidationStatus;
+    validated_at?: ISOString | null;
+    created_at: ISOString;
 }
 
 // --- EVIDENCE TYPES ---
@@ -122,6 +144,185 @@ export interface CitizenIncidentDetailData {
     attachments: CitizenIncidentAttachment[];
     stats: CitizenIncidentStats;
     related_incidents: RelatedCitizenIncident[];
+}
+
+export interface PmeIncidentListItem {
+    incident_uuid: UUID;
+    report_uuid: UUID;
+    public_reference: string;
+    report_status: AlertStatus;
+    incident_status: AlertStatus;
+    channel: 'MOBILE_APP' | 'WEB_PORTAL';
+    message_preview: string;
+    risk_score: number;
+    suspect_phone_masked: string;
+    detection_reason?: string | null;
+    created_at: ISOString;
+    bundle_ready: boolean;
+}
+
+export interface PmeIncidentListData {
+    items: PmeIncidentListItem[];
+    total: number;
+    skip: number;
+    limit: number;
+}
+
+export interface PmeSignalementListItem {
+    report_uuid: UUID;
+    legacy_alert_uuid?: UUID | null;
+    public_reference: string;
+    channel: 'MOBILE_APP' | 'WEB_PORTAL';
+    message_preview: string;
+    risk_score: number;
+    report_status: AlertStatus;
+    suspect_phone_masked: string;
+    created_at: ISOString;
+    attachments_count: number;
+    bundles_count: number;
+}
+
+export interface PmeSignalementListData {
+    items: PmeSignalementListItem[];
+    total: number;
+    skip: number;
+    limit: number;
+}
+
+export interface PmeBundleListItem {
+    bundle_uuid?: UUID | null;
+    report_uuid: UUID;
+    legacy_alert_uuid?: UUID | null;
+    public_reference: string;
+    risk_score: number;
+    message_preview: string;
+    created_at?: ISOString | null;
+    bundle_status: string;
+    pdf_available: boolean;
+    json_available: boolean;
+    zip_available: boolean;
+}
+
+export interface PmeBundleListData {
+    items: PmeBundleListItem[];
+    total: number;
+    skip: number;
+    limit: number;
+}
+
+export interface PmeDashboardData {
+    official_name: string;
+    validation_status: BusinessValidationStatus;
+    total_incidents: number;
+    new_incidents: number;
+    linked_reports: number;
+    bundles_ready: number;
+    last_incident_at?: ISOString | null;
+    recent_incidents: PmeIncidentListItem[];
+}
+
+export interface AdminBusinessListItem {
+    business_uuid: UUID;
+    user_id: number;
+    email: string;
+    official_name: string;
+    validation_status: BusinessValidationStatus;
+    contact_email?: string | null;
+    contact_phone?: string | null;
+    keywords_count: number;
+    legit_numbers_count: number;
+    created_at: ISOString;
+    validated_at?: ISOString | null;
+}
+
+export interface AdminBusinessListData {
+    items: AdminBusinessListItem[];
+    total: number;
+    pending_count: number;
+    active_count: number;
+    rejected_count: number;
+    disabled_count: number;
+}
+
+export type TransmissionStatus = 'PENDING' | 'QUEUED' | 'SENT' | 'RETRYING' | 'FAILED' | 'DELIVERED';
+export type TransmissionTargetType = 'ANSSI_OCRC' | 'OPERATORS';
+
+export interface AdminDailyCount {
+    date: string;
+    count: number;
+}
+
+export interface AdminDashboardRecentReportItem {
+    report_uuid: UUID;
+    legacy_alert_uuid?: UUID | null;
+    public_reference: string;
+    status: AlertStatus;
+    risk_score: number;
+    message_preview: string;
+    suspect_phone_masked: string;
+    created_at: ISOString;
+}
+
+export interface AdminDashboardBusinessTargetItem {
+    business_uuid: UUID;
+    official_name: string;
+    incidents_count: number;
+    last_incident_at?: ISOString | null;
+}
+
+export interface AdminDashboardTopNumberItem {
+    suspect_number_uuid: UUID;
+    masked_phone: string;
+    reports_count: number;
+    last_seen?: ISOString | null;
+}
+
+export interface AdminDashboardData {
+    total_reports: number;
+    open_reports: number;
+    confirmed_reports: number;
+    bundles_ready: number;
+    active_businesses: number;
+    pending_businesses: number;
+    transmissions_pending: number;
+    transmissions_failed: number;
+    reports_by_day: AdminDailyCount[];
+    reports_by_status: Record<AlertStatus, number>;
+    transmissions_by_status: Record<TransmissionStatus, number>;
+    recent_reports: AdminDashboardRecentReportItem[];
+    top_targeted_businesses: AdminDashboardBusinessTargetItem[];
+    top_suspect_numbers: AdminDashboardTopNumberItem[];
+}
+
+export interface AdminTransmissionListItem {
+    transmission_uuid: UUID;
+    bundle_uuid: UUID;
+    report_uuid: UUID;
+    public_reference: string;
+    target_type: TransmissionTargetType;
+    target_endpoint?: string | null;
+    bundle_status: string;
+    status: TransmissionStatus;
+    attempts: number;
+    ack_reference?: string | null;
+    next_retry_at?: ISOString | null;
+    last_error?: string | null;
+    created_at: ISOString;
+    delivered_at?: ISOString | null;
+    risk_score: number;
+    primary_category?: string | null;
+    suspect_phone_masked: string;
+}
+
+export interface AdminTransmissionListData {
+    items: AdminTransmissionListItem[];
+    total: number;
+    pending_count: number;
+    queued_count: number;
+    sent_count: number;
+    retrying_count: number;
+    failed_count: number;
+    delivered_count: number;
 }
 
 export interface PaginatedResponse<T> {

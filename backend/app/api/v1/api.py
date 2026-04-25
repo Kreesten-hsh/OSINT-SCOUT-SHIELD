@@ -1,12 +1,16 @@
 from fastapi import APIRouter, Depends
 from app.api.v1.endpoints import (
+    admin_console,
+    admin_pme,
     auth,
     alerts,
     citizen_analysis,
     evidence,
+    external_receivers,
     ingestion,
     analysis,
     reports,
+    pme,
     signalements,
     sources,
     dashboard,
@@ -22,6 +26,10 @@ api_router = APIRouter()
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(citizen_analysis.router, prefix="/analysis", tags=["analysis"])
 api_router.include_router(signalements.router, prefix="/signalements", tags=["signalements"])
+api_router.include_router(external_receivers.router, prefix="/external", tags=["external-receivers"])
+api_router.include_router(pme.router, prefix="/pme", tags=["pme"])
+api_router.include_router(admin_pme.router, prefix="/admin", tags=["admin-pme"])
+api_router.include_router(admin_console.router, prefix="/admin", tags=["admin-console"])
 api_router.include_router(signals.router, prefix="/signals", tags=["signals"])
 api_router.include_router(incidents.router, prefix="/incidents", tags=["incidents"])
 api_router.include_router(shield.router, prefix="/shield", tags=["shield"])

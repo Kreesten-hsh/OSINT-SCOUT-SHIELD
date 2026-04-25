@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 import asyncio
+import sys
 
 import redis.asyncio as redis
 import sentry_sdk
@@ -34,6 +35,7 @@ async def lifespan(app: FastAPI):
     """Startup/shutdown lifecycle."""
     from app.database import Base, engine
     from app.models import Alert, Evidence, MonitoringSource, Report, User  # noqa: F401
+    from app.workers.external_transmission_consumer import start_external_transmission_consumer
     from app.workers.result_consumer import start_result_consumer
 
     if settings.AUTO_CREATE_TABLES:
@@ -52,6 +54,11 @@ async def lifespan(app: FastAPI):
     if settings.ENABLE_RESULT_CONSUMER:
         background_tasks.append(asyncio.create_task(start_result_consumer(), name="result_consumer"))
         logger.info("Background worker started", worker="result_consumer")
+    if settings.ENABLE_EXTERNAL_TRANSMISSION_CONSUMER and "pytest" not in sys.modules:
+        background_tasks.append(
+            asyncio.create_task(start_external_transmission_consumer(), name="external_transmission_consumer")
+        )
+        logger.info("Background worker started", worker="external_transmission_consumer")
 
     logger.info("OSINT-SCOUT Shield API started")
     try:

@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from app.database import get_db
 from app.main import app
 from app.core.config import settings
-from app.core.security import create_access_token, get_current_subject
+from app.core.security import create_access_token, get_current_active_principal, get_current_subject
 from app.schemas.shield import (
     IncidentDecisionData,
     OperatorActionStatusData,
@@ -71,6 +71,11 @@ def build_client(fake_session: FakeSession, authenticated: bool = False) -> Test
     app.dependency_overrides[get_db] = _override_get_db
     if authenticated:
         app.dependency_overrides[get_current_subject] = lambda: "analyst@local.test"
+        app.dependency_overrides[get_current_active_principal] = lambda: type(
+            "Principal",
+            (),
+            {"id": 1, "email": "admin@local.test", "role": "ADMIN", "status": "ACTIVE"},
+        )()
     return TestClient(app)
 
 

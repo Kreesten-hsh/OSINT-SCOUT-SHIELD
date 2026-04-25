@@ -13,6 +13,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.database import get_db
 from app.models import User
 from app.schemas.token import TokenPayload
 
@@ -135,6 +136,7 @@ def _decode_token_or_raise(token: str) -> TokenPayload:
 
 async def get_optional_current_user(
     token: str | None = Depends(oauth2_scheme_optional),
+    db: AsyncSession = Depends(get_db),
 ) -> AuthenticatedPrincipal | None:
     if token is None:
         return None
@@ -147,11 +149,65 @@ async def get_optional_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    if int(token_data.uid) == 0:
+        return AuthenticatedPrincipal(
+            id=0,
+            email=token_data.sub,
+            role=normalize_role(token_data.role),
+            status="ACTIVE",
+        )
+
+    user = await db.scalar(select(User).where(User.id == int(token_data.uid)))
+    if user is None or normalize_status(getattr(user, "status", None)) != "ACTIVE":
+        return None
+
     return AuthenticatedPrincipal(
-        id=int(token_data.uid),
-        email=token_data.sub,
-        role=normalize_role(token_data.role),
-        status="ACTIVE",
+        id=int(user.id),
+        email=user.email,
+        role=normalize_role(user.role),
+        status=normalize_status(getattr(user, "status", None)),
+    )
+
+
+async def get_current_active_principal(
+    token_data: TokenPayload = Depends(get_current_token_payload),
+    db: AsyncSession = Depends(get_db),
+) -> AuthenticatedPrincipal:
+    if token_data.uid is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if int(token_data.uid) == 0:
+        return AuthenticatedPrincipal(
+            id=0,
+            email=token_data.sub or "",
+            role=normalize_role(token_data.role),
+            status="ACTIVE",
+        )
+
+    user = await db.scalar(select(User).where(User.id == int(token_data.uid)))
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user_status = normalize_status(getattr(user, "status", None))
+    if user_status != "ACTIVE":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Compte non actif.",
+        )
+
+    return AuthenticatedPrincipal(
+        id=int(user.id),
+        email=user.email,
+        role=normalize_role(user.role),
+        status=user_status,
     )
 
 
@@ -159,6 +215,7 @@ def require_role(allowed_roles: Sequence[str]):
     normalized_allowed_roles = {normalize_role(role) for role in allowed_roles}
 
     async def _require_role(
+        _principal: AuthenticatedPrincipal = Depends(get_current_active_principal),
         token_data: TokenPayload = Depends(get_current_token_payload),
     ) -> TokenPayload:
         if normalize_role(token_data.role) not in normalized_allowed_roles:

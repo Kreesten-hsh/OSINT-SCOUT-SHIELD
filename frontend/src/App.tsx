@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Component, Suspense, lazy, type ErrorInfo, type ReactNode } from 'react';
 import { Loader2 } from 'lucide-react';
 
@@ -8,14 +8,20 @@ import { Toaster } from '@/components/ui/toaster';
 import { useAuthStore } from '@/store/auth-store';
 
 const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
+const PmeRegisterPage = lazy(() => import('@/features/auth/PmeRegisterPage'));
 const VerifyPage = lazy(() => import('@/features/verify/VerifyPage'));
 const LivePage = lazy(() => import('@/features/live/LivePage'));
 const DashboardLayout = lazy(() => import('@/layouts/DashboardLayout'));
 const BusinessLayout = lazy(() => import('@/layouts/BusinessLayout'));
+const AdminDashboardPage = lazy(() => import('@/features/admin/AdminDashboardPage'));
+const AdminBusinessesPage = lazy(() => import('@/features/admin/AdminBusinessesPage'));
+const AdminTransmissionsPage = lazy(() => import('@/features/admin/AdminTransmissionsPage'));
+const AdminExportsPage = lazy(() => import('@/features/admin/AdminExportsPage'));
 const BusinessVerifyPage = lazy(() => import('@/features/business/BusinessVerifyPage'));
 const BusinessAlertsPage = lazy(() => import('@/features/business/BusinessAlertsPage'));
+const BusinessSignalsPage = lazy(() => import('@/features/business/BusinessSignalsPage'));
 const BusinessReportsPage = lazy(() => import('@/features/business/BusinessReportsPage'));
-const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'));
+const BusinessProfilePage = lazy(() => import('@/features/business/BusinessProfilePage'));
 const ThreatMapPage = lazy(() => import('@/features/threat-map/ThreatMapPage'));
 const AlertsPage = lazy(() => import('@/features/alerts/AlertsPage'));
 const InvestigationPage = lazy(() => import('@/features/investigation/InvestigationPage'));
@@ -29,7 +35,6 @@ const EvidencePage = lazy(() => import('@/features/evidence/EvidencePage'));
 const MonitoringPage = lazy(() => import('@/features/monitoring/MonitoringPage'));
 const SourceDetailPage = lazy(() => import('@/features/monitoring/SourceDetailPage'));
 const SettingsPage = lazy(() => import('@/features/settings/SettingsPage'));
-const ComingSoonPage = lazy(() => import('@/features/shared/ComingSoonPage'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -66,7 +71,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
       return (
         <div className="flex h-screen items-center justify-center bg-slate-950 text-slate-100">
           <div className="max-w-md space-y-4 text-center">
-            <h1 className="text-2xl font-bold text-red-400">Erreur Critique</h1>
+            <h1 className="text-2xl font-bold text-red-400">Erreur critique</h1>
             <p className="text-slate-400">Une erreur inattendue s'est produite. Rechargez la page.</p>
             <pre className="max-h-32 overflow-auto rounded-lg bg-slate-900 p-3 text-xs text-slate-500">
               {this.state.error?.message}
@@ -138,52 +143,20 @@ function App() {
               <Route path="/verify" element={<VerifyPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/live" element={<LivePage />} />
-              <Route
-                path="/pme/register"
-                element={
-                  <ComingSoonPage
-                    title="Inscription PME"
-                    description="Le parcours d'inscription PME avec validation obligatoire par l'administrateur est le prochain chantier du refactor."
-                  />
-                }
-              />
+              <Route path="/pme/register" element={<PmeRegisterPage />} />
 
               <Route element={<RequireAdmin />}>
                 <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-                <Route path="/admin/dashboard" element={<DashboardPage />} />
-                <Route
-                  path="/admin/pme"
-                  element={
-                    <ComingSoonPage
-                      title="Gestion des PME"
-                      description="La validation, le rejet et la désactivation des comptes PME seront branchés sur le nouveau domaine métier."
-                    />
-                  }
-                />
+                <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+                <Route path="/admin/pme" element={<AdminBusinessesPage />} />
                 <Route path="/admin/signalements" element={<CitizenIncidentsPage />} />
                 <Route path="/admin/signalements/:id" element={<CitizenIncidentDetailPage />} />
                 <Route path="/admin/dossiers" element={<ReportsListPage />} />
                 <Route path="/admin/dossiers/:id" element={<ReportDetailPage />} />
-                <Route
-                  path="/admin/transmissions"
-                  element={
-                    <ComingSoonPage
-                      title="Transmissions externes"
-                      description="Le tableau de supervision des transmissions ANSSI/OCRC et opérateurs sera branché après la nouvelle file Redis."
-                    />
-                  }
-                />
-                <Route
-                  path="/admin/exports"
-                  element={
-                    <ComingSoonPage
-                      title="Exports"
-                      description="Les exports CSV et STIX-lite seront branchés sur le nouveau domaine admin."
-                    />
-                  }
-                />
+                <Route path="/admin/transmissions" element={<AdminTransmissionsPage />} />
+                <Route path="/admin/exports" element={<AdminExportsPage />} />
 
-                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
                 <Route path="/threat-map" element={<ThreatMapPage />} />
                 <Route path="/monitoring" element={<MonitoringPage />} />
                 <Route path="/monitoring/:id" element={<SourceDetailPage />} />
@@ -203,25 +176,9 @@ function App() {
                 <Route path="/pme" element={<Navigate to="/pme/dashboard" replace />} />
                 <Route path="/pme/dashboard" element={<BusinessVerifyPage />} />
                 <Route path="/pme/alertes" element={<BusinessAlertsPage />} />
-                <Route
-                  path="/pme/signalements"
-                  element={
-                    <ComingSoonPage
-                      title="Signalements liés"
-                      description="La liste PME des signalements liés à l'usurpation sera branchée sur le nouveau domaine métier."
-                    />
-                  }
-                />
+                <Route path="/pme/signalements" element={<BusinessSignalsPage />} />
                 <Route path="/pme/dossiers" element={<BusinessReportsPage />} />
-                <Route
-                  path="/pme/profil"
-                  element={
-                    <ComingSoonPage
-                      title="Profil PME"
-                      description="La fiche PME modifiable et les numéros légitimes déclarés seront branchés avec le nouveau modèle business_profile."
-                    />
-                  }
-                />
+                <Route path="/pme/profil" element={<BusinessProfilePage />} />
 
                 <Route path="/business" element={<Navigate to="/pme/dashboard" replace />} />
                 <Route path="/business/verify" element={<Navigate to="/pme/dashboard" replace />} />

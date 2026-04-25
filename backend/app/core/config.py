@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     SQL_ECHO: bool = False
     AUTO_CREATE_TABLES: bool = False
     ENABLE_RESULT_CONSUMER: bool = True
+    ENABLE_EXTERNAL_TRANSMISSION_CONSUMER: bool = True
 
     # Observability
     SENTRY_DSN: str | None = None
@@ -46,6 +47,14 @@ class Settings(BaseSettings):
     # SHIELD simulation
     SHIELD_OPERATOR_SHARED_SECRET: str = "dev-operator-secret"
     SHIELD_ACTION_TTL_SECONDS: int = 86400
+
+    # External transmission simulation
+    EXTERNAL_TRANSMISSION_SHARED_SECRET: str = "dev-transmission-secret"
+    EXTERNAL_ANSSI_RECEIVER_URL: str = "http://127.0.0.1:8000/api/v1/external/anssi-ocrc/receive"
+    EXTERNAL_OPERATORS_RECEIVER_URL: str = "http://127.0.0.1:8000/api/v1/external/operators/receive"
+    EXTERNAL_NUMBER_THRESHOLD: int = 3
+    EXTERNAL_MAX_ATTEMPTS: int = 4
+    EXTERNAL_RETRY_DELAY_SECONDS: int = 30
 
     @property
     def effective_database_url(self) -> str:
