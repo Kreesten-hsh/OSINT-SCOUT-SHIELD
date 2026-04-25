@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse, Response
 from sqlalchemy import func, select, update
+from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -402,7 +403,12 @@ async def list_reports(
     legacy_query = select(Report).order_by(Report.generated_at.desc())
     if scope_owner_user_id is not None:
         legacy_query = legacy_query.join(Alert, Report.alert_id == Alert.id).where(Alert.owner_user_id == scope_owner_user_id)
-    legacy_reports = (await db.execute(legacy_query)).scalars().all()
+    try:
+        legacy_reports = (await db.execute(legacy_query)).scalars().all()
+    except ProgrammingError:
+        logger.warning("Skipping legacy reports listing because the legacy schema is out of sync.")
+        legacy_reports = []
+
     for report in legacy_reports:
         snapshot = report.snapshot_json or {}
         alert_uuid = str((((snapshot.get("data") or {}).get("alert") or {}).get("uuid") or ""))

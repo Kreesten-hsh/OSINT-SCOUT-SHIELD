@@ -252,6 +252,11 @@ export interface AdminDailyCount {
     count: number;
 }
 
+export interface AdminCategoryCount {
+    category: string;
+    count: number;
+}
+
 export interface AdminDashboardRecentReportItem {
     report_uuid: UUID;
     legacy_alert_uuid?: UUID | null;
@@ -277,8 +282,18 @@ export interface AdminDashboardTopNumberItem {
     last_seen?: ISOString | null;
 }
 
+export interface AdminDashboardRecentTransmissionItem {
+    transmission_uuid: UUID;
+    public_reference: string;
+    target_type: TransmissionTargetType;
+    status: TransmissionStatus;
+    created_at: ISOString;
+    delivered_at?: ISOString | null;
+}
+
 export interface AdminDashboardData {
     total_reports: number;
+    daily_reports: number;
     open_reports: number;
     confirmed_reports: number;
     bundles_ready: number;
@@ -286,12 +301,35 @@ export interface AdminDashboardData {
     pending_businesses: number;
     transmissions_pending: number;
     transmissions_failed: number;
+    transmission_success_rate: number;
+    active_campaigns: number;
     reports_by_day: AdminDailyCount[];
+    reports_by_category: AdminCategoryCount[];
     reports_by_status: Record<AlertStatus, number>;
     transmissions_by_status: Record<TransmissionStatus, number>;
     recent_reports: AdminDashboardRecentReportItem[];
     top_targeted_businesses: AdminDashboardBusinessTargetItem[];
     top_suspect_numbers: AdminDashboardTopNumberItem[];
+    recent_transmissions: AdminDashboardRecentTransmissionItem[];
+}
+
+export interface AdminBusinessDetailData {
+    business_uuid: UUID;
+    email: string;
+    official_name: string;
+    validation_status: BusinessValidationStatus;
+    contact_email?: string | null;
+    contact_phone?: string | null;
+    keywords: string[];
+    legit_numbers: string[];
+    created_at: ISOString;
+    validated_at?: ISOString | null;
+    total_incidents: number;
+    linked_reports: number;
+    bundles_ready: number;
+    last_incident_at?: ISOString | null;
+    recent_incidents: PmeIncidentListItem[];
+    recent_reports: PmeSignalementListItem[];
 }
 
 export interface AdminTransmissionListItem {

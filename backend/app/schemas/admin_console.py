@@ -14,6 +14,11 @@ class AdminDailyCount(BaseModel):
     count: int
 
 
+class AdminCategoryCount(BaseModel):
+    category: str
+    count: int
+
+
 class AdminDashboardRecentReportItem(BaseModel):
     report_uuid: UUID4
     legacy_alert_uuid: UUID4 | None = None
@@ -39,8 +44,18 @@ class AdminDashboardTopNumberItem(BaseModel):
     last_seen: datetime | None = None
 
 
+class AdminDashboardRecentTransmissionItem(BaseModel):
+    transmission_uuid: UUID4
+    public_reference: str
+    target_type: TransmissionTargetType
+    status: TransmissionStatus
+    created_at: datetime
+    delivered_at: datetime | None = None
+
+
 class AdminDashboardData(BaseModel):
     total_reports: int
+    daily_reports: int
     open_reports: int
     confirmed_reports: int
     bundles_ready: int
@@ -48,12 +63,16 @@ class AdminDashboardData(BaseModel):
     pending_businesses: int
     transmissions_pending: int
     transmissions_failed: int
+    transmission_success_rate: float
+    active_campaigns: int
     reports_by_day: list[AdminDailyCount] = Field(default_factory=list)
+    reports_by_category: list[AdminCategoryCount] = Field(default_factory=list)
     reports_by_status: dict[str, int] = Field(default_factory=dict)
     transmissions_by_status: dict[str, int] = Field(default_factory=dict)
     recent_reports: list[AdminDashboardRecentReportItem] = Field(default_factory=list)
     top_targeted_businesses: list[AdminDashboardBusinessTargetItem] = Field(default_factory=list)
     top_suspect_numbers: list[AdminDashboardTopNumberItem] = Field(default_factory=list)
+    recent_transmissions: list[AdminDashboardRecentTransmissionItem] = Field(default_factory=list)
 
 
 class AdminTransmissionListItem(BaseModel):

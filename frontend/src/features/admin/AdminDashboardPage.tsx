@@ -1,13 +1,28 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Activity, Building2, FileBadge2, Loader2, RadioTower, ShieldAlert, Users } from 'lucide-react';
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Activity, Building2, Loader2, RadioTower, RefreshCcw, Siren, ShieldAlert } from 'lucide-react';
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
 import { Badge } from '@/components/ui/badge';
-import { alertStatusLabel, alertStatusVariant, riskTone } from '@/lib/presentation';
-import type { AdminDashboardData, AlertStatus, TransmissionStatus } from '@/types';
+import { alertStatusLabel, alertStatusVariant, categoryLabel } from '@/lib/presentation';
+import type { AdminCategoryCount, AdminDashboardData, AlertStatus, TransmissionStatus, TransmissionTargetType } from '@/types';
+
+const CATEGORY_COLORS = ['#0f6a2f', '#2e7dff', '#ef4444', '#f59e0b', '#14b8a6'];
+const VISIBLE_STATUSES: AlertStatus[] = ['NEW', 'IN_REVIEW', 'DISMISSED'];
 
 const TRANSMISSION_LABELS: Record<TransmissionStatus, string> = {
   PENDING: 'En attente',
@@ -18,14 +33,33 @@ const TRANSMISSION_LABELS: Record<TransmissionStatus, string> = {
   DELIVERED: 'Livre',
 };
 
+const TARGET_LABELS: Record<TransmissionTargetType, string> = {
+  ANSSI_OCRC: 'ANSSI/OCRC',
+  OPERATORS: 'Operateurs',
+};
+
 function ChartSkeleton() {
   return (
     <div className="space-y-3 py-2 animate-pulse">
       <div className="h-4 w-1/3 rounded bg-secondary/40" />
-      <div className="h-56 rounded-xl bg-secondary/30" />
-      <div className="h-3 w-2/3 rounded bg-secondary/30" />
+      <div className="h-72 rounded-2xl bg-secondary/30" />
     </div>
   );
+}
+
+function categoryFallback(data: AdminDashboardData | undefined): AdminCategoryCount[] {
+  return VISIBLE_STATUSES.map((status) => ({
+    category: status.toLowerCase(),
+    count: data?.reports_by_status?.[status] ?? 0,
+  })).filter((item) => item.count > 0);
+}
+
+function transmissionBadgeVariant(status: TransmissionStatus): 'outline' | 'secondary' | 'warning' | 'destructive' | 'success' {
+  if (status === 'FAILED') return 'destructive';
+  if (status === 'DELIVERED') return 'success';
+  if (status === 'RETRYING') return 'warning';
+  if (status === 'QUEUED' || status === 'SENT') return 'secondary';
+  return 'outline';
 }
 
 export default function AdminDashboardPage() {
@@ -37,110 +71,119 @@ export default function AdminDashboardPage() {
     },
   });
 
-  const lineData = (data?.reports_by_day ?? []).map((item) => ({
-    date: new Date(item.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
-    count: item.count,
-  }));
+  const lineData = useMemo(
+    () =>
+      (data?.reports_by_day ?? []).map((item) => ({
+        date: new Date(item.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }),
+        count: item.count,
+      })),
+    [data?.reports_by_day],
+  );
+
+  const categoryData = useMemo(
+    () =>
+      (data?.reports_by_category?.length ? data.reports_by_category : categoryFallback(data)).map((item, index) => ({
+        ...item,
+        fill: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
+      })),
+    [data],
+  );
 
   const summaryCards = [
     {
-      label: 'Signalements formels',
+      label: 'Total signalements',
       value: data?.total_reports ?? 0,
-      extra: 'Total consolide du flux citoyen',
+      helper: `${data?.open_reports ?? 0} en cours`,
       icon: ShieldAlert,
-      tone: 'text-red-300',
     },
     {
-      label: 'Signalements ouverts',
-      value: data?.open_reports ?? 0,
-      extra: 'Nouveaux et en revue',
+      label: 'Aujourd hui',
+      value: data?.daily_reports ?? 0,
+      helper: 'Flux citoyen du jour',
       icon: Activity,
-      tone: 'text-amber-300',
-    },
-    {
-      label: 'Dossiers prets',
-      value: data?.bundles_ready ?? 0,
-      extra: 'Bundles forensiques disponibles',
-      icon: FileBadge2,
-      tone: 'text-primary',
     },
     {
       label: 'PME actives',
       value: data?.active_businesses ?? 0,
-      extra: 'Comptes valides par l admin',
+      helper: `${data?.pending_businesses ?? 0} en attente`,
       icon: Building2,
-      tone: 'text-emerald-300',
     },
     {
-      label: 'PME en attente',
-      value: data?.pending_businesses ?? 0,
-      extra: 'Demandes a traiter',
-      icon: Users,
-      tone: 'text-sky-300',
-    },
-    {
-      label: 'Transmissions non resolues',
-      value: data?.transmissions_pending ?? 0,
-      extra: `${data?.transmissions_failed ?? 0} en echec`,
+      label: 'Transmissions',
+      value: `${data?.transmission_success_rate ?? 0}%`,
+      helper: `${data?.transmissions_failed ?? 0} echecs`,
       icon: RadioTower,
-      tone: 'text-fuchsia-300',
+    },
+    {
+      label: 'Campagnes',
+      value: data?.active_campaigns ?? 0,
+      helper: 'Sous surveillance',
+      icon: Siren,
     },
   ];
 
+  const statusCards = VISIBLE_STATUSES.map((status) => ({
+    status,
+    count: data?.reports_by_status?.[status] ?? 0,
+  }));
+
   return (
     <div className="space-y-6">
-      <section className="panel soft-grid relative overflow-hidden p-6 fade-rise-in">
-        <div className="pointer-events-none absolute -right-24 -top-20 h-56 w-56 rounded-full bg-primary/20 blur-3xl" />
-        <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <section className="panel p-6 fade-rise-in">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-primary/90">BENIN CYBER SHIELD</p>
-            <h2 className="mt-1 text-2xl font-bold tracking-tight md:text-3xl">Tableau de bord national</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Vision consolidee du flux citoyen, des usurpations PME et des transmissions externes.
+            <h2 className="text-3xl font-bold tracking-tight">Tableau de bord national</h2>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+              Vue consolidee des signalements citoyens, des transmissions et de l activite PME.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex h-10 items-center rounded-xl border border-input bg-background/70 px-4 text-sm text-muted-foreground">
+              7 derniers jours
+            </span>
             <Link
               to="/admin/transmissions"
-              className="inline-flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/15 px-3 py-2 text-xs font-semibold text-primary transition hover:bg-primary/25"
+              className="inline-flex h-10 items-center rounded-xl border border-primary/30 bg-primary/10 px-4 text-sm font-semibold text-primary transition hover:bg-primary/20"
             >
               Voir les transmissions
             </Link>
             <button
               onClick={() => refetch()}
-              className="inline-flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-xs text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-input px-4 text-sm text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
             >
-              {isFetching ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+              {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
               Actualiser
             </button>
           </div>
         </div>
       </section>
 
-      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6 fade-rise-in-1">
+      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5 fade-rise-in-1">
         {summaryCards.map((card) => (
-          <article key={card.label} className="panel interactive-row p-4">
+          <article key={card.label} className="panel p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">{card.label}</p>
-                <p className="mt-2 text-2xl font-semibold">{card.value}</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{card.label}</p>
+                <p className="mt-4 text-4xl font-semibold">{card.value}</p>
               </div>
-              <div className={`rounded-xl border border-border/80 bg-background/60 p-2 ${card.tone}`}>
-                <card.icon className="h-4 w-4" />
+              <div className="rounded-2xl border border-border/80 bg-background/60 p-3 text-primary">
+                <card.icon className="h-5 w-5" />
               </div>
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">{card.extra}</p>
+            <p className="mt-3 text-sm text-muted-foreground">{card.helper}</p>
           </article>
         ))}
       </section>
 
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-12 fade-rise-in-2">
-        <article className="panel p-5 xl:col-span-7">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="section-title">Evolution des signalements (7 jours)</h3>
-            <Link to="/admin/signalements" className="text-xs text-primary hover:underline">
-              Ouvrir les signalements
-            </Link>
+        <article className="panel p-5 xl:col-span-8">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h3 className="section-title">Signalements par jour</h3>
+              <p className="section-subtitle">Evolution journaliere des depots citoyens formalises.</p>
+            </div>
+            <Badge variant="secondary">{data?.daily_reports ?? 0} aujourd hui</Badge>
           </div>
 
           {isLoading ? (
@@ -149,152 +192,158 @@ export default function AdminDashboardPage() {
             <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-6 text-sm text-destructive">
               Impossible de charger le tableau de bord.
             </p>
-          ) : lineData.some((item) => item.count > 0) ? (
-            <div className="h-64 w-full">
+          ) : (
+            <div className="h-80 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={lineData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.2)" />
+                <AreaChart data={lineData}>
+                  <defs>
+                    <linearGradient id="reportsGradient" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stopColor="#0f6a2f" stopOpacity={0.38} />
+                      <stop offset="100%" stopColor="#0f6a2f" stopOpacity={0.04} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.18)" />
                   <XAxis dataKey="date" stroke="#94A3B8" />
                   <YAxis stroke="#94A3B8" allowDecimals={false} />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#0F172A',
+                      backgroundColor: '#09140d',
                       border: '1px solid rgba(148,163,184,0.35)',
-                      borderRadius: '0.75rem',
+                      borderRadius: '0.9rem',
                       color: '#E2E8F0',
                     }}
                   />
-                  <Line type="monotone" dataKey="count" stroke="#0EA5E9" strokeWidth={3} dot={false} />
-                </LineChart>
+                  <Area type="monotone" dataKey="count" stroke="#0f6a2f" strokeWidth={4} fill="url(#reportsGradient)" />
+                </AreaChart>
               </ResponsiveContainer>
             </div>
-          ) : (
-            <p className="rounded-xl border border-border/70 bg-background/50 px-3 py-6 text-sm text-muted-foreground">
-              Aucun signalement formalise sur les 7 derniers jours.
-            </p>
           )}
         </article>
 
-        <article className="panel p-5 xl:col-span-5">
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-1">
-            <div>
-              <h3 className="section-title mb-3">Statuts des signalements</h3>
-              <div className="space-y-2">
-                {Object.entries(data?.reports_by_status ?? {}).map(([status, count]) => (
-                  <div key={status} className="flex items-center justify-between rounded-xl border border-border/70 bg-background/50 px-3 py-2">
-                    <Badge variant={alertStatusVariant(status as AlertStatus)}>{alertStatusLabel(status as AlertStatus)}</Badge>
-                    <span className="text-sm font-semibold">{count}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="section-title mb-3">Statuts des transmissions</h3>
-              <div className="space-y-2">
-                {Object.entries(data?.transmissions_by_status ?? {}).map(([status, count]) => (
-                  <div key={status} className="flex items-center justify-between rounded-xl border border-border/70 bg-background/50 px-3 py-2">
-                    <span className="text-sm text-muted-foreground">{TRANSMISSION_LABELS[status as TransmissionStatus] ?? status}</span>
-                    <span className="text-sm font-semibold">{count}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+        <article className="panel p-5 xl:col-span-4">
+          <div className="mb-4">
+            <h3 className="section-title">Repartition par categorie</h3>
+            <p className="section-subtitle">Categories detectees par le moteur d analyse.</p>
           </div>
+
+          {isLoading ? (
+            <ChartSkeleton />
+          ) : categoryData.length > 0 ? (
+            <>
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={categoryData} dataKey="count" nameKey="category" innerRadius={68} outerRadius={96} paddingAngle={4}>
+                      {categoryData.map((entry) => (
+                        <Cell key={entry.category} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value: number | string | undefined, name: string | undefined) => [value ?? 0, categoryLabel(name)]}
+                      contentStyle={{
+                        backgroundColor: '#09140d',
+                        border: '1px solid rgba(148,163,184,0.35)',
+                        borderRadius: '0.9rem',
+                        color: '#E2E8F0',
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="space-y-2">
+                {categoryData.map((item) => (
+                  <div key={item.category} className="flex items-center justify-between rounded-xl border border-border/70 bg-background/50 px-3 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.fill }} />
+                      <span className="text-sm text-muted-foreground">{categoryLabel(item.category)}</span>
+                    </div>
+                    <span className="text-sm font-semibold">{item.count}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <p className="rounded-xl border border-border/70 bg-background/50 px-3 py-6 text-sm text-muted-foreground">
+              Les categories apparaitront ici des que des signalements seront disponibles.
+            </p>
+          )}
         </article>
       </section>
 
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-12 fade-rise-in-3">
-        <article className="panel p-5 xl:col-span-5">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="section-title">Signalements recents</h3>
+        <article className="panel p-5 xl:col-span-4">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h3 className="section-title">Statuts des signalements</h3>
+              <p className="section-subtitle">Charge de traitement visible dans le portail admin.</p>
+            </div>
             <Link to="/admin/signalements" className="text-xs text-primary hover:underline">
               Voir tout
             </Link>
           </div>
-          <div className="space-y-2">
-            {(data?.recent_reports ?? []).length === 0 ? (
-              <p className="rounded-xl border border-dashed border-border bg-background/40 px-3 py-6 text-sm text-muted-foreground">
-                Aucun signalement recent.
-              </p>
-            ) : (
-              data?.recent_reports.map((report) => (
-                <Link
-                  key={report.report_uuid}
-                  to={`/admin/signalements/${report.legacy_alert_uuid ?? report.report_uuid}`}
-                  className="interactive-row block rounded-xl border border-border/70 bg-background/50 px-3 py-3"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold">{report.public_reference}</p>
-                      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{report.message_preview}</p>
-                      <p className="mt-2 text-[11px] text-muted-foreground">
-                        {report.suspect_phone_masked} · {new Date(report.created_at).toLocaleString()}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <Badge variant={alertStatusVariant(report.status)}>{alertStatusLabel(report.status)}</Badge>
-                      <p className={`mt-2 text-sm font-semibold ${riskTone(report.risk_score)}`}>{report.risk_score}/100</p>
-                    </div>
-                  </div>
-                </Link>
-              ))
-            )}
+
+          <div className="space-y-3">
+            {statusCards.map((item) => (
+              <div key={item.status} className="rounded-2xl border border-border/70 bg-background/50 p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <Badge variant={alertStatusVariant(item.status)}>{alertStatusLabel(item.status)}</Badge>
+                  <span className="text-sm font-semibold">{item.count}</span>
+                </div>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-secondary/35">
+                  <div
+                    className="h-full rounded-full bg-primary/80"
+                    style={{ width: `${data?.total_reports ? (item.count / data.total_reports) * 100 : 0}%` }}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
         </article>
 
-        <article className="panel p-5 xl:col-span-4">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="section-title">PME les plus ciblees</h3>
-            <Link to="/admin/pme" className="text-xs text-primary hover:underline">
-              Gerer les PME
-            </Link>
+        <article className="panel p-5 xl:col-span-8">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h3 className="section-title">Transmissions recentes</h3>
+              <p className="section-subtitle">Derniers dossiers envoyes vers l ANSSI/OCRC et les operateurs.</p>
+            </div>
+            <Badge variant="outline">{data?.transmission_success_rate ?? 0}% de succes</Badge>
           </div>
-          <div className="space-y-2">
-            {(data?.top_targeted_businesses ?? []).length === 0 ? (
-              <p className="rounded-xl border border-dashed border-border bg-background/40 px-3 py-6 text-sm text-muted-foreground">
-                Aucune usurpation reliee a une PME.
-              </p>
-            ) : (
-              data?.top_targeted_businesses.map((business) => (
-                <div key={business.business_uuid} className="rounded-xl border border-border/70 bg-background/50 px-3 py-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold">{business.official_name}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Dernier incident {business.last_incident_at ? new Date(business.last_incident_at).toLocaleString() : 'non disponible'}
-                      </p>
-                    </div>
-                    <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-                      {business.incidents_count}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </article>
 
-        <article className="panel p-5 xl:col-span-3">
-          <h3 className="section-title mb-4">Numeros recurrents</h3>
-          <div className="space-y-2">
-            {(data?.top_suspect_numbers ?? []).length === 0 ? (
-              <p className="rounded-xl border border-dashed border-border bg-background/40 px-3 py-6 text-sm text-muted-foreground">
-                Aucun numero suspect agrege.
-              </p>
-            ) : (
-              data?.top_suspect_numbers.map((number) => (
-                <div key={number.suspect_number_uuid} className="rounded-xl border border-border/70 bg-background/50 px-3 py-3">
-                  <p className="text-sm font-semibold">{number.masked_phone}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {number.reports_count} signalement{number.reports_count > 1 ? 's' : ''}
-                  </p>
-                  <p className="mt-1 text-[11px] text-muted-foreground">
-                    Derniere activite {number.last_seen ? new Date(number.last_seen).toLocaleString() : 'non disponible'}
-                  </p>
-                </div>
-              ))
-            )}
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[620px] text-left text-sm">
+              <thead className="bg-secondary/35 text-xs uppercase tracking-wide text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3">Reference</th>
+                  <th className="px-4 py-3">Destinataire</th>
+                  <th className="px-4 py-3">Statut</th>
+                  <th className="px-4 py-3">Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/70">
+                {(data?.recent_transmissions ?? []).length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+                      Aucune transmission recente.
+                    </td>
+                  </tr>
+                ) : (
+                  data?.recent_transmissions.map((transmission) => (
+                    <tr key={transmission.transmission_uuid} className="bg-card/70">
+                      <td className="px-4 py-3 font-mono text-xs text-primary">{transmission.public_reference}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">{TARGET_LABELS[transmission.target_type]}</td>
+                      <td className="px-4 py-3">
+                        <Badge variant={transmissionBadgeVariant(transmission.status)}>
+                          {TRANSMISSION_LABELS[transmission.status]}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                        {new Date(transmission.created_at).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </article>
       </section>

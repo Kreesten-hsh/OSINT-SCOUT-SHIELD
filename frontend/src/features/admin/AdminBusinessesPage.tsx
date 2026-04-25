@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
-import { CheckCircle2, Loader2, RefreshCcw, Search, ShieldOff, XCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowRight, CheckCircle2, Loader2, RefreshCcw, Search, ShieldOff, XCircle } from 'lucide-react';
 
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
@@ -83,7 +84,7 @@ export default function AdminBusinessesPage() {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h2 className="section-title text-2xl">Gestion des PME</h2>
-            <p className="section-subtitle">Validation, rejet et desactivation des comptes PME avant acces au portail.</p>
+            <p className="section-subtitle">Validation des comptes, suivi des fiches entreprise et acces aux details PME.</p>
           </div>
 
           <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto">
@@ -140,7 +141,7 @@ export default function AdminBusinessesPage() {
 
       <section className="panel overflow-hidden fade-rise-in-2">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[980px] text-left text-sm">
+          <table className="w-full min-w-[1080px] text-left text-sm">
             <thead className="bg-secondary/35 text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">PME</th>
@@ -150,13 +151,14 @@ export default function AdminBusinessesPage() {
                 <th className="px-4 py-3">Numeros</th>
                 <th className="px-4 py-3">Contact</th>
                 <th className="px-4 py-3">Creation</th>
+                <th className="px-4 py-3">Fiche</th>
                 <th className="px-4 py-3 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/70">
               {isLoading && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">
                     <Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin" />
                     Chargement des PME...
                   </td>
@@ -165,7 +167,7 @@ export default function AdminBusinessesPage() {
 
               {isError && !isLoading && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-destructive">
+                  <td colSpan={9} className="px-4 py-12 text-center text-destructive">
                     Impossible de charger la liste des PME.
                   </td>
                 </tr>
@@ -173,7 +175,7 @@ export default function AdminBusinessesPage() {
 
               {!isLoading && !isError && items.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">
                     Aucune PME pour ce filtre.
                   </td>
                 </tr>
@@ -196,6 +198,15 @@ export default function AdminBusinessesPage() {
                     <p>{item.contact_phone || 'Telephone non renseigne'}</p>
                   </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">{new Date(item.created_at).toLocaleString()}</td>
+                  <td className="px-4 py-3">
+                    <Link
+                      to={`/admin/pme/${item.business_uuid}`}
+                      className="inline-flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-xs text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
+                    >
+                      Ouvrir
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-2">
                       <button

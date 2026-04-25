@@ -5,9 +5,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import require_role
 from app.database import get_db
-from app.schemas.pme import AdminBusinessListData, AdminBusinessListItem
+from app.schemas.pme import AdminBusinessDetailData, AdminBusinessListData, AdminBusinessListItem
 from app.schemas.response import APIResponse
-from app.services.pme_portal import list_admin_businesses, update_business_validation_status
+from app.services.pme_portal import (
+    get_admin_business_detail,
+    list_admin_businesses,
+    update_business_validation_status,
+)
 
 
 router = APIRouter()
@@ -22,6 +26,16 @@ async def read_admin_businesses(
 ) -> APIResponse[AdminBusinessListData]:
     payload = await list_admin_businesses(db=db, status_filter=status, search=q)
     return APIResponse(success=True, message="Liste des PME recuperee.", data=payload)
+
+
+@router.get("/pme/{business_uuid}", response_model=APIResponse[AdminBusinessDetailData])
+async def read_admin_business_detail(
+    business_uuid: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _principal=Depends(require_role(["ADMIN"])),
+) -> APIResponse[AdminBusinessDetailData]:
+    payload = await get_admin_business_detail(db=db, business_uuid=business_uuid)
+    return APIResponse(success=True, message="Fiche PME recuperee.", data=payload)
 
 
 @router.patch("/pme/{business_uuid}/approve", response_model=APIResponse[AdminBusinessListItem])
@@ -67,4 +81,3 @@ async def disable_business(
         admin_user_id=int(principal.uid) if principal.uid is not None else None,
     )
     return APIResponse(success=True, message="PME desactivee.", data=payload)
-

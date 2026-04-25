@@ -187,3 +187,76 @@ def test_admin_pme_approve_authenticated_contract(monkeypatch) -> None:
     payload = response.json()
     assert payload["success"] is True
     assert payload["data"]["validation_status"] == "ACTIVE"
+
+
+def test_admin_pme_detail_authenticated_contract(monkeypatch) -> None:
+    client = build_client()
+    business_uuid = uuid.uuid4()
+    incident_uuid = uuid.uuid4()
+    report_uuid = uuid.uuid4()
+
+    async def _fake_get_admin_business_detail(*_args, **_kwargs):
+        return {
+            "business_uuid": business_uuid,
+            "email": "pme@example.com",
+            "official_name": "Acme Benin",
+            "validation_status": "ACTIVE",
+            "contact_email": "contact@acme.bj",
+            "contact_phone": "+22990000000",
+            "keywords": ["acme", "momo"],
+            "legit_numbers": ["+22990000000"],
+            "created_at": "2026-04-25T10:00:00Z",
+            "validated_at": "2026-04-25T11:00:00Z",
+            "total_incidents": 3,
+            "linked_reports": 2,
+            "bundles_ready": 1,
+            "last_incident_at": "2026-04-25T12:00:00Z",
+            "recent_incidents": [
+                {
+                    "incident_uuid": incident_uuid,
+                    "report_uuid": report_uuid,
+                    "public_reference": "BCS-2026-0001",
+                    "report_status": "CONFIRMED",
+                    "incident_status": "NEW",
+                    "channel": "WEB_PORTAL",
+                    "message_preview": "Agent MTN : renvoyez le code",
+                    "risk_score": 88,
+                    "suspect_phone_masked": "+229******11",
+                    "detection_reason": "Correspondance mot-cle",
+                    "created_at": "2026-04-25T12:00:00Z",
+                    "bundle_ready": True,
+                }
+            ],
+            "recent_reports": [
+                {
+                    "report_uuid": report_uuid,
+                    "legacy_alert_uuid": None,
+                    "public_reference": "BCS-2026-0001",
+                    "channel": "WEB_PORTAL",
+                    "message_preview": "Agent MTN : renvoyez le code",
+                    "risk_score": 88,
+                    "report_status": "CONFIRMED",
+                    "suspect_phone_masked": "+229******11",
+                    "created_at": "2026-04-25T12:00:00Z",
+                    "attachments_count": 1,
+                    "bundles_count": 1,
+                }
+            ],
+        }
+
+    monkeypatch.setattr("app.api.v1.endpoints.admin_pme.get_admin_business_detail", _fake_get_admin_business_detail)
+    app.dependency_overrides[get_current_active_principal] = lambda: type(
+        "Principal",
+        (),
+        {"id": 1, "email": "admin@local.test", "role": "ADMIN", "status": "ACTIVE"},
+    )()
+    try:
+        response = client.get(f"/api/v1/admin/pme/{business_uuid}", headers=auth_headers("ADMIN"))
+    finally:
+        app.dependency_overrides.pop(get_current_active_principal, None)
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["data"]["official_name"] == "Acme Benin"
+    assert payload["data"]["recent_incidents"][0]["public_reference"] == "BCS-2026-0001"

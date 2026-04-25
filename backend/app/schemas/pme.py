@@ -145,3 +145,21 @@ class AdminBusinessListData(BaseModel):
     rejected_count: int
     disabled_count: int
 
+
+class AdminBusinessDetailData(BaseModel):
+    business_uuid: UUID4
+    email: str
+    official_name: str
+    validation_status: BusinessValidationStatus
+    contact_email: str | None = None
+    contact_phone: str | None = None
+    keywords: list[str] = Field(default_factory=list)
+    legit_numbers: list[str] = Field(default_factory=list)
+    created_at: datetime
+    validated_at: datetime | None = None
+    total_incidents: int
+    linked_reports: int
+    bundles_ready: int
+    last_incident_at: datetime | None = None
+    recent_incidents: list[PmeIncidentListItem] = Field(default_factory=list)
+    recent_reports: list[PmeSignalementListItem] = Field(default_factory=list)

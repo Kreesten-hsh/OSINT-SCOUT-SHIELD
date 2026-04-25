@@ -88,3 +88,14 @@ export function safeHostname(value: string): string {
         return 'Cible invalide';
     }
 }
+
+export function categoryLabel(category: string | null | undefined): string {
+    const value = (category || '').trim().toLowerCase();
+    if (!value) return 'Non classe';
+    if (value === 'mobile_money') return 'Mobile Money';
+    if (value === 'identity_spoofing') return 'Usurpation d identite';
+    if (value === 'otp_theft') return 'Vol de code OTP';
+    if (value === 'fake_agent') return 'Faux agent';
+    if (value === 'urgent_refund') return 'Faux remboursement';
+    return value.replace(/[_-]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+}

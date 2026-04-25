@@ -15,8 +15,10 @@ const DashboardLayout = lazy(() => import('@/layouts/DashboardLayout'));
 const BusinessLayout = lazy(() => import('@/layouts/BusinessLayout'));
 const AdminDashboardPage = lazy(() => import('@/features/admin/AdminDashboardPage'));
 const AdminBusinessesPage = lazy(() => import('@/features/admin/AdminBusinessesPage'));
+const AdminBusinessDetailPage = lazy(() => import('@/features/admin/AdminBusinessDetailPage'));
 const AdminTransmissionsPage = lazy(() => import('@/features/admin/AdminTransmissionsPage'));
 const AdminExportsPage = lazy(() => import('@/features/admin/AdminExportsPage'));
+const AdminSettingsPage = lazy(() => import('@/features/admin/AdminSettingsPage'));
 const BusinessVerifyPage = lazy(() => import('@/features/business/BusinessVerifyPage'));
 const BusinessAlertsPage = lazy(() => import('@/features/business/BusinessAlertsPage'));
 const BusinessSignalsPage = lazy(() => import('@/features/business/BusinessSignalsPage'));
@@ -34,7 +36,6 @@ const ReportDetailPage = lazy(() => import('@/features/reports/ReportDetailPage'
 const EvidencePage = lazy(() => import('@/features/evidence/EvidencePage'));
 const MonitoringPage = lazy(() => import('@/features/monitoring/MonitoringPage'));
 const SourceDetailPage = lazy(() => import('@/features/monitoring/SourceDetailPage'));
-const SettingsPage = lazy(() => import('@/features/settings/SettingsPage'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -149,12 +150,14 @@ function App() {
                 <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
                 <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
                 <Route path="/admin/pme" element={<AdminBusinessesPage />} />
+                <Route path="/admin/pme/:businessUuid" element={<AdminBusinessDetailPage />} />
                 <Route path="/admin/signalements" element={<CitizenIncidentsPage />} />
                 <Route path="/admin/signalements/:id" element={<CitizenIncidentDetailPage />} />
                 <Route path="/admin/dossiers" element={<ReportsListPage />} />
                 <Route path="/admin/dossiers/:id" element={<ReportDetailPage />} />
                 <Route path="/admin/transmissions" element={<AdminTransmissionsPage />} />
                 <Route path="/admin/exports" element={<AdminExportsPage />} />
+                <Route path="/admin/settings" element={<AdminSettingsPage />} />
 
                 <Route path="/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
                 <Route path="/threat-map" element={<ThreatMapPage />} />
@@ -169,7 +172,7 @@ function App() {
                 <Route path="/incidents-signales" element={<CitizenIncidentsPage />} />
                 <Route path="/incidents-signales/:id" element={<CitizenIncidentDetailPage />} />
                 <Route path="/evidence" element={<EvidencePage />} />
-                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/settings" element={<Navigate to="/admin/settings" replace />} />
               </Route>
 
               <Route element={<RequireSME />}>

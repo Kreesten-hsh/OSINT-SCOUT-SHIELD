@@ -10,6 +10,7 @@ from sqlalchemy.orm import selectinload
 from app.core.security import get_password_hash
 from app.models import BusinessProfile, FormalReport, ForensicBundle, ImpersonationIncident, User
 from app.schemas.pme import (
+    AdminBusinessDetailData,
     AdminBusinessListData,
     AdminBusinessListItem,
     PmeBundleListData,
@@ -432,6 +433,41 @@ async def list_admin_businesses(
     )
 
 
+async def get_admin_business_detail(db: AsyncSession, business_uuid: uuid.UUID) -> AdminBusinessDetailData:
+    stmt = (
+        select(BusinessProfile, User)
+        .join(User, BusinessProfile.user_id == User.id)
+        .where(BusinessProfile.uuid == business_uuid)
+    )
+    row = (await db.execute(stmt)).first()
+    if row is None:
+        raise HTTPException(status_code=404, detail="PME introuvable.")
+
+    profile, user = row[0], row[1]
+    dashboard = await get_business_dashboard(db=db, user_id=user.id)
+    incidents = await list_business_incidents(db=db, user_id=user.id, skip=0, limit=5)
+    reports = await list_business_signalements(db=db, user_id=user.id, skip=0, limit=5)
+
+    return AdminBusinessDetailData(
+        business_uuid=profile.uuid,
+        email=user.email,
+        official_name=profile.official_name,
+        validation_status=profile.validation_status,
+        contact_email=profile.contact_email,
+        contact_phone=profile.contact_phone,
+        keywords=list(profile.keywords_json or []),
+        legit_numbers=list(profile.legit_numbers_json or []),
+        created_at=profile.created_at,
+        validated_at=profile.validated_at,
+        total_incidents=dashboard.total_incidents,
+        linked_reports=dashboard.linked_reports,
+        bundles_ready=dashboard.bundles_ready,
+        last_incident_at=dashboard.last_incident_at,
+        recent_incidents=incidents.items,
+        recent_reports=reports.items,
+    )
+
+
 async def update_business_validation_status(
     db: AsyncSession,
     business_uuid: uuid.UUID,
@@ -481,4 +517,3 @@ async def update_business_validation_status(
         created_at=profile.created_at,
         validated_at=profile.validated_at,
     )
-

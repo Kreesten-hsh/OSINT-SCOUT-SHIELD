@@ -47,10 +47,12 @@ def test_admin_dashboard_authenticated_contract(monkeypatch) -> None:
     report_uuid = uuid.uuid4()
     business_uuid = uuid.uuid4()
     suspect_uuid = uuid.uuid4()
+    transmission_uuid = uuid.uuid4()
 
     async def _fake_get_dashboard(*_args, **_kwargs):
         return {
             "total_reports": 12,
+            "daily_reports": 3,
             "open_reports": 4,
             "confirmed_reports": 3,
             "bundles_ready": 5,
@@ -58,7 +60,13 @@ def test_admin_dashboard_authenticated_contract(monkeypatch) -> None:
             "pending_businesses": 1,
             "transmissions_pending": 2,
             "transmissions_failed": 1,
+            "transmission_success_rate": 66.7,
+            "active_campaigns": 2,
             "reports_by_day": [{"date": "2026-04-25", "count": 3}],
+            "reports_by_category": [
+                {"category": "mobile_money", "count": 7},
+                {"category": "identity_spoofing", "count": 5},
+            ],
             "reports_by_status": {
                 "NEW": 2,
                 "IN_REVIEW": 2,
@@ -102,6 +110,16 @@ def test_admin_dashboard_authenticated_contract(monkeypatch) -> None:
                     "last_seen": "2026-04-25T11:30:00Z",
                 }
             ],
+            "recent_transmissions": [
+                {
+                    "transmission_uuid": transmission_uuid,
+                    "public_reference": "BCS-2026-0003",
+                    "target_type": "ANSSI_OCRC",
+                    "status": "DELIVERED",
+                    "created_at": "2026-04-25T10:15:00Z",
+                    "delivered_at": "2026-04-25T10:17:00Z",
+                }
+            ],
         }
 
     monkeypatch.setattr("app.api.v1.endpoints.admin_console.get_admin_dashboard", _fake_get_dashboard)
@@ -119,6 +137,10 @@ def test_admin_dashboard_authenticated_contract(monkeypatch) -> None:
     payload = response.json()
     assert payload["success"] is True
     assert payload["data"]["total_reports"] == 12
+    assert payload["data"]["daily_reports"] == 3
+    assert payload["data"]["active_campaigns"] == 2
+    assert payload["data"]["reports_by_category"][0]["category"] == "mobile_money"
+    assert payload["data"]["recent_transmissions"][0]["status"] == "DELIVERED"
     assert payload["data"]["recent_reports"][0]["public_reference"] == "BCS-2026-0001"
 
 

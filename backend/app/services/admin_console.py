@@ -18,12 +18,15 @@ from app.models import (
     FormalReport,
     ForensicBundle,
     ImpersonationIncident,
+    MessageAnalysis,
     SuspectNumber,
 )
 from app.schemas.admin_console import (
+    AdminCategoryCount,
     AdminDashboardBusinessTargetItem,
     AdminDashboardData,
     AdminDashboardRecentReportItem,
+    AdminDashboardRecentTransmissionItem,
     AdminDashboardTopNumberItem,
     AdminDailyCount,
     AdminTransmissionListData,
@@ -126,8 +129,17 @@ async def get_admin_dashboard(db: AsyncSession) -> AdminDashboardData:
     now = datetime.now(timezone.utc)
     start_date = (now - timedelta(days=6)).date()
     start_dt = datetime.combine(start_date, time.min, tzinfo=timezone.utc)
+    today_start = datetime.combine(now.date(), time.min, tzinfo=timezone.utc)
 
     total_reports = int((await db.execute(select(func.count(FormalReport.id)))).scalar_one() or 0)
+    daily_reports = int(
+        (
+            await db.execute(
+                select(func.count(FormalReport.id)).where(FormalReport.created_at >= today_start)
+            )
+        ).scalar_one()
+        or 0
+    )
     open_reports = int(
         (
             await db.execute(
@@ -209,6 +221,20 @@ async def get_admin_dashboard(db: AsyncSession) -> AdminDashboardData:
         if status in transmissions_by_status:
             transmissions_by_status[str(status)] = int(count or 0)
 
+    reports_by_category_rows = (
+        await db.execute(
+            select(
+                func.coalesce(MessageAnalysis.primary_category, "non_classe").label("category"),
+                func.count(FormalReport.id).label("count"),
+            )
+            .select_from(FormalReport)
+            .join(MessageAnalysis, FormalReport.analysis_id == MessageAnalysis.id)
+            .group_by("category")
+            .order_by(desc("count"), "category")
+            .limit(5)
+        )
+    ).all()
+
     recent_reports_stmt = (
         select(FormalReport)
         .options(
@@ -220,6 +246,15 @@ async def get_admin_dashboard(db: AsyncSession) -> AdminDashboardData:
         .limit(5)
     )
     recent_reports = (await db.execute(recent_reports_stmt)).scalars().all()
+
+    recent_transmissions_stmt = (
+        select(ExternalTransmission, FormalReport)
+        .join(ForensicBundle, ExternalTransmission.bundle_id == ForensicBundle.id)
+        .join(FormalReport, ForensicBundle.report_id == FormalReport.id)
+        .order_by(ExternalTransmission.created_at.desc())
+        .limit(5)
+    )
+    recent_transmissions = (await db.execute(recent_transmissions_stmt)).all()
 
     top_business_rows = (
         await db.execute(
@@ -247,9 +282,24 @@ async def get_admin_dashboard(db: AsyncSession) -> AdminDashboardData:
         transmissions_by_status.get(status, 0) for status in ("PENDING", "QUEUED", "SENT", "RETRYING")
     )
     transmissions_failed = transmissions_by_status.get("FAILED", 0)
+    transmissions_delivered = transmissions_by_status.get("DELIVERED", 0)
+    transmissions_total = sum(transmissions_by_status.values())
+    transmission_success_rate = round(
+        (transmissions_delivered / transmissions_total) * 100 if transmissions_total else 0.0,
+        1,
+    )
+    active_campaigns = int(
+        (
+            await db.execute(
+                select(func.count(SuspectNumber.id)).where(SuspectNumber.report_count >= 3)
+            )
+        ).scalar_one()
+        or 0
+    )
 
     return AdminDashboardData(
         total_reports=total_reports,
+        daily_reports=daily_reports,
         open_reports=open_reports,
         confirmed_reports=confirmed_reports,
         bundles_ready=bundles_ready,
@@ -257,7 +307,13 @@ async def get_admin_dashboard(db: AsyncSession) -> AdminDashboardData:
         pending_businesses=pending_businesses,
         transmissions_pending=transmissions_pending,
         transmissions_failed=transmissions_failed,
+        transmission_success_rate=transmission_success_rate,
+        active_campaigns=active_campaigns,
         reports_by_day=reports_by_day,
+        reports_by_category=[
+            AdminCategoryCount(category=str(row.category or "non_classe"), count=int(row.count or 0))
+            for row in reports_by_category_rows
+        ],
         reports_by_status=reports_by_status,
         transmissions_by_status=transmissions_by_status,
         recent_reports=[
@@ -292,6 +348,17 @@ async def get_admin_dashboard(db: AsyncSession) -> AdminDashboardData:
                 last_seen=number.last_seen,
             )
             for number in top_numbers
+        ],
+        recent_transmissions=[
+            AdminDashboardRecentTransmissionItem(
+                transmission_uuid=transmission.uuid,
+                public_reference=report.public_reference,
+                target_type=transmission.target_type,
+                status=transmission.status,
+                created_at=transmission.created_at,
+                delivered_at=transmission.delivered_at,
+            )
+            for transmission, report in recent_transmissions
         ],
     )
 

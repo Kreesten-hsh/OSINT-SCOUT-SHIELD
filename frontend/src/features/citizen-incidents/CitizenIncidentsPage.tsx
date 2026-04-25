@@ -171,7 +171,7 @@ export default function CitizenIncidentsPage() {
                     <div>
                         <h2 className="section-title text-2xl">Incidents signales</h2>
                         <p className="section-subtitle">
-                            Dossiers citoyens pour revue admin, decisions et generation probatoire.
+                            Dossiers citoyens pour revue admin, suivi et generation des dossiers probatoires.
                         </p>
                     </div>
                     <div className="flex items-center gap-2 text-xs">
@@ -213,8 +213,6 @@ export default function CitizenIncidentsPage() {
                         <option value="">Tous les statuts</option>
                         <option value="NEW">Nouveau</option>
                         <option value="IN_REVIEW">En revision</option>
-                        <option value="CONFIRMED">Confirme</option>
-                        <option value="BLOCKED_SIMULATED">Bloque (simule)</option>
                         <option value="DISMISSED">Classe sans suite</option>
                     </select>
                     <button
@@ -312,7 +310,6 @@ export default function CitizenIncidentsPage() {
                             )}
 
                             {data?.items.map((item: CitizenIncidentListItem) => {
-                                const canGenerate = item.status === 'CONFIRMED' || item.status === 'BLOCKED_SIMULATED';
                                 return (
                                     <tr key={item.alert_uuid} className="interactive-row bg-card/70 hover:bg-secondary/20">
                                         <td className="px-4 py-3 font-mono text-xs">{item.phone_number}</td>
@@ -346,7 +343,7 @@ export default function CitizenIncidentsPage() {
                                                         setGeneratingFor(item.alert_uuid);
                                                         generateReportMutation.mutate({ alertUuid: item.alert_uuid });
                                                     }}
-                                                    disabled={!canGenerate || generateReportMutation.isPending}
+                                                    disabled={generateReportMutation.isPending}
                                                     className="inline-flex min-h-[32px] items-center gap-1 rounded-lg border border-primary/30 bg-primary/12 px-2.5 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/20 disabled:opacity-45"
                                                 >
                                                     {generateReportMutation.isPending && generatingFor === item.alert_uuid ? (
