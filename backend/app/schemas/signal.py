@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field, UUID4
 
 SignalChannel = Literal["MOBILE_APP", "WEB_PORTAL"]
 RiskLevel = Literal["LOW", "MEDIUM", "HIGH"]
+DepartmentSource = Literal["USER_SELECTED", "PHONE_DERIVED", "UNKNOWN"]
 
 
 class VerifySignalRequest(BaseModel):
@@ -11,6 +12,7 @@ class VerifySignalRequest(BaseModel):
     channel: SignalChannel = "WEB_PORTAL"
     url: str | None = Field(default=None, max_length=2048)
     phone: str = Field(min_length=8, max_length=32)
+    department: str | None = Field(default=None, max_length=32)
     # Backward-compatibility field kept for Sprint 1A transition.
     create_incident: bool | None = None
 
@@ -35,6 +37,8 @@ class VerifySignalData(BaseModel):
     recommendations: list[str] = Field(default_factory=list)
     citizen_advice: list[str] = Field(default_factory=list)
     fon_alert: str | None = None
+    resolved_department: str | None = None
+    department_source: DepartmentSource = "UNKNOWN"
 
 
 class VerificationSnapshot(BaseModel):
@@ -50,6 +54,7 @@ class IncidentReportRequest(BaseModel):
     channel: SignalChannel = "WEB_PORTAL"
     url: str | None = Field(default=None, max_length=2048)
     phone: str = Field(min_length=8, max_length=32)
+    department: str | None = Field(default=None, max_length=32)
     verification: VerificationSnapshot | None = None
 
 

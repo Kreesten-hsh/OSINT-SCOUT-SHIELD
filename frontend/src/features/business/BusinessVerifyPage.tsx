@@ -58,10 +58,10 @@ export default function BusinessVerifyPage() {
 
           <div className="flex flex-wrap items-center gap-2">
             <Link
-              to="/pme/alertes"
+              to="/verify"
               className="inline-flex h-10 items-center rounded-xl border border-primary/30 bg-primary/10 px-4 text-sm font-semibold text-primary transition hover:bg-primary/20"
             >
-              Voir les alertes
+              Verifier un message
             </Link>
             <Link
               to="/pme/dossiers"

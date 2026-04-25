@@ -153,6 +153,57 @@ def test_admin_pme_list_authenticated_contract(monkeypatch) -> None:
     assert payload["data"]["pending_count"] == 1
 
 
+def test_admin_pme_create_authenticated_contract(monkeypatch) -> None:
+    client = build_client()
+    business_uuid = uuid.uuid4()
+
+    async def _fake_create_business_as_admin(*_args, **_kwargs):
+        return {
+            "business_uuid": business_uuid,
+            "user_id": 12,
+            "email": "new-pme@example.com",
+            "official_name": "New PME Benin",
+            "validation_status": "ACTIVE",
+            "contact_email": "contact@newpme.bj",
+            "contact_phone": "+22991000000",
+            "keywords_count": 2,
+            "legit_numbers_count": 1,
+            "created_at": "2026-04-25T10:00:00Z",
+            "validated_at": "2026-04-25T10:05:00Z",
+        }
+
+    monkeypatch.setattr("app.api.v1.endpoints.admin_pme.create_business_as_admin", _fake_create_business_as_admin)
+    app.dependency_overrides[get_current_active_principal] = lambda: type(
+        "Principal",
+        (),
+        {"id": 1, "uid": 1, "email": "admin@local.test", "role": "ADMIN", "status": "ACTIVE"},
+    )()
+    try:
+        response = client.post(
+            "/api/v1/admin/pme",
+            headers=auth_headers("ADMIN"),
+            json={
+                "email": "new-pme@example.com",
+                "password": "secret-secret",
+                "official_name": "New PME Benin",
+                "keywords": ["new", "pme"],
+                "legit_numbers": ["+22991000000"],
+                "contact_email": "contact@newpme.bj",
+                "contact_phone": "+22991000000",
+                "activate_immediately": True,
+            },
+        )
+    finally:
+        app.dependency_overrides.pop(get_current_active_principal, None)
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["data"]["business_uuid"] == str(business_uuid)
+    assert payload["data"]["validation_status"] == "ACTIVE"
+    assert payload["data"]["official_name"] == "New PME Benin"
+
+
 def test_admin_pme_approve_authenticated_contract(monkeypatch) -> None:
     client = build_client()
     business_uuid = uuid.uuid4()

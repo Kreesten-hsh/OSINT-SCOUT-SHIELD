@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Activity, Building2, Loader2, RadioTower, RefreshCcw, Siren, ShieldAlert } from 'lucide-react';
+import { Activity, Building2, Loader2, MapPinned, RadioTower, RefreshCcw, Siren, ShieldAlert } from 'lucide-react';
 import {
   Area,
   AreaChart,
@@ -18,11 +18,11 @@ import {
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
 import { Badge } from '@/components/ui/badge';
-import { alertStatusLabel, alertStatusVariant, categoryLabel } from '@/lib/presentation';
-import type { AdminCategoryCount, AdminDashboardData, AlertStatus, TransmissionStatus, TransmissionTargetType } from '@/types';
+import BeninSignalMap from '@/features/live/BeninSignalMap';
+import { categoryLabel } from '@/lib/presentation';
+import type { AdminCategoryCount, AdminDashboardData, MapOverviewData, TransmissionStatus, TransmissionTargetType } from '@/types';
 
 const CATEGORY_COLORS = ['#0f6a2f', '#2e7dff', '#ef4444', '#f59e0b', '#14b8a6'];
-const VISIBLE_STATUSES: AlertStatus[] = ['NEW', 'IN_REVIEW', 'DISMISSED'];
 
 const TRANSMISSION_LABELS: Record<TransmissionStatus, string> = {
   PENDING: 'En attente',
@@ -48,10 +48,10 @@ function ChartSkeleton() {
 }
 
 function categoryFallback(data: AdminDashboardData | undefined): AdminCategoryCount[] {
-  return VISIBLE_STATUSES.map((status) => ({
-    category: status.toLowerCase(),
-    count: data?.reports_by_status?.[status] ?? 0,
-  })).filter((item) => item.count > 0);
+  return [
+    { category: 'mobile_money', count: data?.total_reports ?? 0 },
+    { category: 'fake_agent', count: data?.daily_reports ?? 0 },
+  ].filter((item) => item.count > 0);
 }
 
 function transmissionBadgeVariant(status: TransmissionStatus): 'outline' | 'secondary' | 'warning' | 'destructive' | 'success' {
@@ -67,6 +67,16 @@ export default function AdminDashboardPage() {
     queryKey: ['admin-dashboard'],
     queryFn: async () => {
       const response = await apiClient.get<APIResponse<AdminDashboardData>>('/admin/dashboard');
+      return response.data.data;
+    },
+  });
+
+  const { data: mapOverview } = useQuery({
+    queryKey: ['admin-dashboard-map-preview'],
+    queryFn: async () => {
+      const response = await apiClient.get<APIResponse<MapOverviewData>>('/map/overview', {
+        params: { window: '7d', risk: 'all' },
+      });
       return response.data.data;
     },
   });
@@ -122,10 +132,7 @@ export default function AdminDashboardPage() {
     },
   ];
 
-  const statusCards = VISIBLE_STATUSES.map((status) => ({
-    status,
-    count: data?.reports_by_status?.[status] ?? 0,
-  }));
+  const leadDepartment = mapOverview?.top_departments?.[0] ?? null;
 
   return (
     <div className="space-y-6">
@@ -274,30 +281,42 @@ export default function AdminDashboardPage() {
         <article className="panel p-5 xl:col-span-4">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <h3 className="section-title">Statuts des signalements</h3>
-              <p className="section-subtitle">Charge de traitement visible dans le portail admin.</p>
+              <h3 className="section-title">Carte du Benin</h3>
+              <p className="section-subtitle">Mini vue cliquable vers la carte nationale complete.</p>
             </div>
-            <Link to="/admin/signalements" className="text-xs text-primary hover:underline">
-              Voir tout
+            <Link to="/live" className="text-xs text-primary hover:underline">
+              Ouvrir
             </Link>
           </div>
 
-          <div className="space-y-3">
-            {statusCards.map((item) => (
-              <div key={item.status} className="rounded-2xl border border-border/70 bg-background/50 p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <Badge variant={alertStatusVariant(item.status)}>{alertStatusLabel(item.status)}</Badge>
-                  <span className="text-sm font-semibold">{item.count}</span>
+          <Link to="/live" className="block rounded-3xl border border-border/70 bg-[#07110a] p-3 transition hover:border-primary/35 hover:bg-[#09160d]">
+            <div className="overflow-hidden rounded-2xl border border-emerald-950/70">
+              <BeninSignalMap
+                departments={mapOverview?.departments ?? []}
+                selectedDepartment={leadDepartment?.department ?? null}
+                compact
+                className="h-64 w-full"
+              />
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-emerald-950/70 bg-black/20 p-3">
+                <div className="flex items-center gap-2 text-emerald-300">
+                  <MapPinned className="h-4 w-4" />
+                  <p className="text-xs uppercase tracking-wide">Departement en tete</p>
                 </div>
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-secondary/35">
-                  <div
-                    className="h-full rounded-full bg-primary/80"
-                    style={{ width: `${data?.total_reports ? (item.count / data.total_reports) * 100 : 0}%` }}
-                  />
-                </div>
+                <p className="mt-2 text-lg font-semibold text-slate-100">{leadDepartment?.department ?? 'Aucune donnee'}</p>
+                <p className="mt-1 text-xs text-slate-400">
+                  {leadDepartment ? `${leadDepartment.count} signalement(s)` : 'Activite insuffisante'}
+                </p>
               </div>
-            ))}
-          </div>
+              <div className="rounded-2xl border border-emerald-950/70 bg-black/20 p-3">
+                <p className="text-xs uppercase tracking-wide text-slate-400">Categorie dominante</p>
+                <p className="mt-2 text-lg font-semibold text-slate-100">{categoryLabel(mapOverview?.dominant_category)}</p>
+                <p className="mt-1 text-xs text-slate-400">{mapOverview?.active_departments ?? 0} departement(s) actif(s)</p>
+              </div>
+            </div>
+          </Link>
         </article>
 
         <article className="panel p-5 xl:col-span-8">

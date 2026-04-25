@@ -10,6 +10,7 @@ from sqlalchemy.orm import selectinload
 from app.core.security import get_password_hash
 from app.models import BusinessProfile, FormalReport, ForensicBundle, ImpersonationIncident, User
 from app.schemas.pme import (
+    AdminBusinessCreateRequest,
     AdminBusinessDetailData,
     AdminBusinessListData,
     AdminBusinessListItem,
@@ -148,6 +149,68 @@ async def register_business(db: AsyncSession, request: PmeRegisterRequest) -> Pm
         official_name=profile.official_name,
         validation_status=profile.validation_status,
         created_at=profile.created_at,
+    )
+
+
+async def create_business_as_admin(
+    db: AsyncSession,
+    request: AdminBusinessCreateRequest,
+    *,
+    admin_user_id: int | None = None,
+) -> AdminBusinessListItem:
+    email = request.email.strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Adresse email invalide.")
+
+    existing_user = await db.scalar(select(User).where(User.email == email))
+    if existing_user is not None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Un compte existe deja pour cet email.")
+
+    keywords = _clean_unique_strings(request.keywords)
+    legit_numbers = _clean_legit_numbers(request.legit_numbers)
+    official_name = (request.official_name or "").strip()
+    if not official_name:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Nom officiel obligatoire.")
+
+    status_value = "ACTIVE" if request.activate_immediately else "PENDING_APPROVAL"
+    validated_at = datetime.now(timezone.utc) if request.activate_immediately else None
+
+    user = User(
+        email=email,
+        password_hash=get_password_hash(request.password),
+        role="SME",
+        status=status_value,
+    )
+    db.add(user)
+    await db.flush()
+
+    profile = BusinessProfile(
+        user_id=user.id,
+        official_name=official_name,
+        keywords_json=keywords,
+        legit_numbers_json=legit_numbers,
+        contact_email=_clean_string(request.contact_email),
+        contact_phone=_clean_string(request.contact_phone),
+        validation_status=status_value,
+        validated_by_user_id=admin_user_id if request.activate_immediately else None,
+        validated_at=validated_at,
+    )
+    db.add(profile)
+    await db.commit()
+    await db.refresh(profile)
+
+    return AdminBusinessListItem(
+        business_uuid=profile.uuid,
+        user_id=user.id,
+        email=user.email,
+        official_name=profile.official_name,
+        validation_status=profile.validation_status,
+        contact_email=profile.contact_email,
+        contact_phone=profile.contact_phone,
+        keywords_count=len(profile.keywords_json or []),
+        legit_numbers_count=len(profile.legit_numbers_json or []),
+        created_at=profile.created_at,
+        validated_at=profile.validated_at,
     )
 
 

@@ -1,4 +1,5 @@
 import { Menu, ShieldCheck } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 import { useAuthStore } from '@/store/auth-store';
 
@@ -28,6 +29,12 @@ export function BusinessTopbar({ onMenuToggle }: BusinessTopbarProps) {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <Link
+            to="/verify"
+            className="hidden rounded-lg border border-primary/30 bg-primary/15 px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/25 sm:inline-flex"
+          >
+            Verifier un message
+          </Link>
           <div className="hidden items-center gap-2 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[11px] text-emerald-300 sm:inline-flex">
             <ShieldCheck className="h-3.5 w-3.5" />
             Session PME active

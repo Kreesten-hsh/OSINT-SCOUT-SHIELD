@@ -6,8 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import require_role
 from app.database import get_db
 from app.schemas.pme import AdminBusinessDetailData, AdminBusinessListData, AdminBusinessListItem
+from app.schemas.pme import AdminBusinessCreateRequest
 from app.schemas.response import APIResponse
 from app.services.pme_portal import (
+    create_business_as_admin,
     get_admin_business_detail,
     list_admin_businesses,
     update_business_validation_status,
@@ -15,6 +17,20 @@ from app.services.pme_portal import (
 
 
 router = APIRouter()
+
+
+@router.post("/pme", response_model=APIResponse[AdminBusinessListItem])
+async def create_admin_business(
+    request: AdminBusinessCreateRequest,
+    db: AsyncSession = Depends(get_db),
+    principal=Depends(require_role(["ADMIN"])),
+) -> APIResponse[AdminBusinessListItem]:
+    payload = await create_business_as_admin(
+        db=db,
+        request=request,
+        admin_user_id=int(principal.uid) if principal.uid is not None else None,
+    )
+    return APIResponse(success=True, message="Compte PME cree.", data=payload)
 
 
 @router.get("/pme", response_model=APIResponse[AdminBusinessListData])

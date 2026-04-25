@@ -19,6 +19,10 @@ class PmeRegisterRequest(BaseModel):
     contact_phone: str | None = Field(default=None, max_length=64)
 
 
+class AdminBusinessCreateRequest(PmeRegisterRequest):
+    activate_immediately: bool = True
+
+
 class PmeRegistrationData(BaseModel):
     business_uuid: UUID4
     email: str

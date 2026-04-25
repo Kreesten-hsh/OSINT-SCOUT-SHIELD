@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { Link } from 'react-router-dom';
-import { ArrowRight, CheckCircle2, Loader2, RefreshCcw, Search, ShieldOff, XCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Loader2, Plus, RefreshCcw, Search, ShieldOff, XCircle } from 'lucide-react';
 
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
-import type { AdminBusinessListData, AdminBusinessListItem, BusinessValidationStatus } from '@/types';
+import type { AdminBusinessCreateRequest, AdminBusinessListData, AdminBusinessListItem, BusinessValidationStatus } from '@/types';
 
 const STATUS_OPTIONS: Array<{ label: string; value: '' | BusinessValidationStatus }> = [
   { label: 'Tous les statuts', value: '' },
@@ -25,11 +25,29 @@ function statusVariant(status: BusinessValidationStatus): 'outline' | 'success' 
   return 'outline';
 }
 
+function parseCommaSeparated(value: string): string[] {
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 export default function AdminBusinessesPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'' | BusinessValidationStatus>('');
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    email: '',
+    password: '',
+    official_name: '',
+    keywords: '',
+    legit_numbers: '',
+    contact_email: '',
+    contact_phone: '',
+    activate_immediately: true,
+  });
 
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ['admin-pme', statusFilter, search],
@@ -76,7 +94,60 @@ export default function AdminBusinessesPage() {
     },
   });
 
+  const createMutation = useMutation<APIResponse<AdminBusinessListItem>, AxiosError<{ message?: string }>, AdminBusinessCreateRequest>({
+    mutationFn: async (payload) => {
+      const response = await apiClient.post<APIResponse<AdminBusinessListItem>>('/admin/pme', payload);
+      return response.data;
+    },
+    onSuccess: (payload) => {
+      if (!payload.success) {
+        toast({
+          title: 'Creation impossible',
+          description: payload.message || 'Le compte PME n a pas pu etre cree.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: ['admin-pme'] });
+      setCreateForm({
+        email: '',
+        password: '',
+        official_name: '',
+        keywords: '',
+        legit_numbers: '',
+        contact_email: '',
+        contact_phone: '',
+        activate_immediately: true,
+      });
+      setShowCreateForm(false);
+      toast({
+        title: 'Compte PME cree',
+        description: `${payload.data?.official_name || 'La PME'} est maintenant disponible dans la liste.`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Creation impossible',
+        description: error.response?.data?.message || 'Le compte PME n a pas pu etre cree.',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const items = data?.items ?? [];
+
+  const submitCreateForm = () => {
+    createMutation.mutate({
+      email: createForm.email.trim(),
+      password: createForm.password,
+      official_name: createForm.official_name.trim(),
+      keywords: parseCommaSeparated(createForm.keywords),
+      legit_numbers: parseCommaSeparated(createForm.legit_numbers),
+      contact_email: createForm.contact_email.trim() || null,
+      contact_phone: createForm.contact_phone.trim() || null,
+      activate_immediately: createForm.activate_immediately,
+    });
+  };
 
   return (
     <div className="space-y-5">
@@ -110,6 +181,13 @@ export default function AdminBusinessesPage() {
               ))}
             </select>
             <button
+              onClick={() => setShowCreateForm((prev) => !prev)}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/20"
+            >
+              <Plus className="h-4 w-4" />
+              Ajouter une PME
+            </button>
+            <button
               onClick={() => refetch()}
               className="inline-flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-xs text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
             >
@@ -119,6 +197,107 @@ export default function AdminBusinessesPage() {
           </div>
         </div>
       </section>
+
+      {showCreateForm && (
+        <section className="panel p-5 fade-rise-in-1">
+          <div className="mb-4">
+            <h3 className="section-title">Creation rapide d un compte PME</h3>
+            <p className="section-subtitle">Creation directe par l administrateur, avec activation immediate si souhaite.</p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <label className="space-y-2 text-sm">
+              <span className="text-muted-foreground">Nom officiel</span>
+              <input
+                value={createForm.official_name}
+                onChange={(event) => setCreateForm((prev) => ({ ...prev, official_name: event.target.value }))}
+                className="h-11 w-full rounded-xl border border-input bg-background/70 px-3 outline-none transition focus:ring-2 focus:ring-ring"
+              />
+            </label>
+            <label className="space-y-2 text-sm">
+              <span className="text-muted-foreground">Email du compte</span>
+              <input
+                type="email"
+                value={createForm.email}
+                onChange={(event) => setCreateForm((prev) => ({ ...prev, email: event.target.value }))}
+                className="h-11 w-full rounded-xl border border-input bg-background/70 px-3 outline-none transition focus:ring-2 focus:ring-ring"
+              />
+            </label>
+            <label className="space-y-2 text-sm">
+              <span className="text-muted-foreground">Mot de passe temporaire</span>
+              <input
+                type="password"
+                value={createForm.password}
+                onChange={(event) => setCreateForm((prev) => ({ ...prev, password: event.target.value }))}
+                className="h-11 w-full rounded-xl border border-input bg-background/70 px-3 outline-none transition focus:ring-2 focus:ring-ring"
+              />
+            </label>
+            <label className="space-y-2 text-sm">
+              <span className="text-muted-foreground">Mots-cles</span>
+              <input
+                value={createForm.keywords}
+                onChange={(event) => setCreateForm((prev) => ({ ...prev, keywords: event.target.value }))}
+                placeholder="mtn, moov, benin telecom"
+                className="h-11 w-full rounded-xl border border-input bg-background/70 px-3 outline-none transition focus:ring-2 focus:ring-ring"
+              />
+            </label>
+            <label className="space-y-2 text-sm">
+              <span className="text-muted-foreground">Numeros legitimes</span>
+              <input
+                value={createForm.legit_numbers}
+                onChange={(event) => setCreateForm((prev) => ({ ...prev, legit_numbers: event.target.value }))}
+                placeholder="0169647090, 0198765432"
+                className="h-11 w-full rounded-xl border border-input bg-background/70 px-3 outline-none transition focus:ring-2 focus:ring-ring"
+              />
+            </label>
+            <label className="space-y-2 text-sm">
+              <span className="text-muted-foreground">Email de contact</span>
+              <input
+                type="email"
+                value={createForm.contact_email}
+                onChange={(event) => setCreateForm((prev) => ({ ...prev, contact_email: event.target.value }))}
+                className="h-11 w-full rounded-xl border border-input bg-background/70 px-3 outline-none transition focus:ring-2 focus:ring-ring"
+              />
+            </label>
+            <label className="space-y-2 text-sm">
+              <span className="text-muted-foreground">Telephone de contact</span>
+              <input
+                value={createForm.contact_phone}
+                onChange={(event) => setCreateForm((prev) => ({ ...prev, contact_phone: event.target.value }))}
+                className="h-11 w-full rounded-xl border border-input bg-background/70 px-3 outline-none transition focus:ring-2 focus:ring-ring"
+              />
+            </label>
+            <label className="flex items-center gap-3 rounded-2xl border border-input bg-background/50 px-4 py-3 text-sm">
+              <input
+                type="checkbox"
+                checked={createForm.activate_immediately}
+                onChange={(event) => setCreateForm((prev) => ({ ...prev, activate_immediately: event.target.checked }))}
+                className="h-4 w-4 rounded border-input"
+              />
+              Activer le compte des sa creation
+            </label>
+          </div>
+
+          <div className="mt-5 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={submitCreateForm}
+              disabled={createMutation.isPending}
+              className="inline-flex min-h-[42px] items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/20 disabled:opacity-50"
+            >
+              {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              Creer le compte PME
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowCreateForm(false)}
+              className="inline-flex min-h-[42px] items-center rounded-xl border border-input px-4 py-2 text-sm text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
+            >
+              Fermer
+            </button>
+          </div>
+        </section>
+      )}
 
       <section className="grid gap-4 md:grid-cols-4 fade-rise-in-1">
         <div className="panel p-4">

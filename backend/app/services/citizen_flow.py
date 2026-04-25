@@ -25,6 +25,7 @@ from app.models import (
     SuspectNumber,
 )
 from app.schemas.signal import IncidentReportData, IncidentReportRequest, VerifySignalData, VerifySignalRequest
+from app.services.benin_geography import resolve_department
 from app.services.campaign_detector import create_or_update_campaign, register_signal
 from app.services.detection import score_signal
 from app.services.external_transmissions import schedule_external_transmissions_for_report
@@ -71,6 +72,7 @@ async def verify_citizen_signal(
     phone_hash = derive_phone_hash(normalized_phone)
     suspect_number = await db.scalar(select(SuspectNumber).where(SuspectNumber.phone_hash == phone_hash))
     recurrence_count = int(suspect_number.report_count or 0) if suspect_number else 0
+    resolved_department, department_source = resolve_department(request.department, normalized_phone)
 
     return VerifySignalData(
         risk_score=result["risk_score"],
@@ -84,6 +86,8 @@ async def verify_citizen_signal(
         recommendations=result.get("recommendations", []),
         citizen_advice=result.get("citizen_advice", []),
         fon_alert=result.get("fon_alert"),
+        resolved_department=resolved_department,
+        department_source=department_source,
     )
 
 
@@ -117,9 +121,12 @@ async def create_citizen_report(
         categories_detected = request.verification.categories_detected or categories_detected
 
     suspect_number = await _upsert_suspect_number(db=db, phone=normalized_phone)
+    resolved_department, department_source = resolve_department(request.department, normalized_phone)
     message = CitizenMessage(
         content=request.message.strip(),
         channel=request.channel,
+        department=resolved_department,
+        department_source=department_source,
         submitted_url=(request.url or "").strip() or None,
     )
     db.add(message)

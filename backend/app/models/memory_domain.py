@@ -15,6 +15,8 @@ class CitizenMessage(Base):
     uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True, index=True)
     content = Column(Text, nullable=False)
     channel = Column(String(32), nullable=False, default="WEB_PORTAL", index=True)
+    department = Column(String(32), nullable=True, index=True)
+    department_source = Column(String(24), nullable=False, default="UNKNOWN", index=True)
     submitted_url = Column(String, nullable=True)
     ip_hash_submitter = Column(String(64), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)

@@ -5,6 +5,7 @@ import { AlertTriangle, CheckCircle2, Loader2, ShieldAlert, UploadCloud } from '
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
 import HighlightedMessage from '@/features/verify/HighlightedMessage';
+import { BENIN_DEPARTMENTS } from '@/lib/benin';
 
 type SignalChannel = 'MOBILE_APP' | 'WEB_PORTAL';
 type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
@@ -27,6 +28,8 @@ interface VerifySignalData {
   recommendations?: string[];
   citizen_advice?: string[];
   fon_alert?: string | null;
+  resolved_department?: string | null;
+  department_source?: 'USER_SELECTED' | 'PHONE_DERIVED' | 'UNKNOWN';
 }
 
 interface IncidentReportData {
@@ -66,6 +69,7 @@ export default function VerifySignalPanel() {
   const [message, setMessage] = useState('');
   const [url, setUrl] = useState('');
   const [phone, setPhone] = useState('');
+  const [department, setDepartment] = useState('');
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [screenshots, setScreenshots] = useState<File[]>([]);
   const [channel] = useState<SignalChannel>(() => detectCitizenChannel());
@@ -137,6 +141,7 @@ export default function VerifySignalPanel() {
         url: url.trim() || null,
         phone: phone.trim(),
         channel,
+        department: department || null,
       };
 
       const response = await apiClient.post<APIResponse<VerifySignalData>>('/analysis/verify', payload);
@@ -167,6 +172,9 @@ export default function VerifySignalPanel() {
       formData.append('message', message.trim());
       formData.append('phone', phone.trim());
       formData.append('channel', channel);
+      if (department) {
+        formData.append('department', department);
+      }
       if (url.trim()) {
         formData.append('url', url.trim());
       }
@@ -231,7 +239,7 @@ export default function VerifySignalPanel() {
             />
           </label>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <label className="block text-sm">
               <span className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">URL (optionnel)</span>
               <input
@@ -256,6 +264,21 @@ export default function VerifySignalPanel() {
                 required
               />
               {phoneError && <span className="mt-1 block text-xs text-destructive">{phoneError}</span>}
+            </label>
+            <label className="block text-sm">
+              <span className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">Departement (optionnel)</span>
+              <select
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                className="h-11 w-full rounded-xl border border-input bg-background/70 px-3 text-sm outline-none transition focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Detection automatique</option>
+                {BENIN_DEPARTMENTS.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
 
@@ -314,6 +337,12 @@ export default function VerifySignalPanel() {
               {result.risk_level} - Score {result.risk_score}/100
             </span>
           </div>
+
+          {result.resolved_department && (
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+              Departement retenu: <span className="font-semibold">{result.resolved_department}</span>
+            </div>
+          )}
 
           {(result.risk_level === 'HIGH' || result.risk_level === 'MEDIUM') && (
             <a

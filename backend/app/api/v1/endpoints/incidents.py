@@ -61,6 +61,7 @@ async def report_incident_with_media(
     message: str = Form(...),
     phone: str = Form(...),
     channel: SignalChannel = Form(default="WEB_PORTAL"),
+    department: str | None = Form(default=None),
     url: str | None = Form(default=None),
     verification: str | None = Form(default=None),
     screenshots: list[UploadFile] | None = File(default=None),
@@ -82,6 +83,7 @@ async def report_incident_with_media(
         message=message,
         phone=phone,
         channel=channel,
+        department=department,
         url=url,
         verification=verification_snapshot,
     )

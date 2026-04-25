@@ -26,9 +26,9 @@ depends_on: Union[str, Sequence[str], None] = None
 def _default_business_name(email: str | None) -> str:
     local_part = ((email or "").split("@", 1)[0]).replace(".", " ").replace("_", " ").strip()
     if local_part.lower() == "sme":
-        return "PME Demo Benin"
+        return "PME Benin"
     title = " ".join(part.capitalize() for part in local_part.split() if part)
-    return title or "PME Demo Benin"
+    return title or "PME Benin"
 
 
 def upgrade() -> None:

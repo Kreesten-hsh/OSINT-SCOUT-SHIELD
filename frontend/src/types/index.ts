@@ -235,6 +235,17 @@ export interface AdminBusinessListItem {
     validated_at?: ISOString | null;
 }
 
+export interface AdminBusinessCreateRequest {
+    email: string;
+    password: string;
+    official_name: string;
+    keywords: string[];
+    legit_numbers: string[];
+    contact_email?: string | null;
+    contact_phone?: string | null;
+    activate_immediately: boolean;
+}
+
 export interface AdminBusinessListData {
     items: AdminBusinessListItem[];
     total: number;
@@ -311,6 +322,41 @@ export interface AdminDashboardData {
     top_targeted_businesses: AdminDashboardBusinessTargetItem[];
     top_suspect_numbers: AdminDashboardTopNumberItem[];
     recent_transmissions: AdminDashboardRecentTransmissionItem[];
+}
+
+export type MapWindowFilter = '7d' | '30d';
+export type MapRiskFilter = 'all' | 'high' | 'medium' | 'low';
+
+export interface DepartmentMapPoint {
+    department: string;
+    latitude: number;
+    longitude: number;
+    count: number;
+    high_risk_count: number;
+    dominant_category?: string | null;
+    latest_report_at?: ISOString | null;
+}
+
+export interface MapOverviewTransmissionItem {
+    transmission_uuid: UUID;
+    public_reference: string;
+    department?: string | null;
+    target_type: TransmissionTargetType;
+    status: TransmissionStatus;
+    created_at: ISOString;
+}
+
+export interface MapOverviewData {
+    window: MapWindowFilter;
+    risk: MapRiskFilter;
+    category?: string | null;
+    total_reports: number;
+    high_risk_reports: number;
+    active_departments: number;
+    dominant_category?: string | null;
+    departments: DepartmentMapPoint[];
+    top_departments: DepartmentMapPoint[];
+    recent_transmissions: MapOverviewTransmissionItem[];
 }
 
 export interface AdminBusinessDetailData {
