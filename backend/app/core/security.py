@@ -22,7 +22,8 @@ oauth2_scheme_optional = OAuth2PasswordBearer(
     auto_error=False,
 )
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-ALLOWED_ROLES = {"ADMIN", "ANALYST", "SME"}
+ALLOWED_ROLES = {"ADMIN", "SME"}
+ALLOWED_STATUSES = {"PENDING_APPROVAL", "ACTIVE", "REJECTED", "DISABLED"}
 
 
 @dataclass(frozen=True)
@@ -30,6 +31,7 @@ class AuthenticatedPrincipal:
     id: int
     email: str
     role: str
+    status: str
 
 
 def create_access_token(subject: str, uid: int | None = None, role: str | None = None) -> str:
@@ -56,8 +58,15 @@ def verify_password(password: str, hashed_password: str) -> bool:
 
 
 def normalize_role(role: str | None) -> str:
-    role_value = (role or "ANALYST").upper()
-    return role_value if role_value in ALLOWED_ROLES else "ANALYST"
+    role_value = (role or "").upper().strip()
+    if role_value == "ANALYST":
+        return "ADMIN"
+    return role_value if role_value in ALLOWED_ROLES else "SME"
+
+
+def normalize_status(status: str | None) -> str:
+    status_value = (status or "").upper().strip()
+    return status_value if status_value in ALLOWED_STATUSES else "DISABLED"
 
 
 async def authenticate_user(
@@ -77,6 +86,7 @@ async def authenticate_user(
             id=db_user.id,
             email=db_user.email,
             role=normalize_role(db_user.role),
+            status=normalize_status(getattr(db_user, "status", None)),
         )
 
     if hmac.compare_digest(normalized_username, settings.AUTH_ADMIN_EMAIL.strip().lower()) and hmac.compare_digest(
@@ -86,6 +96,7 @@ async def authenticate_user(
             id=0,
             email=normalized_username,
             role="ADMIN",
+            status="ACTIVE",
         )
 
     return None
@@ -140,6 +151,7 @@ async def get_optional_current_user(
         id=int(token_data.uid),
         email=token_data.sub,
         role=normalize_role(token_data.role),
+        status="ACTIVE",
     )
 
 

@@ -23,11 +23,6 @@ def _default_seed_users() -> tuple[SeedUserSpec, ...]:
             role="ADMIN",
         ),
         SeedUserSpec(
-            email=settings.AUTH_ANALYST_EMAIL.strip().lower(),
-            password=settings.AUTH_ANALYST_PASSWORD,
-            role="ANALYST",
-        ),
-        SeedUserSpec(
             email=settings.AUTH_SME_EMAIL.strip().lower(),
             password=settings.AUTH_SME_PASSWORD,
             role="SME",
@@ -46,6 +41,7 @@ async def ensure_default_auth_users(db: AsyncSession) -> None:
                 email=seed.email,
                 password_hash=get_password_hash(seed.password),
                 role=seed.role,
+                status="ACTIVE",
             )
         )
 

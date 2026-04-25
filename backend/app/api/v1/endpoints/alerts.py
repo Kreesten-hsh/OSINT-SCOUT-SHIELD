@@ -15,6 +15,7 @@ from app.schemas.deletion import AlertDeletionData
 from app.schemas.response import APIResponse
 from app.schemas.token import TokenPayload
 from app.services.cascade_delete import delete_alert_cascade
+from app.services.legacy_memory_bridge import sync_memory_domain_status_from_legacy_alert
 
 
 router = APIRouter()
@@ -149,10 +150,19 @@ async def update_alert(
                 detail=f"analysis_note is required when status is {alert_update.status}",
             )
 
+    status_updated = False
     for field, value in alert_update.model_dump(exclude_unset=True).items():
+        if field == "status":
+            status_updated = True
         setattr(alert, field, value)
 
     db.add(alert)
+    if status_updated:
+        await sync_memory_domain_status_from_legacy_alert(
+            db=db,
+            alert_uuid=alert.uuid,
+            alert_status=alert.status,
+        )
     await db.commit()
 
     refreshed = await db.execute(query)
@@ -169,7 +179,7 @@ async def update_alert(
 async def delete_alert(
     alert_uuid: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    _principal=Depends(require_role(["ANALYST", "ADMIN"])),
+    _principal=Depends(require_role(["ADMIN"])),
 ):
     result = await delete_alert_cascade(
         db=db,

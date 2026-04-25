@@ -47,6 +47,13 @@ async def _authenticate_or_raise(
     principal = await authenticate_user(db, username, password)
     if principal is None:
         raise HTTPException(status_code=400, detail="Identifiants incorrects.")
+    if principal.status != "ACTIVE":
+        status_message = {
+            "PENDING_APPROVAL": "Compte en attente de validation par l'administrateur.",
+            "REJECTED": "Compte refuse. Contactez l'administrateur.",
+            "DISABLED": "Compte desactive. Contactez l'administrateur.",
+        }.get(principal.status, "Compte non actif.")
+        raise HTTPException(status_code=403, detail=status_message)
 
     return principal
 
@@ -70,6 +77,7 @@ async def login(
             id=principal.id,
             email=principal.email,
             role=principal.role,
+            status=principal.status,
         ),
     )
 

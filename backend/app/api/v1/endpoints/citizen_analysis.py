@@ -1,33 +1,23 @@
-import logging
-
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database import get_db
-from fastapi import Depends
 from app.schemas.response import APIResponse
 from app.schemas.signal import VerifySignalData, VerifySignalRequest
 from app.services.citizen_flow import verify_citizen_signal
 
 
 router = APIRouter()
-logger = logging.getLogger(__name__)
 
 
 @router.post("/verify", response_model=APIResponse[VerifySignalData])
-async def verify_signal(
+async def public_verify_signal(
     request: VerifySignalRequest,
     db: AsyncSession = Depends(get_db),
 ):
     result = await verify_citizen_signal(request=request, db=db)
-
-    if request.create_incident is not None:
-        logger.warning(
-            "Deprecated field create_incident received on /signals/verify and ignored",
-            extra={"channel": request.channel},
-        )
-
     return APIResponse(
         success=True,
-        message="Signal analyse avec succes.",
+        message="Message analyse avec succes.",
         data=result,
     )

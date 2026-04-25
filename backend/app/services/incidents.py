@@ -2,6 +2,7 @@ import json
 import logging
 import uuid
 import hashlib
+from datetime import datetime, timezone
 from pathlib import Path
 import re
 
@@ -9,9 +10,10 @@ from fastapi import HTTPException, UploadFile, status
 import redis.asyncio as redis
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
-from app.models import Alert, Evidence
+from app.models import Alert, CitizenMessage, Evidence, EvidenceItem, FormalReport, MessageAnalysis, SuspectNumber
 from app.schemas.citizen_incident import (
     CitizenIncidentAttachment,
     CitizenIncidentDetailData,
@@ -22,6 +24,7 @@ from app.schemas.citizen_incident import (
 )
 from app.schemas.signal import IncidentReportRequest, IncidentReportData
 from app.services.detection import score_signal
+from app.services.phone_privacy import decrypt_phone, derive_phone_hash, mask_phone, normalize_phone
 
 
 logger = logging.getLogger(__name__)
@@ -268,78 +271,112 @@ async def list_citizen_incidents(
     search: str | None = None,
     owner_user_id: int | None = None,
 ) -> CitizenIncidentListData:
-    filters = [Alert.source_type.like("CITIZEN_%")]
+    filters = []
     if owner_user_id is not None:
-        filters.append(Alert.owner_user_id == owner_user_id)
+        filters.append(FormalReport.reporter_user_id == owner_user_id)
     if status_filter:
-        filters.append(Alert.status == status_filter)
-    if search:
-        term = f"%{search.strip()}%"
-        filters.append(
-            or_(
-                Alert.phone_number.ilike(term),
-                Alert.reported_message.ilike(term),
-                Alert.url.ilike(term),
-            )
-        )
+        filters.append(FormalReport.status == status_filter)
+    if search and search.strip():
+        search_value = search.strip()
+        term = f"%{search_value}%"
+        search_filters = [
+            CitizenMessage.content.ilike(term),
+            CitizenMessage.submitted_url.ilike(term),
+        ]
+        try:
+            normalized_phone = normalize_phone(search_value)
+            if PHONE_PATTERN.match(normalized_phone):
+                search_filters.append(SuspectNumber.phone_hash == derive_phone_hash(normalized_phone))
+        except Exception:
+            logger.debug("Unable to normalize search phone for citizen incident list", exc_info=True)
+        filters.append(or_(*search_filters))
 
-    total_stmt = select(func.count(Alert.id)).where(*filters)
+    total_stmt = (
+        select(func.count(FormalReport.id))
+        .select_from(FormalReport)
+        .join(CitizenMessage, FormalReport.message_id == CitizenMessage.id)
+        .join(SuspectNumber, FormalReport.suspect_number_id == SuspectNumber.id)
+        .where(*filters)
+    )
     total = int((await db.execute(total_stmt)).scalar_one() or 0)
 
     stmt = (
-        select(Alert)
+        select(FormalReport)
+        .options(
+            selectinload(FormalReport.message),
+            selectinload(FormalReport.analysis),
+            selectinload(FormalReport.suspect_number),
+            selectinload(FormalReport.evidence_items),
+        )
+        .join(CitizenMessage, FormalReport.message_id == CitizenMessage.id)
+        .join(SuspectNumber, FormalReport.suspect_number_id == SuspectNumber.id)
         .where(*filters)
-        .order_by(Alert.created_at.desc())
+        .order_by(FormalReport.created_at.desc())
         .offset(skip)
         .limit(limit)
     )
-    alerts = (await db.execute(stmt)).scalars().all()
+    reports = (await db.execute(stmt)).scalars().all()
 
-    phone_numbers = sorted({a.phone_number for a in alerts if a.phone_number})
-    phone_report_counts: dict[str, int] = {}
-    if phone_numbers:
-        phone_count_filters = [
-            Alert.source_type.like("CITIZEN_%"),
-            Alert.phone_number.in_(phone_numbers),
-        ]
-        if owner_user_id is not None:
-            phone_count_filters.append(Alert.owner_user_id == owner_user_id)
+    report_counts_by_number: dict[int, int] = {}
+    suspect_number_ids = sorted({report.suspect_number_id for report in reports if report.suspect_number_id is not None})
+    if suspect_number_ids:
         count_stmt = (
-            select(Alert.phone_number, func.count(Alert.id))
-            .where(
-                *phone_count_filters,
+            select(FormalReport.suspect_number_id, func.count(FormalReport.id))
+            .where(FormalReport.suspect_number_id.in_(suspect_number_ids))
+            .group_by(FormalReport.suspect_number_id)
+        )
+        if owner_user_id is not None:
+            count_stmt = count_stmt.where(FormalReport.reporter_user_id == owner_user_id)
+        for suspect_number_id, count in (await db.execute(count_stmt)).all():
+            if suspect_number_id is not None:
+                report_counts_by_number[int(suspect_number_id)] = int(count)
+
+    attachment_count_map: dict[uuid.UUID, int] = {}
+    legacy_alert_uuid_map = {
+        report.legacy_alert_uuid: report
+        for report in reports
+        if report.legacy_alert_uuid is not None
+    }
+    if legacy_alert_uuid_map:
+        alert_rows = (
+            await db.execute(
+                select(Alert.id, Alert.uuid).where(Alert.uuid.in_(list(legacy_alert_uuid_map.keys())))
             )
-            .group_by(Alert.phone_number)
-        )
-        for phone, count in (await db.execute(count_stmt)).all():
-            if phone:
-                phone_report_counts[str(phone)] = int(count)
+        ).all()
+        alert_id_by_uuid = {alert_uuid: int(alert_id) for alert_id, alert_uuid in alert_rows if alert_uuid is not None}
+        if alert_id_by_uuid:
+            attachment_count_stmt = (
+                select(Evidence.alert_id, func.count(Evidence.id))
+                .where(Evidence.alert_id.in_(list(alert_id_by_uuid.values())))
+                .group_by(Evidence.alert_id)
+            )
+            counts_by_alert_id = {int(alert_id): int(count) for alert_id, count in (await db.execute(attachment_count_stmt)).all()}
+            for alert_uuid, alert_id in alert_id_by_uuid.items():
+                attachment_count_map[alert_uuid] = counts_by_alert_id.get(alert_id, 0)
 
-    attachment_count_map: dict[int, int] = {}
-    if alerts:
-        alert_ids = [a.id for a in alerts]
-        attachment_count_stmt = (
-            select(Evidence.alert_id, func.count(Evidence.id))
-            .where(Evidence.alert_id.in_(alert_ids))
-            .group_by(Evidence.alert_id)
+    items = []
+    for report in reports:
+        incident_uuid = report.legacy_alert_uuid or report.uuid
+        suspect_number = report.suspect_number
+        phone_number = "-"
+        if suspect_number is not None:
+            try:
+                phone_number = decrypt_phone(suspect_number.phone_ciphertext)
+            except Exception:
+                logger.warning("Unable to decrypt suspect phone for incident list", extra={"report_uuid": str(report.uuid)})
+        items.append(
+            CitizenIncidentListItem(
+                alert_uuid=incident_uuid,
+                phone_number=phone_number,
+                channel=(report.message.channel if report.message else "WEB_PORTAL"),
+                message_preview=((report.message.content if report.message else "") or "")[:140],
+                risk_score=int(report.analysis.risk_score if report.analysis else 0),
+                status=report.status,
+                created_at=report.created_at,
+                attachments_count=attachment_count_map.get(report.legacy_alert_uuid, 0) if report.legacy_alert_uuid else len(report.evidence_items or []),
+                reports_for_phone=report_counts_by_number.get(int(report.suspect_number_id or 0), 1),
+            )
         )
-        for alert_id, count in (await db.execute(attachment_count_stmt)).all():
-            attachment_count_map[int(alert_id)] = int(count)
-
-    items = [
-        CitizenIncidentListItem(
-            alert_uuid=alert.uuid,
-            phone_number=alert.phone_number or "-",
-            channel=(alert.citizen_channel or "WEB_PORTAL"),
-            message_preview=(alert.reported_message or "")[:140],
-            risk_score=alert.risk_score,
-            status=alert.status,
-            created_at=alert.created_at,
-            attachments_count=attachment_count_map.get(alert.id, 0),
-            reports_for_phone=phone_report_counts.get(alert.phone_number or "", 1),
-        )
-        for alert in alerts
-    ]
 
     return CitizenIncidentListData(items=items, total=total, skip=skip, limit=limit)
 
@@ -348,96 +385,140 @@ async def get_citizen_incident_detail(
     db: AsyncSession,
     incident_id: uuid.UUID,
 ) -> CitizenIncidentDetailData:
-    stmt = select(Alert).where(
-        Alert.uuid == incident_id,
-        Alert.source_type.like("CITIZEN_%"),
+    stmt = (
+        select(FormalReport)
+        .options(
+            selectinload(FormalReport.message),
+            selectinload(FormalReport.analysis),
+            selectinload(FormalReport.suspect_number),
+            selectinload(FormalReport.evidence_items),
+        )
+        .where(
+            or_(
+                FormalReport.legacy_alert_uuid == incident_id,
+                FormalReport.uuid == incident_id,
+            )
+        )
     )
-    alert = (await db.execute(stmt)).scalars().first()
-    if not alert:
+    report = (await db.execute(stmt)).scalars().first()
+    if not report:
         raise HTTPException(status_code=404, detail="Citizen incident not found")
 
-    evidence_stmt = select(Evidence).where(Evidence.alert_id == alert.id).order_by(Evidence.captured_at.desc())
-    evidences = (await db.execute(evidence_stmt)).scalars().all()
+    legacy_alert = None
+    evidences = []
+    if report.legacy_alert_uuid is not None:
+        alert_stmt = (
+            select(Alert)
+            .options(selectinload(Alert.evidences))
+            .where(Alert.uuid == report.legacy_alert_uuid)
+        )
+        legacy_alert = (await db.execute(alert_stmt)).scalars().first()
+        if legacy_alert:
+            evidences = sorted(
+                legacy_alert.evidences or [],
+                key=lambda item: item.captured_at or datetime.min.replace(tzinfo=timezone.utc),
+                reverse=True,
+            )
 
-    phone = alert.phone_number or ""
-    if phone:
-        reports_for_phone_stmt = select(func.count(Alert.id)).where(
-            Alert.source_type.like("CITIZEN_%"),
-            Alert.phone_number == phone,
+    suspect_number = report.suspect_number
+    phone = "-"
+    if suspect_number is not None:
+        try:
+            phone = decrypt_phone(suspect_number.phone_ciphertext)
+        except Exception:
+            logger.warning("Unable to decrypt suspect phone for incident detail", extra={"report_uuid": str(report.uuid)})
+
+    reports_for_phone = 0
+    open_reports_for_phone = 0
+    confirmed_reports_for_phone = 0
+    blocked_reports_for_phone = 0
+    related_reports = []
+    if report.suspect_number_id is not None:
+        reports_for_phone_stmt = select(func.count(FormalReport.id)).where(
+            FormalReport.suspect_number_id == report.suspect_number_id,
         )
         reports_for_phone = int((await db.execute(reports_for_phone_stmt)).scalar_one() or 0)
 
-        open_reports_stmt = select(func.count(Alert.id)).where(
-            Alert.source_type.like("CITIZEN_%"),
-            Alert.phone_number == phone,
-            Alert.status.in_(("NEW", "IN_REVIEW")),
+        open_reports_stmt = select(func.count(FormalReport.id)).where(
+            FormalReport.suspect_number_id == report.suspect_number_id,
+            FormalReport.status.in_(("NEW", "IN_REVIEW")),
         )
         open_reports_for_phone = int((await db.execute(open_reports_stmt)).scalar_one() or 0)
 
-        confirmed_reports_stmt = select(func.count(Alert.id)).where(
-            Alert.source_type.like("CITIZEN_%"),
-            Alert.phone_number == phone,
-            Alert.status == "CONFIRMED",
+        confirmed_reports_stmt = select(func.count(FormalReport.id)).where(
+            FormalReport.suspect_number_id == report.suspect_number_id,
+            FormalReport.status == "CONFIRMED",
         )
         confirmed_reports_for_phone = int((await db.execute(confirmed_reports_stmt)).scalar_one() or 0)
 
-        blocked_reports_stmt = select(func.count(Alert.id)).where(
-            Alert.source_type.like("CITIZEN_%"),
-            Alert.phone_number == phone,
-            Alert.status == "BLOCKED_SIMULATED",
+        blocked_reports_stmt = select(func.count(FormalReport.id)).where(
+            FormalReport.suspect_number_id == report.suspect_number_id,
+            FormalReport.status == "BLOCKED_SIMULATED",
         )
         blocked_reports_for_phone = int((await db.execute(blocked_reports_stmt)).scalar_one() or 0)
 
         related_stmt = (
-            select(Alert)
+            select(FormalReport)
+            .options(selectinload(FormalReport.analysis))
             .where(
-                Alert.source_type.like("CITIZEN_%"),
-                Alert.phone_number == phone,
-                Alert.id != alert.id,
+                FormalReport.suspect_number_id == report.suspect_number_id,
+                FormalReport.id != report.id,
             )
-            .order_by(Alert.created_at.desc())
+            .order_by(FormalReport.created_at.desc())
             .limit(5)
         )
-        related = (await db.execute(related_stmt)).scalars().all()
-    else:
-        reports_for_phone = 0
-        open_reports_for_phone = 0
-        confirmed_reports_for_phone = 0
-        blocked_reports_for_phone = 0
-        related = []
+        related_reports = (await db.execute(related_stmt)).scalars().all()
 
-    attachments = [
-        CitizenIncidentAttachment(
-            evidence_id=evidence.id,
-            file_path=evidence.file_path,
-            file_hash=evidence.file_hash,
-            captured_at=evidence.captured_at,
-            type=evidence.type,
-            preview_endpoint=f"/evidence/view/{evidence.id}",
-        )
-        for evidence in evidences
-    ]
+    attachments = []
+    if evidences:
+        attachments = [
+            CitizenIncidentAttachment(
+                evidence_id=evidence.id,
+                file_path=evidence.file_path,
+                file_hash=evidence.file_hash,
+                captured_at=evidence.captured_at,
+                type=evidence.type,
+                preview_endpoint=f"/evidence/view/{evidence.id}",
+            )
+            for evidence in evidences
+        ]
+    else:
+        attachments = [
+            CitizenIncidentAttachment(
+                evidence_id=evidence_item.id,
+                file_path=evidence_item.file_path,
+                file_hash=evidence_item.file_hash,
+                captured_at=evidence_item.created_at,
+                type=evidence_item.type,
+                preview_endpoint=f"/evidence/items/view/{evidence_item.id}",
+            )
+            for evidence_item in sorted(
+                report.evidence_items or [],
+                key=lambda item: item.created_at or datetime.min.replace(tzinfo=timezone.utc),
+                reverse=True,
+            )
+        ]
 
     related_incidents = [
         RelatedCitizenIncident(
-            alert_uuid=row.uuid,
+            alert_uuid=(row.legacy_alert_uuid or row.uuid),
             status=row.status,
-            risk_score=row.risk_score,
+            risk_score=int(row.analysis.risk_score if row.analysis else 0),
             created_at=row.created_at,
         )
-        for row in related
+        for row in related_reports
     ]
 
     return CitizenIncidentDetailData(
-        alert_uuid=alert.uuid,
+        alert_uuid=(report.legacy_alert_uuid or report.uuid),
         phone_number=phone or "-",
-        channel=(alert.citizen_channel or "WEB_PORTAL"),
-        message=alert.reported_message or "",
-        url=alert.url,
-        risk_score=alert.risk_score,
-        status=alert.status,
-        analysis_note=alert.analysis_note,
-        created_at=alert.created_at,
+        channel=(report.message.channel if report.message else "WEB_PORTAL"),
+        message=report.message.content if report.message else "",
+        url=(report.message.submitted_url if report.message and report.message.submitted_url else "citizen://text-signal"),
+        risk_score=int(report.analysis.risk_score if report.analysis else 0),
+        status=report.status,
+        analysis_note=(legacy_alert.analysis_note if legacy_alert else None),
+        created_at=report.created_at,
         attachments=attachments,
         stats=CitizenIncidentStats(
             reports_for_phone=reports_for_phone,
@@ -449,41 +530,35 @@ async def get_citizen_incident_detail(
     )
 
 
-def _mask_phone(phone_number: str) -> str:
-    digits = re.sub(r"\D", "", phone_number or "")
-    if len(digits) > 10:
-        digits = digits[-10:]
-    if len(digits) < 7:
-        return phone_number or "-"
-    return f"{digits[:3]}****{digits[-3:]}"
-
-
 async def get_top_reported_numbers(
     db: AsyncSession,
     limit: int = 5,
     owner_user_id: int | None = None,
 ) -> list[dict[str, int | str]]:
-    filters = [
-        Alert.source_type.like("CITIZEN_%"),
-        Alert.phone_number.is_not(None),
-        Alert.phone_number != "",
-    ]
-    if owner_user_id is not None:
-        filters.append(Alert.owner_user_id == owner_user_id)
-
     stmt = (
-        select(Alert.phone_number, func.count(Alert.id).label("total"))
-        .where(*filters)
-        .group_by(Alert.phone_number)
-        .order_by(func.count(Alert.id).desc(), Alert.phone_number.asc())
+        select(SuspectNumber.phone_ciphertext, func.count(FormalReport.id).label("total"))
+        .join(FormalReport, FormalReport.suspect_number_id == SuspectNumber.id)
+        .group_by(SuspectNumber.id, SuspectNumber.phone_ciphertext)
+        .order_by(func.count(FormalReport.id).desc(), SuspectNumber.id.asc())
         .limit(limit)
     )
+    if owner_user_id is not None:
+        stmt = stmt.where(FormalReport.reporter_user_id == owner_user_id)
+
     rows = (await db.execute(stmt)).all()
-    return [
-        {
-            "phone": _mask_phone(str(phone)),
-            "count": int(total),
-        }
-        for phone, total in rows
-        if phone
-    ]
+    masked_rows: list[dict[str, int | str]] = []
+    for ciphertext, total in rows:
+        if not ciphertext:
+            continue
+        try:
+            decrypted_phone = decrypt_phone(str(ciphertext))
+        except Exception:
+            logger.warning("Unable to decrypt suspect phone for top-number stats")
+            continue
+        masked_rows.append(
+            {
+                "phone": mask_phone(decrypted_phone),
+                "count": int(total),
+            }
+        )
+    return masked_rows

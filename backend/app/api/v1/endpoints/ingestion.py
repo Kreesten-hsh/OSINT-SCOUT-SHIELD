@@ -26,7 +26,7 @@ from app.schemas.response import APIResponse
 async def manual_ingestion(
     request: IngestionRequest,
     db: AsyncSession = Depends(get_db),
-    _principal=Depends(require_role(["ANALYST", "ADMIN"])),
+    _principal=Depends(require_role(["ADMIN"])),
 ):
     """
     Ingestion manuelle d'une URL ou source.

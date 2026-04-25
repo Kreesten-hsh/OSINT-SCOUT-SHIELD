@@ -8,7 +8,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    PROJECT_NAME: str = "OSINT-SCOUT-SHIELD"
+    PROJECT_NAME: str = "BENIN CYBER SHIELD"
     API_V1_STR: str = "/api/v1"
 
     # Database
@@ -24,12 +24,11 @@ class Settings(BaseSettings):
 
     # Auth
     SECRET_KEY: str = "CHANGE_ME_IN_PRODUCTION"
+    PHONE_ENCRYPTION_SECRET: str | None = None
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     AUTH_ADMIN_EMAIL: str = "admin@osint.com"
     AUTH_ADMIN_PASSWORD: str = "CHANGE_ME_ADMIN_PASSWORD"
-    AUTH_ANALYST_EMAIL: str = "analyst@osint.com"
-    AUTH_ANALYST_PASSWORD: str = "CHANGE_ME_ANALYST_PASSWORD"
     AUTH_SME_EMAIL: str = "sme@osint.com"
     AUTH_SME_PASSWORD: str = "CHANGE_ME_SME_PASSWORD"
 

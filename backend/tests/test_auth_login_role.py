@@ -47,14 +47,14 @@ def test_json_login_returns_user_role(monkeypatch) -> None:
         return None
 
     async def _fake_auth(_db, username: str, _password: str):
-        return AuthenticatedPrincipal(id=7, email=username, role="ANALYST")
+        return AuthenticatedPrincipal(id=7, email=username, role="ADMIN", status="ACTIVE")
 
     monkeypatch.setattr("app.api.v1.endpoints.auth.ensure_default_auth_users", _fake_seed)
     monkeypatch.setattr("app.api.v1.endpoints.auth.authenticate_user", _fake_auth)
 
     response = client.post(
         "/api/v1/auth/login",
-        json={"username": "agent@anssi.bj", "password": "secret"},
+        json={"username": "admin@benincybershield.bj", "password": "secret"},
     )
 
     assert response.status_code == 200
@@ -62,8 +62,9 @@ def test_json_login_returns_user_role(monkeypatch) -> None:
     assert payload["access_token"]
     assert payload["token_type"] == "bearer"
     assert payload["user"]["id"] == 7
-    assert payload["user"]["email"] == "agent@anssi.bj"
-    assert payload["user"]["role"] == "ANALYST"
+    assert payload["user"]["email"] == "admin@benincybershield.bj"
+    assert payload["user"]["role"] == "ADMIN"
+    assert payload["user"]["status"] == "ACTIVE"
 
 
 def test_json_login_invalid_credentials_returns_400(monkeypatch) -> None:
@@ -80,7 +81,7 @@ def test_json_login_invalid_credentials_returns_400(monkeypatch) -> None:
 
     response = client.post(
         "/api/v1/auth/login",
-        json={"username": "agent@anssi.bj", "password": "wrong"},
+        json={"username": "admin@benincybershield.bj", "password": "wrong"},
     )
 
     assert response.status_code == 400
@@ -101,8 +102,29 @@ def test_change_password_requires_authentication() -> None:
     assert response.status_code == 401
 
 
+def test_json_login_pending_account_returns_403(monkeypatch) -> None:
+    client = build_client()
+
+    async def _fake_seed(_db) -> None:
+        return None
+
+    async def _fake_auth(_db, username: str, _password: str):
+        return AuthenticatedPrincipal(id=9, email=username, role="SME", status="PENDING_APPROVAL")
+
+    monkeypatch.setattr("app.api.v1.endpoints.auth.ensure_default_auth_users", _fake_seed)
+    monkeypatch.setattr("app.api.v1.endpoints.auth.authenticate_user", _fake_auth)
+
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"username": "pme@benincybershield.bj", "password": "secret"},
+    )
+
+    assert response.status_code == 403
+    assert "validation" in response.json()["message"].lower()
+
+
 def test_change_password_success(monkeypatch) -> None:
-    fake_user = SimpleNamespace(id=5, email="analyst@osint.com", password_hash="old-hash")
+    fake_user = SimpleNamespace(id=5, email="admin@benincybershield.bj", password_hash="old-hash")
     fake_session = FakeSession(user=fake_user)
     client = build_client(fake_session=fake_session)
 
@@ -110,9 +132,9 @@ def test_change_password_success(monkeypatch) -> None:
     monkeypatch.setattr("app.api.v1.endpoints.auth.get_password_hash", lambda *_args, **_kwargs: "new-hash")
 
     app.dependency_overrides[get_current_token_payload] = lambda: TokenPayload(
-        sub="analyst@osint.com",
+        sub="admin@benincybershield.bj",
         uid=5,
-        role="ANALYST",
+        role="ADMIN",
     )
     try:
         response = client.post(

@@ -25,7 +25,7 @@ export default function LoginPage() {
             const response = await apiClient.post<LoginResponse>('/auth/login', { username: email, password });
             const { access_token, token_type, user } = response.data;
             login({ access_token, token_type }, user);
-            navigate(user.role === 'SME' ? '/business/verify' : '/dashboard');
+            navigate(user.role === 'SME' ? '/pme/dashboard' : '/admin/dashboard');
         } catch (err: unknown) {
             if (axios.isAxiosError(err)) {
                 setError(err.response?.data?.message || err.response?.data?.detail || 'Echec de connexion.');
@@ -47,7 +47,7 @@ export default function LoginPage() {
                         <ShieldCheck className="h-7 w-7" />
                     </div>
                     <h1 className="font-display text-2xl font-bold tracking-tight">BENIN CYBER SHIELD</h1>
-                    <p className="mt-1 text-sm text-muted-foreground">Connexion espace analyste SOC</p>
+                    <p className="mt-1 text-sm text-muted-foreground">Connexion admin ou PME</p>
                 </div>
 
                 {error && (
@@ -67,7 +67,7 @@ export default function LoginPage() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
-                                placeholder="admin@osint.com"
+                                placeholder="admin@benincybershield.bj"
                                 className="h-11 w-full rounded-xl border border-input bg-background/70 pl-9 pr-3 text-sm outline-none ring-offset-background transition focus:ring-2 focus:ring-ring"
                             />
                         </div>
@@ -99,7 +99,7 @@ export default function LoginPage() {
                 </form>
 
                 <p className="mt-5 text-center text-[11px] text-muted-foreground">
-                    Console reservee aux analystes autorises. Activite journalisee.
+                    Acces reserve aux comptes admin et PME valides. Activite journalisee.
                 </p>
             </div>
         </div>

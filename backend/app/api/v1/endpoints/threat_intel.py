@@ -21,7 +21,7 @@ router = APIRouter()
 @router.get("/threat-intel/dashboard")
 async def get_threat_intel_dashboard(
     db: AsyncSession = Depends(get_db),
-    _principal=Depends(require_role(["ANALYST", "ADMIN"])),
+    _principal=Depends(require_role(["ADMIN"])),
 ) -> dict:
     """Return top recurring indicators, category distribution, and active threat count."""
     top_stmt = (
@@ -121,7 +121,7 @@ async def get_map_heatmap(
 async def export_threat_intel(
     format: str = Query(default="json"),
     db: AsyncSession = Depends(get_db),
-    _principal=Depends(require_role(["ANALYST", "ADMIN"])),
+    _principal=Depends(require_role(["ADMIN"])),
 ):
     """Export active threat intelligence in JSON, CSV, or STIX-lite formats."""
     export_format = (format or "json").strip().lower()
@@ -206,7 +206,7 @@ async def export_threat_intel(
 @router.get("/dashboard/intel/summary")
 async def get_campaign_summary(
     db: AsyncSession = Depends(get_db),
-    _principal=Depends(require_role(["ANALYST", "ADMIN"])),
+    _principal=Depends(require_role(["ADMIN"])),
 ) -> dict:
     """Return active coordinated campaign alerts for analyst dashboard banner."""
     stmt = (

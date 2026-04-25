@@ -94,7 +94,7 @@ export default function CitizenIncidentsPage() {
             queryClient.invalidateQueries({ queryKey: ['reports-list'] });
             toast({
                 title: 'Rapport genere',
-                description: 'Le rapport est disponible dans la section Rapports.',
+                description: 'Le dossier est disponible dans la section Dossiers.',
             });
         },
         onError: (err) => {
@@ -130,7 +130,7 @@ export default function CitizenIncidentsPage() {
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             toast({
                 title: 'Signalement supprime',
-                description: 'Incident, preuves et rapports associes supprimes.',
+                description: 'Incident, preuves et dossiers associes supprimes.',
             });
         },
         onError: (err) => {
@@ -171,7 +171,7 @@ export default function CitizenIncidentsPage() {
                     <div>
                         <h2 className="section-title text-2xl">Incidents signales</h2>
                         <p className="section-subtitle">
-                            Dossiers citoyens pour revue SOC, decisions et generation probatoire.
+                            Dossiers citoyens pour revue admin, decisions et generation probatoire.
                         </p>
                     </div>
                     <div className="flex items-center gap-2 text-xs">
@@ -335,7 +335,7 @@ export default function CitizenIncidentsPage() {
                                         <td className="px-4 py-3 text-right">
                                             <div className="flex items-center justify-end gap-2">
                                                 <Link
-                                                    to={`/incidents-signales/${item.alert_uuid}`}
+                                                    to={`/admin/signalements/${item.alert_uuid}`}
                                                     className="inline-flex rounded-lg border border-input bg-background/50 px-2.5 py-1.5 text-xs text-muted-foreground transition hover:border-primary/40 hover:text-primary"
                                                 >
                                                     Detail

@@ -1,7 +1,8 @@
 from typing import Literal, Optional
 from pydantic import BaseModel
 
-UserRole = Literal["ADMIN", "ANALYST", "SME"]
+UserRole = Literal["ADMIN", "SME"]
+UserStatus = Literal["PENDING_APPROVAL", "ACTIVE", "REJECTED", "DISABLED"]
 
 
 class Token(BaseModel):
@@ -13,6 +14,7 @@ class AuthUser(BaseModel):
     id: int
     email: str
     role: UserRole
+    status: UserStatus
 
 
 class LoginResponse(Token):

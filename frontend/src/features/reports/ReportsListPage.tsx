@@ -107,20 +107,14 @@ export default function ReportsListPage({
                     <FileText className="mx-auto mb-3 h-12 w-12 text-muted-foreground/50" />
                     <h2 className="text-lg font-semibold">Aucun rapport genere</h2>
                     <p className="mx-auto mt-2 max-w-lg text-sm text-muted-foreground">
-                        Confirme un incident puis genere un rapport depuis Incidents signales ou Alertes.
+                        Confirme un incident puis genere un dossier depuis les signalements citoyens.
                     </p>
                     <div className="mt-4 flex items-center justify-center gap-3">
                         <button
-                            onClick={() => navigate('/incidents-signales')}
+                            onClick={() => navigate('/admin/signalements')}
                             className="rounded-lg border border-primary/30 bg-primary/15 px-3 py-2 text-sm font-medium text-primary"
                         >
                             Ouvrir Incidents signales
-                        </button>
-                        <button
-                            onClick={() => navigate('/alerts')}
-                            className="rounded-lg border border-input px-3 py-2 text-sm text-muted-foreground hover:bg-secondary/40 hover:text-foreground"
-                        >
-                            Ouvrir Alertes
                         </button>
                     </div>
                 </section>
@@ -219,7 +213,7 @@ export default function ReportsListPage({
                                         </button>
                                         {alertUuid && (
                                             <button
-                                                onClick={() => navigate(`/reports/${alertUuid}`)}
+                                                onClick={() => navigate(`/admin/dossiers/${alertUuid}`)}
                                                 className="inline-flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-xs text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
                                             >
                                                 <FileText className="h-3.5 w-3.5" /> Ouvrir dossier

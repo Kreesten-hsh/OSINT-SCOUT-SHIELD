@@ -35,10 +35,25 @@ class FakeSession:
     async def refresh(self, _obj: Any) -> None:
         return None
 
+    async def scalar(self, _query: Any):
+        return None
+
     async def execute(self, _query: Any):
         class _Result:
+            def scalar(self):
+                return None
+
             def scalar_one(self) -> int:
                 return 0
+
+            def scalars(self):
+                return self
+
+            def all(self) -> list[Any]:
+                return []
+
+            def first(self):
+                return None
 
         return _Result()
 
@@ -59,7 +74,7 @@ def build_client(fake_session: FakeSession, authenticated: bool = False) -> Test
     return TestClient(app)
 
 
-def auth_headers(role: str = "ANALYST") -> dict[str, str]:
+def auth_headers(role: str = "ADMIN") -> dict[str, str]:
     token = create_access_token(
         subject=f"{role.lower()}@local.test",
         uid=1,
@@ -124,7 +139,7 @@ def test_report_valid_without_url_creates_alert_and_not_queued(monkeypatch) -> N
     def _should_not_be_called(*_args, **_kwargs):
         raise AssertionError("Redis should not be called when URL is missing")
 
-    monkeypatch.setattr("app.services.incidents.redis.from_url", _should_not_be_called)
+    monkeypatch.setattr("app.services.citizen_flow.redis.from_url", _should_not_be_called)
 
     response = client.post(
         "/api/v1/incidents/report",
@@ -140,7 +155,7 @@ def test_report_valid_without_url_creates_alert_and_not_queued(monkeypatch) -> N
     assert payload["success"] is True
     assert payload["data"]["status"] == "NEW"
     assert payload["data"]["queued_for_osint"] is False
-    assert len(fake_session.added) == 1
+    assert len(fake_session.added) >= 1
 
 
 def test_report_valid_with_http_url_creates_alert_and_queued(monkeypatch) -> None:
@@ -159,7 +174,7 @@ def test_report_valid_with_http_url_creates_alert_and_queued(monkeypatch) -> Non
 
     fake_redis = FakeRedis()
 
-    monkeypatch.setattr("app.services.incidents.redis.from_url", lambda *_args, **_kwargs: fake_redis)
+    monkeypatch.setattr("app.services.citizen_flow.redis.from_url", lambda *_args, **_kwargs: fake_redis)
 
     response = client.post(
         "/api/v1/incidents/report",
@@ -175,7 +190,7 @@ def test_report_valid_with_http_url_creates_alert_and_queued(monkeypatch) -> Non
     payload = response.json()
     assert payload["success"] is True
     assert payload["data"]["queued_for_osint"] is True
-    assert len(fake_session.added) == 1
+    assert len(fake_session.added) >= 1
     assert len(fake_redis.rpush_calls) == 1
     assert fake_redis.rpush_calls[0][0] == "osint_to_scan"
 
@@ -242,7 +257,7 @@ def test_incident_decision_authenticated_returns_contract(monkeypatch) -> None:
     response = client.patch(
         f"/api/v1/incidents/{incident_id}/decision",
         json={"decision": "CONFIRM", "comment": "ok"},
-        headers=auth_headers("ANALYST"),
+        headers=auth_headers("ADMIN"),
     )
 
     assert response.status_code == 200
@@ -296,7 +311,7 @@ def test_shield_dispatch_authenticated_returns_contract(monkeypatch) -> None:
             "reason": "test",
             "auto_callback": True,
         },
-        headers=auth_headers("ANALYST"),
+        headers=auth_headers("ADMIN"),
     )
 
     assert response.status_code == 200
@@ -422,7 +437,7 @@ def test_report_with_media_accepts_form_without_jwt(monkeypatch) -> None:
             "queued_for_osint": False,
         }
 
-    monkeypatch.setattr("app.api.v1.endpoints.incidents.report_signal_to_incident", _fake_report)
+    monkeypatch.setattr("app.api.v1.endpoints.incidents.create_citizen_report", _fake_report)
 
     response = client.post(
         "/api/v1/incidents/report-with-media",
@@ -470,7 +485,7 @@ def test_citizen_top_numbers_authenticated_contract(monkeypatch) -> None:
 
     response = client.get(
         "/api/v1/incidents/citizen/stats/top-numbers",
-        headers=auth_headers("ANALYST"),
+        headers=auth_headers("ADMIN"),
     )
 
     assert response.status_code == 200
@@ -496,7 +511,7 @@ def test_citizen_incidents_list_authenticated_contract(monkeypatch) -> None:
 
     response = client.get(
         "/api/v1/incidents/citizen",
-        headers=auth_headers("ANALYST"),
+        headers=auth_headers("ADMIN"),
     )
 
     assert response.status_code == 200
@@ -568,7 +583,7 @@ def test_alert_delete_authenticated_returns_contract(monkeypatch) -> None:
 
     monkeypatch.setattr("app.api.v1.endpoints.alerts.delete_alert_cascade", _fake_delete)
 
-    response = client.delete(f"/api/v1/alerts/{alert_id}", headers=auth_headers("ANALYST"))
+    response = client.delete(f"/api/v1/alerts/{alert_id}", headers=auth_headers("ADMIN"))
 
     assert response.status_code == 200
     payload = response.json()
@@ -606,7 +621,7 @@ def test_citizen_incident_delete_authenticated_returns_contract(monkeypatch) -> 
 
     response = client.delete(
         f"/api/v1/incidents/citizen/{incident_id}",
-        headers=auth_headers("ANALYST"),
+        headers=auth_headers("ADMIN"),
     )
 
     assert response.status_code == 200

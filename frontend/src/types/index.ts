@@ -7,12 +7,14 @@ export interface Token {
     token_type: string;
 }
 
-export type UserRole = 'ADMIN' | 'ANALYST' | 'SME';
+export type UserRole = 'ADMIN' | 'SME';
+export type UserStatus = 'PENDING_APPROVAL' | 'ACTIVE' | 'REJECTED' | 'DISABLED';
 
 export interface User {
     id: number;
     email: string;
     role: UserRole;
+    status: UserStatus;
 }
 
 export interface LoginResponse extends Token {

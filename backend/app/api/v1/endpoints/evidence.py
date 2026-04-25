@@ -9,7 +9,7 @@ import os
 from app.core.config import settings
 from app.core.security import require_role
 from app.database import get_db
-from app.models import Evidence
+from app.models import Evidence, EvidenceItem
 from app.schemas.alert import EvidenceResponse
 
 router = APIRouter()
@@ -23,7 +23,7 @@ async def read_evidences(
     db: AsyncSession = Depends(get_db),
     skip: int = 0,
     limit: int = 100,
-    _principal=Depends(require_role(["ANALYST", "ADMIN"])),
+    _principal=Depends(require_role(["ADMIN"])),
 ):
     """
     Récupère la liste globale des preuves (Evidences).
@@ -71,5 +71,29 @@ async def view_evidence_by_id(
         raise HTTPException(status_code=400, detail="Invalid evidence path")
     if not target.exists():
         raise HTTPException(status_code=404, detail="Evidence file not found")
+
+    return FileResponse(target)
+
+
+@router.get("/items/view/{evidence_item_id}")
+async def view_evidence_item_by_id(
+    evidence_item_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = select(EvidenceItem).where(EvidenceItem.id == evidence_item_id)
+    evidence_item = (await db.execute(stmt)).scalars().first()
+    if not evidence_item:
+        raise HTTPException(status_code=404, detail="Evidence item not found")
+
+    relative = str(evidence_item.file_path or "").strip()
+    if not relative:
+        raise HTTPException(status_code=404, detail="Evidence item file path missing")
+
+    base_dir = Path(EVIDENCE_DIR).resolve()
+    target = (base_dir / relative).resolve()
+    if base_dir not in target.parents and target != base_dir:
+        raise HTTPException(status_code=400, detail="Invalid evidence item path")
+    if not target.exists():
+        raise HTTPException(status_code=404, detail="Evidence item file not found")
 
     return FileResponse(target)

@@ -34,6 +34,8 @@ interface IncidentReportData {
   status: 'NEW';
   risk_score_initial: number;
   queued_for_osint: boolean;
+  report_uuid?: string | null;
+  public_reference?: string | null;
 }
 
 const VERIFY_ROTATION_MESSAGES = ['Analyse en cours...', 'Verification du numero...', 'Consultation de la base...'];
@@ -137,7 +139,7 @@ export default function VerifySignalPanel() {
         channel,
       };
 
-      const response = await apiClient.post<APIResponse<VerifySignalData>>('/signals/verify', payload);
+      const response = await apiClient.post<APIResponse<VerifySignalData>>('/analysis/verify', payload);
       setResult(response.data.data ?? null);
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
@@ -184,7 +186,7 @@ export default function VerifySignalPanel() {
         formData.append('screenshots', file);
       }
 
-      const response = await apiClient.post<APIResponse<IncidentReportData>>('/incidents/report-with-media', formData, {
+      const response = await apiClient.post<APIResponse<IncidentReportData>>('/signalements/with-media', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -419,6 +421,11 @@ export default function VerifySignalPanel() {
             <p className="mt-2 text-sm text-muted-foreground">
               Merci. Votre signalement a bien ete pris en compte et sera traite par nos equipes.
             </p>
+            {incident?.public_reference ? (
+              <div className="mt-4 rounded-xl border border-border/70 bg-secondary/20 px-4 py-3 text-sm">
+                Reference publique: <span className="font-mono font-semibold">{incident.public_reference}</span>
+              </div>
+            ) : null}
             <button
               type="button"
               onClick={() => setShowReportSuccess(false)}

@@ -25,13 +25,13 @@ from app.services.incidents import (
     get_citizen_incident_detail,
     get_top_reported_numbers,
     list_citizen_incidents,
-    report_signal_to_incident,
 )
 from app.services.cascade_delete import delete_alert_cascade
 from app.schemas.shield import IncidentDecisionData, IncidentDecisionRequest
 from app.schemas.token import TokenPayload
 from app.services.shield import apply_incident_decision
 from app.schemas.citizen_incident import CitizenTopNumbersData
+from app.services.citizen_flow import create_citizen_report
 
 
 router = APIRouter()
@@ -44,7 +44,7 @@ async def report_incident(
     current_user=Depends(get_optional_current_user),
 ):
     owner_user_id = current_user.id if current_user and current_user.role == "SME" else None
-    incident = await report_signal_to_incident(
+    incident = await create_citizen_report(
         request=request,
         db=db,
         owner_user_id=owner_user_id,
@@ -86,7 +86,7 @@ async def report_incident_with_media(
         verification=verification_snapshot,
     )
     owner_user_id = current_user.id if current_user and current_user.role == "SME" else None
-    incident = await report_signal_to_incident(
+    incident = await create_citizen_report(
         request=request,
         db=db,
         screenshots=screenshots or [],
@@ -104,7 +104,7 @@ async def decide_incident(
     incident_id: uuid.UUID,
     request: IncidentDecisionRequest,
     db: AsyncSession = Depends(get_db),
-    _principal=Depends(require_role(["ANALYST", "ADMIN"])),
+    _principal=Depends(require_role(["ADMIN"])),
 ):
     decision = await apply_incident_decision(incident_id=incident_id, request=request, db=db)
     return APIResponse(
@@ -181,7 +181,7 @@ async def read_citizen_incident(
 async def delete_citizen_incident(
     incident_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    _principal=Depends(require_role(["ANALYST", "ADMIN"])),
+    _principal=Depends(require_role(["ADMIN"])),
 ):
     result = await delete_alert_cascade(
         db=db,

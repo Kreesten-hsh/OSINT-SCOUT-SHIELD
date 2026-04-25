@@ -127,7 +127,7 @@ export default function SettingsPage() {
           </div>
           <div className="rounded-xl border border-border/70 bg-secondary/20 p-3">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">Role</p>
-            <p className="mt-1 text-sm font-semibold">{user?.role || 'ANALYST'}</p>
+            <p className="mt-1 text-sm font-semibold">{user?.role || 'ADMIN'}</p>
           </div>
         </div>
 

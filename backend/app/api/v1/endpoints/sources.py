@@ -116,7 +116,7 @@ async def toggle_source(
 async def delete_source(
     source_id: int,
     db: AsyncSession = Depends(get_db),
-    _principal=Depends(require_role(["ANALYST", "ADMIN"])),
+    _principal=Depends(require_role(["ADMIN"])),
 ):
     """
     Supprime une source.

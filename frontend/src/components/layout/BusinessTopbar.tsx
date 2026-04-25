@@ -22,7 +22,7 @@ export function BusinessTopbar({ onMenuToggle }: BusinessTopbarProps) {
             <Menu className="h-4 w-4" />
           </button>
           <div>
-            <p className="text-xs uppercase tracking-[0.16em] text-primary/90">Business Workspace</p>
+            <p className="text-xs uppercase tracking-[0.16em] text-primary/90">PME Workspace</p>
             <h1 className="font-display text-base font-semibold leading-tight sm:text-lg">Espace PME</h1>
           </div>
         </div>
@@ -44,4 +44,3 @@ export function BusinessTopbar({ onMenuToggle }: BusinessTopbarProps) {
     </header>
   );
 }
-

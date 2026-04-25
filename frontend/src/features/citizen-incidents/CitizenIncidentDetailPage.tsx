@@ -279,7 +279,7 @@ export default function CitizenIncidentDetailPage() {
             queryClient.invalidateQueries({ queryKey: ['reports-list'] });
             toast({
                 title: 'Rapport genere',
-                description: 'Le rapport est maintenant visible dans la section Rapports.',
+                description: 'Le dossier est maintenant visible dans la section Dossiers.',
             });
         },
         onError: (err) => {
@@ -303,7 +303,7 @@ export default function CitizenIncidentDetailPage() {
             queryClient.invalidateQueries({ queryKey: ['reports-list'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             toast({ title: 'Incident supprime', description: 'Le dossier et ses artefacts ont ete supprimes.' });
-            navigate('/incidents-signales');
+            navigate('/admin/signalements');
         },
         onError: (err) => {
             const msg = err.response?.data?.message || err.response?.data?.detail || 'Erreur suppression incident';
@@ -339,7 +339,7 @@ export default function CitizenIncidentDetailPage() {
                 <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-primary/20 blur-3xl" />
                 <div className="relative z-10 space-y-4">
                     <button
-                        onClick={() => navigate('/incidents-signales')}
+                        onClick={() => navigate('/admin/signalements')}
                         className="inline-flex items-center gap-1 rounded-lg border border-border/70 bg-background/50 px-3 py-1.5 text-xs text-muted-foreground transition hover:bg-secondary/30 hover:text-foreground"
                     >
                         <ArrowLeft className="h-3.5 w-3.5" /> Retour incidents signales
@@ -397,10 +397,10 @@ export default function CitizenIncidentDetailPage() {
                         </button>
 
                         <Link
-                            to="/reports"
+                            to="/admin/dossiers"
                             className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-input px-3 py-2 text-sm text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
                         >
-                            Voir Rapports
+                            Voir Dossiers
                         </Link>
                         <button
                             type="button"
@@ -607,7 +607,7 @@ export default function CitizenIncidentDetailPage() {
                         {incident.related_incidents.map((related) => (
                             <Link
                                 key={related.alert_uuid}
-                                to={`/incidents-signales/${related.alert_uuid}`}
+                                to={`/admin/signalements/${related.alert_uuid}`}
                                 className="interactive-row flex items-center justify-between rounded-lg border border-border bg-secondary/15 px-3 py-2 text-xs hover:bg-secondary/30"
                             >
                                 <span className="font-mono">#{related.alert_uuid.slice(0, 8)}</span>

@@ -11,6 +11,7 @@ from sqlalchemy.orm import selectinload
 from app.core.config import settings
 from app.models import Alert, Report
 from app.schemas.deletion import AlertDeletionData
+from app.services.legacy_memory_bridge import delete_linked_memory_domain_reports
 
 
 logger = logging.getLogger(__name__)
@@ -119,6 +120,10 @@ async def delete_alert_cascade(
     deleted_reports_count = len(reports)
     deleted_evidences_count = len(alert.evidences or [])
     deleted_analysis_results_count = 1 if alert.analysis_results is not None else 0
+    memory_domain_summary = await delete_linked_memory_domain_reports(
+        db=db,
+        alert_uuid=alert_uuid,
+    )
 
     for report in reports:
         await db.delete(report)
@@ -143,7 +148,29 @@ async def delete_alert_cascade(
         elif not found:
             missing_files_count += 1
 
+    for relative_path in sorted(memory_domain_summary.artifact_paths):
+        deleted, found = _delete_file_from_candidates(_build_candidates(relative_path, report_file=False))
+        if deleted:
+            deleted_files_count += 1
+        elif not found:
+            missing_files_count += 1
+
     deleted_shield_actions_count = await _delete_shield_dispatches(alert_uuid)
+
+    logger.info(
+        "Deleted linked memory-domain records for alert",
+        extra={
+            "alert_uuid": str(alert_uuid),
+            "memory_reports": memory_domain_summary.deleted_reports_count,
+            "memory_messages": memory_domain_summary.deleted_messages_count,
+            "memory_analyses": memory_domain_summary.deleted_analyses_count,
+            "memory_evidence_items": memory_domain_summary.deleted_evidence_items_count,
+            "memory_impersonation_incidents": memory_domain_summary.deleted_impersonation_incidents_count,
+            "memory_forensic_bundles": memory_domain_summary.deleted_forensic_bundles_count,
+            "memory_external_transmissions": memory_domain_summary.deleted_external_transmissions_count,
+            "memory_suspect_numbers": memory_domain_summary.deleted_suspect_numbers_count,
+        },
+    )
 
     return AlertDeletionData(
         alert_uuid=alert_uuid,
@@ -154,4 +181,3 @@ async def delete_alert_cascade(
         missing_files_count=missing_files_count,
         deleted_shield_actions_count=deleted_shield_actions_count,
     )
-

@@ -21,7 +21,7 @@ router = APIRouter()
 async def dispatch_action(
     request: ShieldDispatchRequest,
     db: AsyncSession = Depends(get_db),
-    _principal=Depends(require_role(["ANALYST", "ADMIN"])),
+    _principal=Depends(require_role(["ADMIN"])),
 ):
     dispatch_result = await dispatch_shield_action(request=request, db=db)
     return APIResponse(

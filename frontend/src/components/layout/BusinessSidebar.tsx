@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { AlertTriangle, FileText, Globe, LogOut, ShieldCheck, X } from 'lucide-react';
+import { AlertTriangle, FileText, FolderKanban, LogOut, ShieldCheck, UserCircle2, X } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -11,10 +11,11 @@ interface BusinessSidebarProps {
 }
 
 const businessNavItems = [
-  { to: '/business/verify', label: 'Vérification', icon: ShieldCheck },
-  { to: '/business/monitoring', label: 'Surveillance', icon: Globe },
-  { to: '/business/alerts', label: 'Mes alertes', icon: AlertTriangle },
-  { to: '/business/reports', label: 'Mes rapports', icon: FileText },
+  { to: '/pme/dashboard', label: 'Tableau de bord', icon: ShieldCheck },
+  { to: '/pme/alertes', label: 'Mes alertes', icon: AlertTriangle },
+  { to: '/pme/signalements', label: 'Signalements lies', icon: FolderKanban },
+  { to: '/pme/dossiers', label: 'Mes dossiers', icon: FileText },
+  { to: '/pme/profil', label: 'Mon profil', icon: UserCircle2 },
 ];
 
 export function BusinessSidebar({ mobileOpen, onClose }: BusinessSidebarProps) {
@@ -47,7 +48,7 @@ export function BusinessSidebar({ mobileOpen, onClose }: BusinessSidebarProps) {
                 BENIN CYBER SHIELD
               </p>
               <div className="mt-0.5 flex items-center gap-2">
-                <p className="text-xs text-muted-foreground">Business Console</p>
+                <p className="text-xs text-muted-foreground">Espace PME</p>
                 <Badge variant="outline" className="h-5 border-primary/30 bg-primary/10 text-[10px] uppercase text-primary">
                   PME
                 </Badge>

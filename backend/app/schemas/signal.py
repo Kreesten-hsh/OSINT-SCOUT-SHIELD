@@ -58,3 +58,5 @@ class IncidentReportData(BaseModel):
     status: Literal["NEW"]
     risk_score_initial: int
     queued_for_osint: bool
+    report_uuid: UUID4 | None = None
+    public_reference: str | None = None

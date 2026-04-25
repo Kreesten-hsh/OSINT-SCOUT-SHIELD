@@ -19,6 +19,7 @@ from app.schemas.shield import (
     ShieldIncidentTimelineData,
     ShieldDispatchRequest,
 )
+from app.services.legacy_memory_bridge import sync_memory_domain_status_from_legacy_alert
 
 
 def _utc_now_iso() -> str:
@@ -64,6 +65,11 @@ async def apply_incident_decision(
     alert.analysis_note = _append_note(alert.analysis_note, base_note)
 
     db.add(alert)
+    await sync_memory_domain_status_from_legacy_alert(
+        db=db,
+        alert_uuid=alert.uuid,
+        alert_status=alert.status,
+    )
     await db.commit()
     await db.refresh(alert)
 
@@ -201,6 +207,11 @@ async def operator_callback_action_status(
 
     alert.analysis_note = _append_note(alert.analysis_note, callback_note)
     db.add(alert)
+    await sync_memory_domain_status_from_legacy_alert(
+        db=db,
+        alert_uuid=alert.uuid,
+        alert_status=alert.status,
+    )
     await db.commit()
     await db.refresh(alert)
 

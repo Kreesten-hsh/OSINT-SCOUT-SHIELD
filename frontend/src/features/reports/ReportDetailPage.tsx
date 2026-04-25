@@ -56,17 +56,15 @@ export default function ReportDetailPage() {
         },
     });
 
-    const existingReport = useMemo(() => {
+    const activeReport = useMemo(() => {
         const items = reports ?? [];
-        return items.find((r) => r.snapshot_json?.data?.alert?.uuid === id) ?? null;
+        return items.find((report) => report.snapshot_json?.data?.alert?.uuid === id) ?? null;
     }, [reports, id]);
-
-    const activeReport = existingReport;
 
     if (isLoadingAlert) {
         return (
             <div className="flex min-h-[60vh] items-center justify-center text-muted-foreground">
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Chargement dossier rapport...
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Chargement du dossier...
             </div>
         );
     }
@@ -74,7 +72,7 @@ export default function ReportDetailPage() {
     if (isAlertError || !alert) {
         return (
             <div className="panel border-destructive/25 bg-destructive/10 p-8 text-center text-destructive">
-                Impossible de charger cet incident pour le rapport.
+                Impossible de charger cet incident pour le dossier.
             </div>
         );
     }
@@ -83,22 +81,22 @@ export default function ReportDetailPage() {
         if (!activeReport?.uuid) {
             return;
         }
-        if (!window.confirm('Supprimer ce rapport définitivement ?')) {
+        if (!window.confirm('Supprimer ce dossier definitivement ?')) {
             return;
         }
         try {
             await apiClient.delete(`/reports/${activeReport.uuid}/delete`);
             await queryClient.invalidateQueries({ queryKey: ['reports-list'] });
             toast({
-                title: 'Rapport supprime',
-                description: 'Le rapport a ete retire avec succes.',
+                title: 'Dossier supprime',
+                description: 'Le dossier a ete retire avec succes.',
             });
-            navigate('/reports');
+            navigate('/admin/dossiers');
         } catch (err) {
             console.error('Suppression echouee', err);
             toast({
                 title: 'Suppression impossible',
-                description: 'Le rapport n a pas pu etre supprime.',
+                description: 'Le dossier n a pas pu etre supprime.',
                 variant: 'destructive',
             });
         }
@@ -110,7 +108,9 @@ export default function ReportDetailPage() {
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div>
                         <p className="text-xs uppercase tracking-[0.22em] text-primary/90">Forensic dossier</p>
-                        <h1 className="font-display text-2xl font-bold tracking-tight md:text-3xl">Rapport incident #{alert.uuid.slice(0, 8)}</h1>
+                        <h1 className="font-display text-2xl font-bold tracking-tight md:text-3xl">
+                            Dossier incident #{alert.uuid.slice(0, 8)}
+                        </h1>
                         <p className="mt-1 text-sm text-muted-foreground break-all">{alert.url}</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -123,15 +123,15 @@ export default function ReportDetailPage() {
             <section className="panel p-5 fade-rise-in-1">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h2 className="section-title text-base">Actions du rapport</h2>
+                        <h2 className="section-title text-base">Actions du dossier</h2>
                         <p className="text-sm text-muted-foreground">Consultation, export et suppression du dossier forensique.</p>
                     </div>
                     <div className="flex items-center gap-2">
                         <Link
-                            to="/reports"
+                            to="/admin/dossiers"
                             className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-input px-3 py-2 text-sm text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
                         >
-                            Voir tous les rapports
+                            Voir tous les dossiers
                         </Link>
                     </div>
                 </div>
@@ -142,7 +142,7 @@ export default function ReportDetailPage() {
                             onClick={handleDelete}
                             className="inline-flex items-center gap-2 rounded-lg border border-red-700 bg-red-900/60 px-4 py-2 text-sm text-red-200 transition-colors hover:bg-red-800"
                         >
-                            🗑️ Supprimer ce rapport
+                            Supprimer ce dossier
                         </button>
                     </div>
                 ) : null}
@@ -154,14 +154,14 @@ export default function ReportDetailPage() {
                 {!activeReport ? (
                     <div className="rounded-xl border border-dashed border-border bg-secondary/20 p-8 text-center">
                         <Shield className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
-                        <p className="text-sm text-muted-foreground">Aucun rapport genere pour cet incident pour le moment.</p>
+                        <p className="text-sm text-muted-foreground">Aucun dossier genere pour cet incident pour le moment.</p>
                     </div>
                 ) : (
                     <div className="space-y-4">
                         <div className="rounded-xl border border-border bg-secondary/20 p-4 text-sm">
                             <div className="grid gap-2 sm:grid-cols-2">
                                 <div>
-                                    <p className="text-xs text-muted-foreground">ID rapport</p>
+                                    <p className="text-xs text-muted-foreground">ID dossier</p>
                                     <p className="font-mono text-xs">{activeReport.uuid}</p>
                                 </div>
                                 <div>
@@ -170,7 +170,7 @@ export default function ReportDetailPage() {
                                 </div>
                                 <div className="sm:col-span-2">
                                     <p className="text-xs text-muted-foreground inline-flex items-center gap-1">
-                                        <Fingerprint className="h-3.5 w-3.5" /> Hash rapport
+                                        <Fingerprint className="h-3.5 w-3.5" /> Hash dossier
                                     </p>
                                     <p className="break-all font-mono text-xs">{activeReport.report_hash}</p>
                                 </div>
@@ -185,7 +185,7 @@ export default function ReportDetailPage() {
                                     } catch {
                                         toast({
                                             title: 'Telechargement impossible',
-                                            description: 'Le PDF du rapport est indisponible.',
+                                            description: 'Le PDF du dossier est indisponible.',
                                             variant: 'destructive',
                                         });
                                     }
@@ -211,7 +211,7 @@ export default function ReportDetailPage() {
                                 }}
                                 className="inline-flex items-center gap-1 rounded bg-indigo-700 px-3 py-1.5 text-sm text-white transition-colors hover:bg-indigo-600"
                             >
-                                ⚖️ Dossier CRIET
+                                Dossier CRIET
                             </button>
                             <button
                                 onClick={async () => {
@@ -220,7 +220,7 @@ export default function ReportDetailPage() {
                                     } catch {
                                         toast({
                                             title: 'Telechargement impossible',
-                                            description: 'Le JSON du rapport est indisponible.',
+                                            description: 'Le JSON du dossier est indisponible.',
                                             variant: 'destructive',
                                         });
                                     }
