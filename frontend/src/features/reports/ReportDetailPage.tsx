@@ -6,6 +6,7 @@ import { CheckCircle2, Download, ExternalLink, Fingerprint, Loader2, Shield } fr
 
 import { apiClient } from '@/api/client';
 import type { Alert } from '@/types';
+import PageHero from '@/components/layout/PageHero';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { alertStatusLabel, alertStatusVariant } from '@/lib/presentation';
@@ -104,21 +105,17 @@ export default function ReportDetailPage() {
 
     return (
         <div className="mx-auto max-w-5xl space-y-5">
-            <section className="panel p-6 fade-rise-in">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                    <div>
-                        <p className="text-xs uppercase tracking-[0.22em] text-primary/90">Forensic dossier</p>
-                        <h1 className="font-display text-2xl font-bold tracking-tight md:text-3xl">
-                            Dossier incident #{alert.uuid.slice(0, 8)}
-                        </h1>
-                        <p className="mt-1 text-sm text-muted-foreground break-all">{alert.url}</p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
+            <PageHero
+                title={`Dossier incident #${alert.uuid.slice(0, 8)}`}
+                subtitle={alert.url}
+                eyebrow={<p className="text-xs uppercase tracking-[0.22em] text-primary/90">Forensic dossier</p>}
+                actions={
+                    <>
                         <Badge variant={riskBadge(alert.risk_score)}>Risque {alert.risk_score}/100</Badge>
                         <Badge variant={alertStatusVariant(alert.status)}>{alertStatusLabel(alert.status)}</Badge>
-                    </div>
-                </div>
-            </section>
+                    </>
+                }
+            />
 
             <section className="panel p-5 fade-rise-in-1">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

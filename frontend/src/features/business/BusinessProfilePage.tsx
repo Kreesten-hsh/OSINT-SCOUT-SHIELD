@@ -5,6 +5,7 @@ import { Loader2, Save } from 'lucide-react';
 
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
+import PageHero from '@/components/layout/PageHero';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import type { PmeProfileData } from '@/types';
@@ -106,15 +107,11 @@ export default function BusinessProfilePage() {
 
   return (
     <div className="space-y-5">
-      <section className="panel p-5 fade-rise-in">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="section-title text-2xl">Profil PME</h2>
-            <p className="section-subtitle">Informations d'identification utilisees pour detecter les usurpations.</p>
-          </div>
-          <Badge variant={validationVariant(data.validation_status)}>{data.validation_status}</Badge>
-        </div>
-      </section>
+      <PageHero
+        title="Profil PME"
+        subtitle="Informations d'identification utilisees pour detecter les usurpations."
+        actions={<Badge variant={validationVariant(data.validation_status)}>{data.validation_status}</Badge>}
+      />
 
       <section className="panel p-5 fade-rise-in-1">
         <div className="mb-5 grid gap-4 lg:grid-cols-3">

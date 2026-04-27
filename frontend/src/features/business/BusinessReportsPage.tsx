@@ -3,6 +3,7 @@ import { Download, FileText, Loader2, RefreshCcw } from 'lucide-react';
 
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
+import PageHero from '@/components/layout/PageHero';
 import { useToast } from '@/components/ui/use-toast';
 import { downloadApiFile } from '@/lib/download';
 import { riskTone } from '@/lib/presentation';
@@ -22,23 +23,16 @@ export default function BusinessReportsPage() {
 
   return (
     <div className="space-y-5">
-      <section className="panel p-5 fade-rise-in">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="section-title text-2xl">Dossiers probatoires</h2>
-            <p className="section-subtitle">
-              Bundles forensiques relies aux signalements qui usurpent votre identite.
-            </p>
-          </div>
-          <button
-            onClick={() => refetch()}
-            className="inline-flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-xs text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
-          >
-            <RefreshCcw className={`h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} />
+      <PageHero
+        title="Dossiers probatoires"
+        subtitle="Bundles forensiques relies aux signalements qui usurpent votre identite."
+        actions={
+          <button onClick={() => refetch()} className="hero-action-secondary">
+            <RefreshCcw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
             Actualiser
           </button>
-        </div>
-      </section>
+        }
+      />
 
       {isLoading && (
         <section className="panel flex min-h-56 items-center justify-center text-muted-foreground fade-rise-in-1">

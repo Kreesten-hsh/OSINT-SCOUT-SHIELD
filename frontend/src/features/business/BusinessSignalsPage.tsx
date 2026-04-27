@@ -3,6 +3,7 @@ import { Loader2, RefreshCcw } from 'lucide-react';
 
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
+import PageHero from '@/components/layout/PageHero';
 import { Badge } from '@/components/ui/badge';
 import { alertStatusLabel, alertStatusVariant, channelLabel } from '@/lib/presentation';
 import type { PmeSignalementListData } from '@/types';
@@ -20,43 +21,36 @@ export default function BusinessSignalsPage() {
 
   return (
     <div className="space-y-5">
-      <section className="panel p-5 fade-rise-in">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="section-title text-2xl">Signalements lies</h2>
-            <p className="section-subtitle">
-              Dossiers citoyens relies a votre identite, avec reference publique et pieces disponibles.
-            </p>
-          </div>
-          <button
-            onClick={() => refetch()}
-            className="inline-flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-xs text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
-          >
-            <RefreshCcw className={`h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} />
+      <PageHero
+        title="Signalements lies"
+        subtitle="Dossiers citoyens relies a votre identite, avec reference publique et pieces disponibles."
+        actions={
+          <button onClick={() => refetch()} className="hero-action-secondary">
+            <RefreshCcw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
             Actualiser
           </button>
-        </div>
-      </section>
+        }
+      />
 
-      <section className="panel overflow-hidden fade-rise-in-1">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[860px] text-left text-sm">
-            <thead className="bg-secondary/35 text-xs uppercase tracking-wide text-muted-foreground">
+      <section className="table-shell fade-rise-in-1">
+        <div className="table-scroll">
+          <table className="table-base min-w-[860px]">
+            <thead>
               <tr>
-                <th className="px-4 py-3">Reference</th>
-                <th className="px-4 py-3">Canal</th>
-                <th className="px-4 py-3">Message</th>
-                <th className="px-4 py-3">Numero</th>
-                <th className="px-4 py-3">Risque</th>
-                <th className="px-4 py-3">Statut</th>
-                <th className="px-4 py-3">Pieces</th>
-                <th className="px-4 py-3">Date</th>
+                <th>Reference</th>
+                <th>Canal</th>
+                <th>Message</th>
+                <th>Numero</th>
+                <th>Risque</th>
+                <th>Statut</th>
+                <th>Pieces</th>
+                <th>Date</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border/70">
+            <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={8} className="table-empty">
                     <Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin" />
                     Chargement des signalements...
                   </td>
@@ -65,7 +59,7 @@ export default function BusinessSignalsPage() {
 
               {isError && !isLoading && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-destructive">
+                  <td colSpan={8} className="table-empty text-destructive">
                     Impossible de charger les signalements lies.
                   </td>
                 </tr>
@@ -73,28 +67,28 @@ export default function BusinessSignalsPage() {
 
               {!isLoading && !isError && items.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={8} className="table-empty">
                     Aucun signalement lie a votre PME pour le moment.
                   </td>
                 </tr>
               )}
 
               {items.map((item) => (
-                <tr key={item.report_uuid} className="bg-card/70">
-                  <td className="px-4 py-3 font-mono text-xs text-primary">{item.public_reference}</td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">{channelLabel(item.channel)}</td>
-                  <td className="max-w-[340px] px-4 py-3">
+                <tr key={item.report_uuid} className="table-row">
+                  <td className="font-mono text-xs text-primary">{item.public_reference}</td>
+                  <td className="text-xs text-muted-foreground">{channelLabel(item.channel)}</td>
+                  <td className="max-w-[340px]">
                     <p className="line-clamp-2">{item.message_preview}</p>
                   </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">{item.suspect_phone_masked}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{item.risk_score}/100</td>
-                  <td className="px-4 py-3">
+                  <td className="text-xs text-muted-foreground">{item.suspect_phone_masked}</td>
+                  <td className="font-mono text-xs text-muted-foreground">{item.risk_score}/100</td>
+                  <td>
                     <Badge variant={alertStatusVariant(item.report_status)}>{alertStatusLabel(item.report_status)}</Badge>
                   </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                  <td className="text-xs text-muted-foreground">
                     {item.attachments_count} capture(s) / {item.bundles_count} dossier(s)
                   </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                  <td className="text-xs text-muted-foreground">
                     {new Date(item.created_at).toLocaleString()}
                   </td>
                 </tr>

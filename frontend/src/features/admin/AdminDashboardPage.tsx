@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Activity, Building2, Loader2, MapPinned, RadioTower, RefreshCcw, Siren, ShieldAlert } from 'lucide-react';
+import { Activity, Building2, Loader2, RadioTower, RefreshCcw, Siren, ShieldAlert } from 'lucide-react';
 import {
   Area,
   AreaChart,
@@ -17,6 +17,7 @@ import {
 
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
+import PageHero from '@/components/layout/PageHero';
 import { Badge } from '@/components/ui/badge';
 import BeninSignalMap from '@/features/live/BeninSignalMap';
 import { categoryLabel } from '@/lib/presentation';
@@ -132,53 +133,40 @@ export default function AdminDashboardPage() {
     },
   ];
 
-  const leadDepartment = mapOverview?.top_departments?.[0] ?? null;
-
   return (
     <div className="space-y-6">
-      <section className="panel p-6 fade-rise-in">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">Tableau de bord national</h2>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Vue consolidee des signalements citoyens, des transmissions et de l activite PME.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex h-10 items-center rounded-xl border border-input bg-background/70 px-4 text-sm text-muted-foreground">
+      <PageHero
+        title="Tableau de bord national"
+        subtitle="Vue consolidee des signalements citoyens, des transmissions et de l activite PME."
+        actions={
+          <>
+            <span className="inline-flex min-h-[40px] items-center rounded-xl border border-input bg-background/70 px-4 text-sm text-muted-foreground">
               7 derniers jours
             </span>
-            <Link
-              to="/admin/transmissions"
-              className="inline-flex h-10 items-center rounded-xl border border-primary/30 bg-primary/10 px-4 text-sm font-semibold text-primary transition hover:bg-primary/20"
-            >
+            <Link to="/admin/transmissions" className="hero-action-primary">
               Voir les transmissions
             </Link>
-            <button
-              onClick={() => refetch()}
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-input px-4 text-sm text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
-            >
+            <button onClick={() => refetch()} className="hero-action-secondary">
               {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
               Actualiser
             </button>
-          </div>
-        </div>
-      </section>
+          </>
+        }
+      />
 
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5 fade-rise-in-1">
         {summaryCards.map((card) => (
-          <article key={card.label} className="panel p-5">
+          <article key={card.label} className="metric-card">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{card.label}</p>
-                <p className="mt-4 text-4xl font-semibold">{card.value}</p>
+                <p className="metric-card-label">{card.label}</p>
+                <p className="metric-card-value">{card.value}</p>
               </div>
               <div className="rounded-2xl border border-border/80 bg-background/60 p-3 text-primary">
                 <card.icon className="h-5 w-5" />
               </div>
             </div>
-            <p className="mt-3 text-sm text-muted-foreground">{card.helper}</p>
+            <p className="metric-card-helper">{card.helper}</p>
           </article>
         ))}
       </section>
@@ -278,43 +266,24 @@ export default function AdminDashboardPage() {
       </section>
 
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-12 fade-rise-in-3">
-        <article className="panel p-5 xl:col-span-4">
-          <div className="mb-4 flex items-center justify-between gap-3">
+        <article className="panel overflow-hidden p-0 xl:col-span-4">
+          <div className="flex items-center justify-between gap-3 px-5 pb-4 pt-5">
             <div>
               <h3 className="section-title">Carte du Benin</h3>
-              <p className="section-subtitle">Mini vue cliquable vers la carte nationale complete.</p>
             </div>
             <Link to="/live" className="text-xs text-primary hover:underline">
               Ouvrir
             </Link>
           </div>
 
-          <Link to="/live" className="block rounded-3xl border border-border/70 bg-[#07110a] p-3 transition hover:border-primary/35 hover:bg-[#09160d]">
-            <div className="overflow-hidden rounded-2xl border border-emerald-950/70">
+          <Link to="/live" className="block border-t border-border/70 bg-[#07110a] p-3 transition hover:bg-[#09160d]">
+            <div className="overflow-hidden rounded-[1.35rem] border border-emerald-950/70">
               <BeninSignalMap
                 departments={mapOverview?.departments ?? []}
-                selectedDepartment={leadDepartment?.department ?? null}
+                selectedDepartment={null}
                 compact
-                className="h-64 w-full"
+                className="h-[310px] w-full"
               />
-            </div>
-
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-emerald-950/70 bg-black/20 p-3">
-                <div className="flex items-center gap-2 text-emerald-300">
-                  <MapPinned className="h-4 w-4" />
-                  <p className="text-xs uppercase tracking-wide">Departement en tete</p>
-                </div>
-                <p className="mt-2 text-lg font-semibold text-slate-100">{leadDepartment?.department ?? 'Aucune donnee'}</p>
-                <p className="mt-1 text-xs text-slate-400">
-                  {leadDepartment ? `${leadDepartment.count} signalement(s)` : 'Activite insuffisante'}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-emerald-950/70 bg-black/20 p-3">
-                <p className="text-xs uppercase tracking-wide text-slate-400">Categorie dominante</p>
-                <p className="mt-2 text-lg font-semibold text-slate-100">{categoryLabel(mapOverview?.dominant_category)}</p>
-                <p className="mt-1 text-xs text-slate-400">{mapOverview?.active_departments ?? 0} departement(s) actif(s)</p>
-              </div>
             </div>
           </Link>
         </article>
@@ -328,34 +297,34 @@ export default function AdminDashboardPage() {
             <Badge variant="outline">{data?.transmission_success_rate ?? 0}% de succes</Badge>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[620px] text-left text-sm">
-              <thead className="bg-secondary/35 text-xs uppercase tracking-wide text-muted-foreground">
+          <div className="table-scroll">
+            <table className="table-base min-w-[620px]">
+              <thead>
                 <tr>
-                  <th className="px-4 py-3">Reference</th>
-                  <th className="px-4 py-3">Destinataire</th>
-                  <th className="px-4 py-3">Statut</th>
-                  <th className="px-4 py-3">Date</th>
+                  <th>Reference</th>
+                  <th>Destinataire</th>
+                  <th>Statut</th>
+                  <th>Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border/70">
+              <tbody>
                 {(data?.recent_transmissions ?? []).length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+                    <td colSpan={4} className="table-empty">
                       Aucune transmission recente.
                     </td>
                   </tr>
                 ) : (
                   data?.recent_transmissions.map((transmission) => (
-                    <tr key={transmission.transmission_uuid} className="bg-card/70">
-                      <td className="px-4 py-3 font-mono text-xs text-primary">{transmission.public_reference}</td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">{TARGET_LABELS[transmission.target_type]}</td>
-                      <td className="px-4 py-3">
+                    <tr key={transmission.transmission_uuid} className="table-row">
+                      <td className="font-mono text-xs text-primary">{transmission.public_reference}</td>
+                      <td className="text-sm text-muted-foreground">{TARGET_LABELS[transmission.target_type]}</td>
+                      <td>
                         <Badge variant={transmissionBadgeVariant(transmission.status)}>
                           {TRANSMISSION_LABELS[transmission.status]}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                      <td className="text-xs text-muted-foreground">
                         {new Date(transmission.created_at).toLocaleString()}
                       </td>
                     </tr>

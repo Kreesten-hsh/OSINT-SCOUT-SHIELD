@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Filter, Loader2, MapPinned, RadioTower, ShieldAlert } from 'lucide-react';
+import { Filter, Loader2, MapPinned, RadioTower, RefreshCcw } from 'lucide-react';
 
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
+import PageHero from '@/components/layout/PageHero';
 import { Badge } from '@/components/ui/badge';
 import { categoryLabel } from '@/lib/presentation';
 import type { DepartmentMapPoint, MapOverviewData, MapRiskFilter, MapWindowFilter } from '@/types';
@@ -48,21 +49,27 @@ export default function LivePage() {
 
   return (
     <div className="min-h-screen bg-[#07110a] text-slate-100">
-      <section className="border-b border-emerald-950/80 bg-[radial-gradient(circle_at_top_right,_rgba(22,163,74,0.18),_transparent_38%),linear-gradient(180deg,#07110a_0%,#08150d_100%)] px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-[1600px] space-y-5">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
+      <div className="px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[1600px]">
+          <PageHero
+            tone="dark"
+            title="Carte vivante des signalements"
+            subtitle="Vue territoriale des signalements citoyens, des foyers de risque et des transmissions associees."
+            eyebrow={
+              <>
                 <Badge variant="secondary">Veille nationale</Badge>
                 <Badge variant="outline">Carte Benin</Badge>
-              </div>
-              <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Carte vivante des signalements</h1>
-              <p className="mt-2 max-w-3xl text-sm text-slate-300">
-                Vue territoriale des signalements citoyens, des foyers de risque et des transmissions associees.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:min-w-[540px]">
+              </>
+            }
+            actions={
+              <button onClick={() => refetch()} className="hero-action-secondary">
+                {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
+                Actualiser
+              </button>
+            }
+            toolbarClassName="space-y-4"
+          >
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <div className="rounded-2xl border border-emerald-900/70 bg-black/25 p-4">
                 <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Signalements</p>
                 <p className="mt-3 text-3xl font-semibold">{data?.total_reports ?? 0}</p>
@@ -80,47 +87,40 @@ export default function LivePage() {
                 <p className="mt-3 text-lg font-semibold">{categoryLabel(data?.dominant_category)}</p>
               </div>
             </div>
-          </div>
 
-          <div className="flex flex-col gap-3 rounded-2xl border border-emerald-950/80 bg-black/20 p-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-center gap-2 text-sm text-slate-300">
-              <Filter className="h-4 w-4 text-emerald-300" />
-              Filtres de lecture territoriale
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-center gap-2 text-sm text-slate-300">
+                <Filter className="h-4 w-4 text-emerald-300" />
+                Filtres de lecture territoriale
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <select
+                  value={windowFilter}
+                  onChange={(event) => setWindowFilter(event.target.value as MapWindowFilter)}
+                  className="h-11 rounded-xl border border-emerald-900/80 bg-[#07110a] px-4 text-sm text-slate-100 outline-none transition focus:ring-2 focus:ring-emerald-600"
+                >
+                  {WINDOW_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={riskFilter}
+                  onChange={(event) => setRiskFilter(event.target.value as MapRiskFilter)}
+                  className="h-11 rounded-xl border border-emerald-900/80 bg-[#07110a] px-4 text-sm text-slate-100 outline-none transition focus:ring-2 focus:ring-emerald-600"
+                >
+                  {RISK_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <select
-                value={windowFilter}
-                onChange={(event) => setWindowFilter(event.target.value as MapWindowFilter)}
-                className="h-11 rounded-xl border border-emerald-900/80 bg-[#07110a] px-4 text-sm text-slate-100 outline-none transition focus:ring-2 focus:ring-emerald-600"
-              >
-                {WINDOW_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={riskFilter}
-                onChange={(event) => setRiskFilter(event.target.value as MapRiskFilter)}
-                className="h-11 rounded-xl border border-emerald-900/80 bg-[#07110a] px-4 text-sm text-slate-100 outline-none transition focus:ring-2 focus:ring-emerald-600"
-              >
-                {RISK_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <button
-                onClick={() => refetch()}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-emerald-900/80 bg-black/25 px-4 text-sm text-slate-200 transition hover:bg-black/35"
-              >
-                {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldAlert className="h-4 w-4" />}
-                Actualiser
-              </button>
-            </div>
-          </div>
+          </PageHero>
         </div>
-      </section>
+      </div>
 
       <main className="mx-auto max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8">
         {isLoading ? (

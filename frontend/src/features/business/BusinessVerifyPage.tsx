@@ -5,6 +5,7 @@ import { AlertTriangle, Loader2, RefreshCcw, ShieldAlert } from 'lucide-react';
 
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
+import PageHero from '@/components/layout/PageHero';
 import { Badge } from '@/components/ui/badge';
 import type { PmeDashboardData } from '@/types';
 import { alertStatusLabel, alertStatusVariant, channelLabel } from '@/lib/presentation';
@@ -41,44 +42,32 @@ export default function BusinessVerifyPage() {
 
   return (
     <div className="space-y-5">
-      <section className="panel p-6 fade-rise-in">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant={statusVariant(data?.validation_status ?? 'PENDING_APPROVAL')}>
-                {data?.validation_status ?? 'PENDING_APPROVAL'}
-              </Badge>
-              <Badge variant="secondary">Portail PME</Badge>
-            </div>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight">{data?.official_name || 'Tableau de bord PME'}</h2>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Vue simple de vos incidents d usurpation, des signalements relies et des dossiers probatoires disponibles.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              to="/verify"
-              className="inline-flex h-10 items-center rounded-xl border border-primary/30 bg-primary/10 px-4 text-sm font-semibold text-primary transition hover:bg-primary/20"
-            >
+      <PageHero
+        title={data?.official_name || 'Tableau de bord PME'}
+        subtitle="Vue simple de vos incidents d usurpation, des signalements relies et des dossiers probatoires disponibles."
+        eyebrow={
+          <>
+            <Badge variant={statusVariant(data?.validation_status ?? 'PENDING_APPROVAL')}>
+              {data?.validation_status ?? 'PENDING_APPROVAL'}
+            </Badge>
+            <Badge variant="secondary">Portail PME</Badge>
+          </>
+        }
+        actions={
+          <>
+            <Link to="/verify" className="hero-action-primary">
               Verifier un message
             </Link>
-            <Link
-              to="/pme/dossiers"
-              className="inline-flex h-10 items-center rounded-xl border border-input px-4 text-sm text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
-            >
+            <Link to="/pme/dossiers" className="hero-action-secondary">
               Ouvrir les dossiers
             </Link>
-            <button
-              onClick={() => refetch()}
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-input px-4 text-sm text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
-            >
+            <button onClick={() => refetch()} className="hero-action-secondary">
               {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
               Actualiser
             </button>
-          </div>
-        </div>
-      </section>
+          </>
+        }
+      />
 
       {isLoading && (
         <section className="panel flex min-h-56 items-center justify-center text-muted-foreground fade-rise-in-1">
@@ -98,25 +87,25 @@ export default function BusinessVerifyPage() {
       {!isLoading && !isError && data && (
         <>
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 fade-rise-in-1">
-            <article className="panel p-5">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Incidents</p>
-              <p className="mt-4 text-4xl font-semibold">{data.total_incidents}</p>
-              <p className="mt-2 text-sm text-muted-foreground">Usurpations detectees</p>
+            <article className="metric-card">
+              <p className="metric-card-label">Incidents</p>
+              <p className="metric-card-value">{data.total_incidents}</p>
+              <p className="metric-card-helper">Usurpations detectees</p>
             </article>
-            <article className="panel p-5">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Nouveaux cas</p>
-              <p className="mt-4 text-4xl font-semibold">{data.new_incidents}</p>
-              <p className="mt-2 text-sm text-muted-foreground">A traiter rapidement</p>
+            <article className="metric-card">
+              <p className="metric-card-label">Nouveaux cas</p>
+              <p className="metric-card-value">{data.new_incidents}</p>
+              <p className="metric-card-helper">A traiter rapidement</p>
             </article>
-            <article className="panel p-5">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Signalements relies</p>
-              <p className="mt-4 text-4xl font-semibold">{data.linked_reports}</p>
-              <p className="mt-2 text-sm text-muted-foreground">Messages relies a votre marque</p>
+            <article className="metric-card">
+              <p className="metric-card-label">Signalements relies</p>
+              <p className="metric-card-value">{data.linked_reports}</p>
+              <p className="metric-card-helper">Messages relies a votre marque</p>
             </article>
-            <article className="panel p-5">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Dossiers prets</p>
-              <p className="mt-4 text-4xl font-semibold">{data.bundles_ready}</p>
-              <p className="mt-2 text-sm text-muted-foreground">Preuves exportables</p>
+            <article className="metric-card">
+              <p className="metric-card-label">Dossiers prets</p>
+              <p className="metric-card-value">{data.bundles_ready}</p>
+              <p className="metric-card-helper">Preuves exportables</p>
             </article>
           </section>
 
@@ -179,32 +168,32 @@ export default function BusinessVerifyPage() {
                   Aucune alerte d usurpation n a encore ete detectee pour votre PME.
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[680px] text-left text-sm">
-                    <thead className="bg-secondary/35 text-xs uppercase tracking-wide text-muted-foreground">
+                <div className="table-scroll">
+                  <table className="table-base min-w-[680px]">
+                    <thead>
                       <tr>
-                        <th className="px-4 py-3">Reference</th>
-                        <th className="px-4 py-3">Canal</th>
-                        <th className="px-4 py-3">Message</th>
-                        <th className="px-4 py-3">Risque</th>
-                        <th className="px-4 py-3">Statut</th>
+                        <th>Reference</th>
+                        <th>Canal</th>
+                        <th>Message</th>
+                        <th>Risque</th>
+                        <th>Statut</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-border/70">
+                    <tbody>
                       {data.recent_incidents.map((item) => (
-                        <tr key={item.incident_uuid} className="bg-card/70">
-                          <td className="px-4 py-3 font-mono text-xs text-primary">{item.public_reference}</td>
-                          <td className="px-4 py-3 text-xs text-muted-foreground">{channelLabel(item.channel)}</td>
-                          <td className="max-w-[320px] px-4 py-3">
+                        <tr key={item.incident_uuid} className="table-row">
+                          <td className="font-mono text-xs text-primary">{item.public_reference}</td>
+                          <td className="text-xs text-muted-foreground">{channelLabel(item.channel)}</td>
+                          <td className="max-w-[320px]">
                             <p className="line-clamp-2">{item.message_preview}</p>
                           </td>
-                          <td className="px-4 py-3">
+                          <td>
                             <div className="inline-flex items-center gap-2 font-semibold">
                               <AlertTriangle className="h-4 w-4 text-amber-300" />
                               {item.risk_score}/100
                             </div>
                           </td>
-                          <td className="px-4 py-3">
+                          <td>
                             <Badge variant={alertStatusVariant(item.report_status)}>{alertStatusLabel(item.report_status)}</Badge>
                           </td>
                         </tr>

@@ -10,6 +10,7 @@ import type { APIResponse } from '@/api/types';
 import { Badge } from '@/components/ui/badge';
 import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/use-toast';
+import PageHero from '@/components/layout/PageHero';
 import type { CitizenIncidentListData, CitizenIncidentListItem } from '@/types';
 import { alertStatusLabel, alertStatusVariant, channelLabel } from '@/lib/presentation';
 
@@ -166,28 +167,22 @@ export default function CitizenIncidentsPage() {
 
     return (
         <div className="space-y-5">
-            <section className="panel p-5 fade-rise-in">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-                    <div>
-                        <h2 className="section-title text-2xl">Incidents signales</h2>
-                        <p className="section-subtitle">
-                            Dossiers citoyens pour revue admin, suivi et generation des dossiers probatoires.
-                        </p>
+            <PageHero
+                title="Incidents signales"
+                subtitle="Dossiers citoyens pour revue admin, suivi et generation des dossiers probatoires."
+                toolbarClassName="space-y-4"
+            >
+                <div className="grid gap-3 text-xs text-muted-foreground sm:grid-cols-2">
+                    <div className="metric">
+                        <span className="text-muted-foreground">Total: </span>
+                        <span className="font-semibold">{summary.total}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs">
-                        <div className="metric">
-                            <span className="text-muted-foreground">Total: </span>
-                            <span className="font-semibold">{summary.total}</span>
-                        </div>
-                        <div className="metric">
-                            <span className="text-muted-foreground">Haut risque: </span>
-                            <span className="font-semibold text-red-300">{summary.highRisk}</span>
-                        </div>
+                    <div className="metric">
+                        <span className="text-muted-foreground">Haut risque: </span>
+                        <span className="font-semibold text-red-300">{summary.highRisk}</span>
                     </div>
                 </div>
-            </section>
 
-            <section className="panel p-4 fade-rise-in-1">
                 <div className="flex flex-col gap-2 sm:flex-row">
                     <label className="relative w-full sm:max-w-sm">
                         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -198,7 +193,7 @@ export default function CitizenIncidentsPage() {
                                 setPage(1);
                             }}
                             placeholder="Rechercher numero, message ou URL"
-                            className="h-10 w-full rounded-xl border border-input bg-background/70 py-2.5 pl-9 pr-3 text-sm outline-none transition focus:ring-2 focus:ring-ring"
+                            className="hero-search-field w-full"
                         />
                     </label>
 
@@ -208,7 +203,7 @@ export default function CitizenIncidentsPage() {
                             setStatus(e.target.value);
                             setPage(1);
                         }}
-                        className="h-10 rounded-xl border border-input bg-background/70 px-3 text-sm outline-none transition focus:ring-2 focus:ring-ring"
+                        className="hero-field"
                     >
                         <option value="">Tous les statuts</option>
                         <option value="NEW">Nouveau</option>
@@ -222,12 +217,12 @@ export default function CitizenIncidentsPage() {
                             setPage(1);
                             refetch();
                         }}
-                        className="h-10 rounded-xl border border-input px-3 text-sm text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
+                        className="hero-action-secondary"
                     >
                         Reinitialiser
                     </button>
                 </div>
-            </section>
+            </PageHero>
 
             <section className="panel p-5 fade-rise-in-2">
                 <h3 className="section-title">Top 5 numeros les plus signales</h3>

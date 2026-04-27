@@ -5,6 +5,7 @@ import { Loader2, RadioTower, RefreshCcw, Search } from 'lucide-react';
 
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
+import PageHero from '@/components/layout/PageHero';
 import { Badge } from '@/components/ui/badge';
 import type { AdminTransmissionListData, TransmissionStatus, TransmissionTargetType } from '@/types';
 
@@ -70,98 +71,91 @@ export default function AdminTransmissionsPage() {
 
   return (
     <div className="space-y-5">
-      <section className="panel p-5 fade-rise-in">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h2 className="section-title text-2xl">Transmissions externes</h2>
-            <p className="section-subtitle">
-              Supervision des dossiers transmis vers l ANSSI/OCRC et les operateurs mobiles.
-            </p>
-          </div>
-
-          <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto">
-            <label className="relative w-full sm:w-72">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Reference, ack ou numero"
-                className="h-10 w-full rounded-xl border border-input bg-background/70 pl-9 pr-3 text-sm outline-none transition focus:ring-2 focus:ring-ring"
-              />
-            </label>
-            <select
-              value={targetFilter}
-              onChange={(event) => setTargetFilter(event.target.value as '' | TransmissionTargetType)}
-              className="h-10 rounded-xl border border-input bg-background/70 px-3 text-sm outline-none transition focus:ring-2 focus:ring-ring"
-            >
-              {TARGET_OPTIONS.map((option) => (
-                <option key={option.label} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <select
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as '' | TransmissionStatus)}
-              className="h-10 rounded-xl border border-input bg-background/70 px-3 text-sm outline-none transition focus:ring-2 focus:ring-ring"
-            >
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.label} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={() => refetch()}
-              className="inline-flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-xs text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
-            >
-              <RefreshCcw className={`h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} />
-              Actualiser
-            </button>
-          </div>
+      <PageHero
+        title="Transmissions externes"
+        subtitle="Supervision des dossiers transmis vers l ANSSI/OCRC et les operateurs mobiles."
+        actions={
+          <button onClick={() => refetch()} className="hero-action-secondary">
+            <RefreshCcw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+            Actualiser
+          </button>
+        }
+      >
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_220px]">
+          <label className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Reference, ack ou numero"
+              className="hero-search-field w-full"
+            />
+          </label>
+          <select
+            value={targetFilter}
+            onChange={(event) => setTargetFilter(event.target.value as '' | TransmissionTargetType)}
+            className="hero-field"
+          >
+            {TARGET_OPTIONS.map((option) => (
+              <option key={option.label} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value as '' | TransmissionStatus)}
+            className="hero-field"
+          >
+            {STATUS_OPTIONS.map((option) => (
+              <option key={option.label} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
-      </section>
+      </PageHero>
 
       <section className="grid gap-4 md:grid-cols-4 fade-rise-in-1">
-        <div className="panel p-4">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">En attente</p>
-          <p className="mt-2 text-3xl font-semibold">{data?.pending_count ?? 0}</p>
+        <div className="metric-card">
+          <p className="metric-card-label">En attente</p>
+          <p className="metric-card-value">{data?.pending_count ?? 0}</p>
         </div>
-        <div className="panel p-4">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Relances</p>
-          <p className="mt-2 text-3xl font-semibold">{data?.retrying_count ?? 0}</p>
+        <div className="metric-card">
+          <p className="metric-card-label">Relances</p>
+          <p className="metric-card-value">{data?.retrying_count ?? 0}</p>
         </div>
-        <div className="panel p-4">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Echecs</p>
-          <p className="mt-2 text-3xl font-semibold">{data?.failed_count ?? 0}</p>
+        <div className="metric-card">
+          <p className="metric-card-label">Echecs</p>
+          <p className="metric-card-value">{data?.failed_count ?? 0}</p>
         </div>
-        <div className="panel p-4">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Livrees</p>
-          <p className="mt-2 text-3xl font-semibold">{data?.delivered_count ?? 0}</p>
+        <div className="metric-card">
+          <p className="metric-card-label">Livrees</p>
+          <p className="metric-card-value">{data?.delivered_count ?? 0}</p>
         </div>
       </section>
 
-      <section className="panel overflow-hidden fade-rise-in-2">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1180px] text-left text-sm">
-            <thead className="bg-secondary/35 text-xs uppercase tracking-wide text-muted-foreground">
+      <section className="table-shell fade-rise-in-2">
+        <div className="table-scroll">
+          <table className="table-base min-w-[1180px]">
+            <thead>
               <tr>
-                <th className="px-4 py-3">Reference</th>
-                <th className="px-4 py-3">Cible</th>
-                <th className="px-4 py-3">Statut</th>
-                <th className="px-4 py-3">Risque</th>
-                <th className="px-4 py-3">Numero</th>
-                <th className="px-4 py-3">Tentatives</th>
-                <th className="px-4 py-3">Accuse / erreur</th>
-                <th className="px-4 py-3">Dates</th>
-                <th className="px-4 py-3 text-right">Action</th>
+                <th>Reference</th>
+                <th>Cible</th>
+                <th>Statut</th>
+                <th>Risque</th>
+                <th>Numero</th>
+                <th>Tentatives</th>
+                <th>Accuse / erreur</th>
+                <th>Dates</th>
+                <th className="text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border/70">
+            <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={9} className="table-empty">
                     <Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin" />
                     Chargement des transmissions...
                   </td>
@@ -170,7 +164,7 @@ export default function AdminTransmissionsPage() {
 
               {isError && !isLoading && (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center text-destructive">
+                  <td colSpan={9} className="table-empty text-destructive">
                     Impossible de charger les transmissions.
                   </td>
                 </tr>
@@ -178,36 +172,36 @@ export default function AdminTransmissionsPage() {
 
               {!isLoading && !isError && items.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={9} className="table-empty">
                     Aucune transmission pour ce filtre.
                   </td>
                 </tr>
               )}
 
               {items.map((item) => (
-                <tr key={item.transmission_uuid} className="bg-card/70 align-top">
-                  <td className="px-4 py-3">
+                <tr key={item.transmission_uuid} className="table-row">
+                  <td>
                     <p className="font-semibold">{item.public_reference}</p>
                     <p className="mt-1 text-xs text-muted-foreground">{item.primary_category || 'categorie non renseignee'}</p>
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     <Badge variant="outline">{TARGET_LABELS[item.target_type]}</Badge>
                     <p className="mt-2 max-w-xs truncate text-xs text-muted-foreground" title={item.target_endpoint || ''}>
                       {item.target_endpoint || 'endpoint simule'}
                     </p>
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     <Badge variant={statusVariant(item.status)}>{STATUS_LABELS[item.status]}</Badge>
                     <p className="mt-2 text-xs text-muted-foreground">Bundle {item.bundle_status}</p>
                   </td>
-                  <td className="px-4 py-3 font-semibold">{item.risk_score}/100</td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">{item.suspect_phone_masked}</td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">{item.attempts}</td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                  <td className="font-semibold">{item.risk_score}/100</td>
+                  <td className="text-xs text-muted-foreground">{item.suspect_phone_masked}</td>
+                  <td className="text-xs text-muted-foreground">{item.attempts}</td>
+                  <td className="text-xs text-muted-foreground">
                     <p>{item.ack_reference || 'Pas d accuse'}</p>
                     <p className="mt-1 text-destructive/80">{item.last_error || 'Aucune erreur'}</p>
                   </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                  <td className="text-xs text-muted-foreground">
                     <p>Creation {new Date(item.created_at).toLocaleString()}</p>
                     <p className="mt-1">
                       Livraison {item.delivered_at ? new Date(item.delivered_at).toLocaleString() : 'en attente'}
@@ -216,7 +210,7 @@ export default function AdminTransmissionsPage() {
                       Retry {item.next_retry_at ? new Date(item.next_retry_at).toLocaleString() : 'non planifie'}
                     </p>
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="text-right">
                     <Link
                       to={`/admin/signalements/${item.report_uuid}`}
                       className="inline-flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-xs text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"

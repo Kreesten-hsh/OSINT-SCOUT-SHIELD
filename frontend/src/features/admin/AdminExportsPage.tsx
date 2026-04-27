@@ -4,6 +4,7 @@ import { Download, FileJson, FileSpreadsheet, Loader2 } from 'lucide-react';
 
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
+import PageHero from '@/components/layout/PageHero';
 import { useToast } from '@/components/ui/use-toast';
 import { downloadApiFile } from '@/lib/download';
 import type { AdminDashboardData } from '@/types';
@@ -41,30 +42,25 @@ export default function AdminExportsPage() {
 
   return (
     <div className="space-y-5">
-      <section className="panel p-5 fade-rise-in">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h2 className="section-title text-2xl">Exports admin</h2>
-            <p className="section-subtitle">
-              Extraction des signalements, bundles et transmissions du nouveau domaine BENIN CYBER SHIELD.
-            </p>
+      <PageHero
+        title="Exports admin"
+        subtitle="Extraction des signalements, bundles et transmissions du nouveau domaine BENIN CYBER SHIELD."
+      >
+        <div className="grid gap-3 text-xs text-muted-foreground sm:grid-cols-3">
+          <div className="rounded-xl border border-border/70 bg-background/50 px-3 py-2">
+            <p>Signalements</p>
+            <p className="mt-1 text-base font-semibold text-foreground">{data?.total_reports ?? 0}</p>
           </div>
-          <div className="grid gap-3 text-xs text-muted-foreground sm:grid-cols-3">
-            <div className="rounded-xl border border-border/70 bg-background/50 px-3 py-2">
-              <p>Signalements</p>
-              <p className="mt-1 text-base font-semibold text-foreground">{data?.total_reports ?? 0}</p>
-            </div>
-            <div className="rounded-xl border border-border/70 bg-background/50 px-3 py-2">
-              <p>Dossiers prets</p>
-              <p className="mt-1 text-base font-semibold text-foreground">{data?.bundles_ready ?? 0}</p>
-            </div>
-            <div className="rounded-xl border border-border/70 bg-background/50 px-3 py-2">
-              <p>Transmissions en cours</p>
-              <p className="mt-1 text-base font-semibold text-foreground">{data?.transmissions_pending ?? 0}</p>
-            </div>
+          <div className="rounded-xl border border-border/70 bg-background/50 px-3 py-2">
+            <p>Dossiers prets</p>
+            <p className="mt-1 text-base font-semibold text-foreground">{data?.bundles_ready ?? 0}</p>
+          </div>
+          <div className="rounded-xl border border-border/70 bg-background/50 px-3 py-2">
+            <p>Transmissions en cours</p>
+            <p className="mt-1 text-base font-semibold text-foreground">{data?.transmissions_pending ?? 0}</p>
           </div>
         </div>
-      </section>
+      </PageHero>
 
       <section className="grid gap-4 lg:grid-cols-2 fade-rise-in-1">
         <article className="panel p-5">

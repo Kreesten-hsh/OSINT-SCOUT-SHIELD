@@ -93,6 +93,60 @@
         @apply rounded-xl border border-border/70 bg-background/60 px-4 py-3;
     }
 
+    .metric-card {
+        @apply panel p-4 sm:p-4;
+    }
+
+    .metric-card-label {
+        @apply text-[11px] uppercase tracking-[0.18em] text-muted-foreground;
+    }
+
+    .metric-card-value {
+        font-size: clamp(1.85rem, 1.5rem + 1vw, 2.4rem);
+        line-height: 1;
+        @apply mt-3 font-semibold;
+    }
+
+    .metric-card-helper {
+        @apply mt-2 text-sm text-muted-foreground;
+    }
+
+    .table-shell {
+        @apply panel overflow-hidden;
+    }
+
+    .table-scroll {
+        @apply overflow-x-auto;
+    }
+
+    .table-base {
+        @apply w-full text-left text-sm;
+    }
+
+    .table-base thead {
+        @apply bg-secondary/35 text-[11px] uppercase tracking-[0.16em] text-muted-foreground;
+    }
+
+    .table-base th {
+        @apply px-4 py-3 font-medium;
+    }
+
+    .table-base tbody {
+        @apply divide-y divide-border/70;
+    }
+
+    .table-base td {
+        @apply px-4 py-3 align-top;
+    }
+
+    .table-row {
+        @apply bg-card/70;
+    }
+
+    .table-empty {
+        @apply px-4 py-10 text-center text-muted-foreground;
+    }
+
     .interactive-row {
         @apply transition;
         transition-duration: var(--duration-base);
@@ -115,6 +169,72 @@
     .soft-grid {
         background-image: linear-gradient(rgba(51, 65, 85, 0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(51, 65, 85, 0.18) 1px, transparent 1px);
         background-size: 22px 22px;
+    }
+
+    .hero-panel {
+        @apply panel soft-grid relative overflow-hidden p-5 md:p-6;
+    }
+
+    .hero-panel::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(circle at top right, rgba(16, 185, 129, 0.12), transparent 34%),
+            radial-gradient(circle at bottom left, rgba(13, 147, 242, 0.1), transparent 32%);
+        pointer-events: none;
+    }
+
+    .hero-panel > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    .hero-panel-dark {
+        @apply border-emerald-950/80 bg-[#07110a]/95 text-slate-100;
+        box-shadow: 0 18px 42px -28px rgba(2, 8, 23, 0.98);
+    }
+
+    .hero-panel-dark::before {
+        background:
+            radial-gradient(circle at top right, rgba(22, 163, 74, 0.18), transparent 36%),
+            radial-gradient(circle at bottom left, rgba(14, 165, 233, 0.1), transparent 30%);
+    }
+
+    .hero-panel-dark .section-subtitle {
+        color: rgb(148 163 184 / 0.92);
+    }
+
+    .hero-actions {
+        @apply flex flex-wrap items-center gap-2;
+    }
+
+    .hero-toolbar {
+        @apply mt-5 rounded-2xl border border-border/70 bg-background/50 p-3;
+    }
+
+    .hero-panel-dark .hero-toolbar {
+        @apply border-emerald-950/80 bg-black/20;
+    }
+
+    .hero-field {
+        @apply h-10 rounded-xl border border-input bg-background/70 px-3 text-sm outline-none transition focus:ring-2 focus:ring-ring;
+    }
+
+    .hero-search-field {
+        @apply hero-field pl-9 pr-3;
+    }
+
+    .hero-action-primary {
+        @apply inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-4 text-sm font-semibold text-primary transition hover:bg-primary/20;
+    }
+
+    .hero-action-secondary {
+        @apply inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl border border-input px-4 text-sm text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground;
+    }
+
+    .hero-panel-dark .hero-action-secondary {
+        @apply border-emerald-900/80 bg-black/25 text-slate-200 hover:bg-black/35 hover:text-white;
     }
 }
 

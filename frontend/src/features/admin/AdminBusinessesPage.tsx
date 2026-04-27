@@ -6,6 +6,7 @@ import { ArrowRight, CheckCircle2, Loader2, Plus, RefreshCcw, Search, ShieldOff,
 
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
+import PageHero from '@/components/layout/PageHero';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import type { AdminBusinessCreateRequest, AdminBusinessListData, AdminBusinessListItem, BusinessValidationStatus } from '@/types';
@@ -151,52 +152,46 @@ export default function AdminBusinessesPage() {
 
   return (
     <div className="space-y-5">
-      <section className="panel p-5 fade-rise-in">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h2 className="section-title text-2xl">Gestion des PME</h2>
-            <p className="section-subtitle">Validation des comptes, suivi des fiches entreprise et acces aux details PME.</p>
-          </div>
-
-          <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto">
-            <label className="relative w-full sm:w-72">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Rechercher PME ou email"
-                className="h-10 w-full rounded-xl border border-input bg-background/70 pl-9 pr-3 text-sm outline-none transition focus:ring-2 focus:ring-ring"
-              />
-            </label>
-            <select
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as '' | BusinessValidationStatus)}
-              className="h-10 rounded-xl border border-input bg-background/70 px-3 text-sm outline-none transition focus:ring-2 focus:ring-ring"
-            >
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.label} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={() => setShowCreateForm((prev) => !prev)}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/20"
-            >
+      <PageHero
+        title="Gestion des PME"
+        subtitle="Validation des comptes, suivi des fiches entreprise et acces aux details PME."
+        actions={
+          <>
+            <button onClick={() => setShowCreateForm((prev) => !prev)} className="hero-action-primary">
               <Plus className="h-4 w-4" />
               Ajouter une PME
             </button>
-            <button
-              onClick={() => refetch()}
-              className="inline-flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-xs text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
-            >
-              <RefreshCcw className={`h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} />
+            <button onClick={() => refetch()} className="hero-action-secondary">
+              <RefreshCcw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
               Actualiser
             </button>
-          </div>
+          </>
+        }
+      >
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px]">
+          <label className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Rechercher PME ou email"
+              className="hero-search-field w-full"
+            />
+          </label>
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value as '' | BusinessValidationStatus)}
+            className="hero-field"
+          >
+            {STATUS_OPTIONS.map((option) => (
+              <option key={option.label} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
-      </section>
+      </PageHero>
 
       {showCreateForm && (
         <section className="panel p-5 fade-rise-in-1">
@@ -300,44 +295,44 @@ export default function AdminBusinessesPage() {
       )}
 
       <section className="grid gap-4 md:grid-cols-4 fade-rise-in-1">
-        <div className="panel p-4">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">En attente</p>
-          <p className="mt-2 text-3xl font-semibold">{data?.pending_count ?? 0}</p>
+        <div className="metric-card">
+          <p className="metric-card-label">En attente</p>
+          <p className="metric-card-value">{data?.pending_count ?? 0}</p>
         </div>
-        <div className="panel p-4">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Actives</p>
-          <p className="mt-2 text-3xl font-semibold">{data?.active_count ?? 0}</p>
+        <div className="metric-card">
+          <p className="metric-card-label">Actives</p>
+          <p className="metric-card-value">{data?.active_count ?? 0}</p>
         </div>
-        <div className="panel p-4">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Rejetees</p>
-          <p className="mt-2 text-3xl font-semibold">{data?.rejected_count ?? 0}</p>
+        <div className="metric-card">
+          <p className="metric-card-label">Rejetees</p>
+          <p className="metric-card-value">{data?.rejected_count ?? 0}</p>
         </div>
-        <div className="panel p-4">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Desactivees</p>
-          <p className="mt-2 text-3xl font-semibold">{data?.disabled_count ?? 0}</p>
+        <div className="metric-card">
+          <p className="metric-card-label">Desactivees</p>
+          <p className="metric-card-value">{data?.disabled_count ?? 0}</p>
         </div>
       </section>
 
-      <section className="panel overflow-hidden fade-rise-in-2">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1080px] text-left text-sm">
-            <thead className="bg-secondary/35 text-xs uppercase tracking-wide text-muted-foreground">
+      <section className="table-shell fade-rise-in-2">
+        <div className="table-scroll">
+          <table className="table-base min-w-[1080px]">
+            <thead>
               <tr>
-                <th className="px-4 py-3">PME</th>
-                <th className="px-4 py-3">Compte</th>
-                <th className="px-4 py-3">Statut</th>
-                <th className="px-4 py-3">Cles</th>
-                <th className="px-4 py-3">Numeros</th>
-                <th className="px-4 py-3">Contact</th>
-                <th className="px-4 py-3">Creation</th>
-                <th className="px-4 py-3">Fiche</th>
-                <th className="px-4 py-3 text-right">Action</th>
+                <th>PME</th>
+                <th>Compte</th>
+                <th>Statut</th>
+                <th>Cles</th>
+                <th>Numeros</th>
+                <th>Contact</th>
+                <th>Creation</th>
+                <th>Fiche</th>
+                <th className="text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border/70">
+            <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={9} className="table-empty">
                     <Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin" />
                     Chargement des PME...
                   </td>
@@ -346,7 +341,7 @@ export default function AdminBusinessesPage() {
 
               {isError && !isLoading && (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center text-destructive">
+                  <td colSpan={9} className="table-empty text-destructive">
                     Impossible de charger la liste des PME.
                   </td>
                 </tr>
@@ -354,7 +349,7 @@ export default function AdminBusinessesPage() {
 
               {!isLoading && !isError && items.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={9} className="table-empty">
                     Aucune PME pour ce filtre.
                   </td>
                 </tr>

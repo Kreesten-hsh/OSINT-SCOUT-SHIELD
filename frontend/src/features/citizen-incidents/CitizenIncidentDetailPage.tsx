@@ -7,6 +7,7 @@ import type { AxiosError } from 'axios';
 
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
+import PageHero from '@/components/layout/PageHero';
 import { Badge } from '@/components/ui/badge';
 import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { useToast } from '@/components/ui/use-toast';
@@ -166,40 +167,37 @@ export default function CitizenIncidentDetailPage() {
 
   return (
     <div className="space-y-5">
-      <section className="panel p-6 fade-rise-in">
-        <div className="space-y-4">
-          <button
-            onClick={() => navigate('/admin/signalements')}
-            className="inline-flex items-center gap-1 rounded-lg border border-border/70 bg-background/50 px-3 py-1.5 text-xs text-muted-foreground transition hover:bg-secondary/30 hover:text-foreground"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" /> Retour aux signalements
-          </button>
-
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.22em] text-primary/90">Signalement citoyen</p>
-              <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Dossier #{incident.alert_uuid.slice(0, 8)}</h1>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {incident.phone_number} - {channelLabel(incident.channel)} - {formatDate(incident.created_at)}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant={alertStatusVariant(incident.status)}>{alertStatusLabel(incident.status)}</Badge>
-              <div className="rounded-xl border border-border bg-background/50 px-4 py-2 text-right">
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Score risque</p>
-                <p className={`text-xl font-semibold ${riskTone(incident.risk_score)}`}>{incident.risk_score}/100</p>
-              </div>
-            </div>
+      <PageHero
+        title={`Dossier #${incident.alert_uuid.slice(0, 8)}`}
+        subtitle={`${incident.phone_number} - ${channelLabel(incident.channel)} - ${formatDate(incident.created_at)}`}
+        eyebrow={
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => navigate('/admin/signalements')}
+              className="inline-flex items-center gap-1 rounded-lg border border-border/70 bg-background/50 px-3 py-1.5 text-xs text-muted-foreground transition hover:bg-secondary/30 hover:text-foreground"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> Retour aux signalements
+            </button>
+            <p className="text-xs uppercase tracking-[0.22em] text-primary/90">Signalement citoyen</p>
           </div>
-
-          <div className="h-1.5 overflow-hidden rounded-full bg-secondary/60">
-            <div
-              className={`h-full rounded-full ${incident.risk_score >= 80 ? 'bg-red-500' : incident.risk_score >= 50 ? 'bg-amber-500' : 'bg-emerald-500'}`}
-              style={{ width: `${riskProgress}%` }}
-            />
-          </div>
+        }
+        actions={
+          <>
+            <Badge variant={alertStatusVariant(incident.status)}>{alertStatusLabel(incident.status)}</Badge>
+            <div className="rounded-xl border border-border bg-background/50 px-4 py-2 text-right">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Score risque</p>
+              <p className={`text-xl font-semibold ${riskTone(incident.risk_score)}`}>{incident.risk_score}/100</p>
+            </div>
+          </>
+        }
+      >
+        <div className="h-1.5 overflow-hidden rounded-full bg-secondary/60">
+          <div
+            className={`h-full rounded-full ${incident.risk_score >= 80 ? 'bg-red-500' : incident.risk_score >= 50 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+            style={{ width: `${riskProgress}%` }}
+          />
         </div>
-      </section>
+      </PageHero>
 
       <section className="panel p-4 fade-rise-in-1">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

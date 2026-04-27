@@ -4,6 +4,7 @@ import { BellRing, CheckCircle2, KeyRound, Loader2, RadioTower, Settings2, Shiel
 
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
+import PageHero from '@/components/layout/PageHero';
 import { useAuthStore } from '@/store/auth-store';
 
 const CONSOLE_NOTIFICATIONS_KEY = 'admin.notifications.transmissions_failed';
@@ -96,16 +97,11 @@ export default function AdminSettingsPage() {
 
   return (
     <div className="space-y-5">
-      <section className="panel soft-grid relative overflow-hidden p-6 fade-rise-in">
-        <div className="pointer-events-none absolute -right-24 top-0 h-48 w-48 rounded-full bg-primary/18 blur-3xl" />
-        <div className="relative z-10">
-          <p className="text-xs uppercase tracking-[0.18em] text-primary/85">Console administrateur</p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-tight">Parametres</h2>
-          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-            Reglages de la console nationale, preferences operateur et securite du compte administrateur.
-          </p>
-        </div>
-      </section>
+      <PageHero
+        title="Parametres"
+        subtitle="Reglages de la console nationale, preferences operateur et securite du compte administrateur."
+        eyebrow={<p className="text-xs uppercase tracking-[0.18em] text-primary/85">Console administrateur</p>}
+      />
 
       <section className="grid gap-4 xl:grid-cols-[1fr_1fr] fade-rise-in-1">
         <article className="panel p-5">
