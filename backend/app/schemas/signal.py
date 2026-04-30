@@ -1,4 +1,5 @@
 from typing import Literal
+
 from pydantic import BaseModel, Field, UUID4
 
 
@@ -13,6 +14,7 @@ class VerifySignalRequest(BaseModel):
     url: str | None = Field(default=None, max_length=2048)
     phone: str = Field(min_length=8, max_length=32)
     department: str | None = Field(default=None, max_length=32)
+    device_install_id: str | None = Field(default=None, max_length=128)
     # Backward-compatibility field kept for Sprint 1A transition.
     create_incident: bool | None = None
 
@@ -39,6 +41,8 @@ class VerifySignalData(BaseModel):
     fon_alert: str | None = None
     resolved_department: str | None = None
     department_source: DepartmentSource = "UNKNOWN"
+    verification_message_uuid: UUID4 | None = None
+    verification_analysis_uuid: UUID4 | None = None
 
 
 class VerificationSnapshot(BaseModel):
@@ -55,6 +59,9 @@ class IncidentReportRequest(BaseModel):
     url: str | None = Field(default=None, max_length=2048)
     phone: str = Field(min_length=8, max_length=32)
     department: str | None = Field(default=None, max_length=32)
+    device_install_id: str | None = Field(default=None, max_length=128)
+    verification_message_uuid: UUID4 | None = None
+    verification_analysis_uuid: UUID4 | None = None
     verification: VerificationSnapshot | None = None
 
 

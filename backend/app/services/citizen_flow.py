@@ -10,6 +10,7 @@ import redis.asyncio as redis
 from fastapi import HTTPException, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
 from app.models import (
@@ -31,7 +32,7 @@ from app.services.detection import score_signal
 from app.services.external_transmissions import schedule_external_transmissions_for_report
 from app.services.hashing import compute_snapshot_hash
 from app.services.legacy_memory_bridge import build_legacy_analysis_payload
-from app.services.phone_privacy import derive_phone_hash, encrypt_phone, normalize_phone
+from app.services.phone_privacy import derive_phone_hash, encrypt_phone, mask_phone, normalize_phone
 
 
 logger = logging.getLogger(__name__)
@@ -57,6 +58,10 @@ def _generate_public_reference() -> str:
     return f"BCS-{now.strftime('%Y%m%d')}-{uuid.uuid4().hex[:8].upper()}"
 
 
+def _new_uuid() -> uuid.UUID:
+    return uuid.uuid4()
+
+
 async def verify_citizen_signal(
     request: VerifySignalRequest,
     db: AsyncSession,
@@ -73,6 +78,41 @@ async def verify_citizen_signal(
     suspect_number = await db.scalar(select(SuspectNumber).where(SuspectNumber.phone_hash == phone_hash))
     recurrence_count = int(suspect_number.report_count or 0) if suspect_number else 0
     resolved_department, department_source = resolve_department(request.department, normalized_phone)
+    verification_message_uuid: uuid.UUID | None = None
+    verification_analysis_uuid: uuid.UUID | None = None
+
+    if request.channel == "MOBILE_APP" and request.device_install_id:
+        message = CitizenMessage(
+            uuid=_new_uuid(),
+            content=request.message.strip(),
+            channel=request.channel,
+            device_install_id=request.device_install_id.strip(),
+            history_entry_type="VERIFY",
+            submitted_phone_masked=mask_phone(normalized_phone),
+            department=resolved_department,
+            department_source=department_source,
+            submitted_url=(request.url or "").strip() or None,
+        )
+        db.add(message)
+        await db.flush()
+
+        analysis = MessageAnalysis(
+            uuid=_new_uuid(),
+            message_id=message.id,
+            risk_score=max(0, min(int(result["risk_score"]), 100)),
+            risk_level=str(result["risk_level"]),
+            primary_category=_primary_category(result.get("categories_detected", [])),
+            matched_rules=result.get("matched_rules", []),
+            categories_detected=result.get("categories_detected", []),
+            explanation=result.get("explanation", []),
+            recommendations=result.get("recommendations", []),
+            highlighted_spans=result.get("highlighted_spans", []),
+            fon_alert=result.get("fon_alert"),
+        )
+        db.add(analysis)
+        await db.commit()
+        verification_message_uuid = message.uuid
+        verification_analysis_uuid = analysis.uuid
 
     return VerifySignalData(
         risk_score=result["risk_score"],
@@ -88,6 +128,8 @@ async def verify_citizen_signal(
         fon_alert=result.get("fon_alert"),
         resolved_department=resolved_department,
         department_source=department_source,
+        verification_message_uuid=verification_message_uuid,
+        verification_analysis_uuid=verification_analysis_uuid,
     )
 
 
@@ -103,6 +145,15 @@ async def create_citizen_report(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="phone must be a valid number (8 to 15 digits, optional leading +)",
         )
+
+    existing_mobile_message = await _load_mobile_verification_message(
+        db=db,
+        message_uuid=request.verification_message_uuid,
+        analysis_uuid=request.verification_analysis_uuid,
+        device_install_id=request.device_install_id,
+    )
+    if existing_mobile_message and existing_mobile_message.reports:
+        return _build_existing_report_response(existing_mobile_message.reports[0])
 
     detection = score_signal(message=request.message, url=request.url, phone=normalized_phone)
     categories_detected = detection.get("categories_detected", []) or []
@@ -122,30 +173,59 @@ async def create_citizen_report(
 
     suspect_number = await _upsert_suspect_number(db=db, phone=normalized_phone)
     resolved_department, department_source = resolve_department(request.department, normalized_phone)
-    message = CitizenMessage(
-        content=request.message.strip(),
-        channel=request.channel,
-        department=resolved_department,
-        department_source=department_source,
-        submitted_url=(request.url or "").strip() or None,
-    )
-    db.add(message)
-    await db.flush()
+    if existing_mobile_message and existing_mobile_message.analysis:
+        message = existing_mobile_message
+        analysis = existing_mobile_message.analysis
+        message.content = request.message.strip()
+        message.channel = request.channel
+        message.device_install_id = request.device_install_id
+        message.history_entry_type = "REPORT"
+        message.submitted_phone_masked = mask_phone(normalized_phone)
+        message.department = resolved_department
+        message.department_source = department_source
+        message.submitted_url = (request.url or "").strip() or None
+        analysis.risk_score = max(0, min(risk_score, 100))
+        analysis.risk_level = risk_level
+        analysis.primary_category = _primary_category(categories_detected)
+        analysis.matched_rules = matched_rules
+        analysis.categories_detected = categories_detected
+        analysis.explanation = explanation
+        analysis.recommendations = recommendations
+        analysis.highlighted_spans = highlighted_spans
+        analysis.fon_alert = fon_alert
+        db.add(message)
+        db.add(analysis)
+        await db.flush()
+    else:
+        message = CitizenMessage(
+            uuid=_new_uuid(),
+            content=request.message.strip(),
+            channel=request.channel,
+            device_install_id=request.device_install_id,
+            history_entry_type="REPORT" if request.channel == "MOBILE_APP" and request.device_install_id else "VERIFY",
+            submitted_phone_masked=mask_phone(normalized_phone),
+            department=resolved_department,
+            department_source=department_source,
+            submitted_url=(request.url or "").strip() or None,
+        )
+        db.add(message)
+        await db.flush()
 
-    analysis = MessageAnalysis(
-        message_id=message.id,
-        risk_score=max(0, min(risk_score, 100)),
-        risk_level=risk_level,
-        primary_category=_primary_category(categories_detected),
-        matched_rules=matched_rules,
-        categories_detected=categories_detected,
-        explanation=explanation,
-        recommendations=recommendations,
-        highlighted_spans=highlighted_spans,
-        fon_alert=fon_alert,
-    )
-    db.add(analysis)
-    await db.flush()
+        analysis = MessageAnalysis(
+            uuid=_new_uuid(),
+            message_id=message.id,
+            risk_score=max(0, min(risk_score, 100)),
+            risk_level=risk_level,
+            primary_category=_primary_category(categories_detected),
+            matched_rules=matched_rules,
+            categories_detected=categories_detected,
+            explanation=explanation,
+            recommendations=recommendations,
+            highlighted_spans=highlighted_spans,
+            fon_alert=fon_alert,
+        )
+        db.add(analysis)
+        await db.flush()
 
     public_reference = _generate_public_reference()
     custody_hash = compute_snapshot_hash(
@@ -159,6 +239,7 @@ async def create_citizen_report(
     )
 
     formal_report = FormalReport(
+        uuid=_new_uuid(),
         public_reference=public_reference,
         message=message,
         analysis=analysis,
@@ -221,10 +302,52 @@ async def create_citizen_report(
         alert_uuid=legacy_alert.uuid if legacy_alert else formal_report.uuid,
         status="NEW",
         risk_score_initial=analysis.risk_score,
-        queued_for_osint=queued_for_osint,
+        queued_for_osint=bool(queued_for_osint),
         report_uuid=formal_report.uuid,
         public_reference=formal_report.public_reference,
     )
+
+
+def _build_existing_report_response(report: FormalReport) -> IncidentReportData:
+    return IncidentReportData(
+        alert_uuid=report.legacy_alert_uuid or report.uuid,
+        status="NEW",
+        risk_score_initial=int(report.analysis.risk_score if report.analysis else 0),
+        queued_for_osint=False,
+        report_uuid=report.uuid,
+        public_reference=report.public_reference,
+    )
+
+
+async def _load_mobile_verification_message(
+    *,
+    db: AsyncSession,
+    message_uuid: uuid.UUID | None,
+    analysis_uuid: uuid.UUID | None,
+    device_install_id: str | None,
+) -> CitizenMessage | None:
+    if not message_uuid or not analysis_uuid or not device_install_id:
+        return None
+
+    stmt = (
+        select(CitizenMessage)
+        .options(
+            selectinload(CitizenMessage.analysis),
+            selectinload(CitizenMessage.reports).selectinload(FormalReport.analysis),
+        )
+        .where(
+            CitizenMessage.uuid == message_uuid,
+            CitizenMessage.device_install_id == device_install_id,
+            CitizenMessage.channel == "MOBILE_APP",
+        )
+    )
+    result = await db.execute(stmt)
+    message = result.scalar_one_or_none()
+    if message is None or message.analysis is None:
+        return None
+    if message.analysis.uuid != analysis_uuid:
+        return None
+    return message
 
 
 async def _upsert_suspect_number(db: AsyncSession, phone: str) -> SuspectNumber:
