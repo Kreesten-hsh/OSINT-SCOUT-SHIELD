@@ -26,6 +26,10 @@ final GoRouter appRouter = GoRouter(
       path: '/onboarding',
       builder: (BuildContext context, GoRouterState state) => const OnboardingPage(),
     ),
+    GoRoute(
+      path: '/settings',
+      builder: (BuildContext context, GoRouterState state) => const SettingsPage(),
+    ),
     StatefulShellRoute.indexedStack(
       builder: (
         BuildContext context,
@@ -70,14 +74,6 @@ final GoRouter appRouter = GoRouter(
             GoRoute(
               path: '/about',
               builder: (BuildContext context, GoRouterState state) => const AboutPage(),
-            ),
-          ],
-        ),
-        StatefulShellBranch(
-          routes: <RouteBase>[
-            GoRoute(
-              path: '/settings',
-              builder: (BuildContext context, GoRouterState state) => const SettingsPage(),
             ),
           ],
         ),

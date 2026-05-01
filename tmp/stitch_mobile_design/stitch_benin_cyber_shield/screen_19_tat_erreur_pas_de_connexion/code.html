@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BENIN CYBER SHIELD - Connexion indisponible</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary": "#002e6a",
+                      "primary": "#adc6ff",
+                      "outline-variant": "#424754",
+                      "surface-container-high": "#1b2b3f",
+                      "primary-container": "#4d8eff",
+                      "secondary-fixed-dim": "#c4c6cf",
+                      "on-secondary-fixed-variant": "#44474e",
+                      "on-tertiary-fixed": "#311400",
+                      "background": "#031427",
+                      "surface-container-low": "#0b1c30",
+                      "on-primary-container": "#00285d",
+                      "primary-fixed-dim": "#adc6ff",
+                      "on-error-container": "#ffdad6",
+                      "on-error": "#690005",
+                      "inverse-primary": "#005ac2",
+                      "tertiary-fixed": "#ffdcc6",
+                      "primary-fixed": "#d8e2ff",
+                      "surface-container": "#102034",
+                      "secondary-fixed": "#e1e2eb",
+                      "tertiary-container": "#df7412",
+                      "surface-dim": "#031427",
+                      "surface-container-highest": "#26364a",
+                      "on-tertiary-fixed-variant": "#723600",
+                      "surface-tint": "#adc6ff",
+                      "surface-container-lowest": "#000f21",
+                      "secondary-container": "#464950",
+                      "inverse-surface": "#d3e4fe",
+                      "inverse-on-surface": "#213145",
+                      "on-secondary-container": "#b6b8c1",
+                      "on-tertiary-container": "#461f00",
+                      "error-container": "#93000a",
+                      "surface-variant": "#26364a",
+                      "secondary": "#c4c6cf",
+                      "outline": "#8c909f",
+                      "error": "#ffb4ab",
+                      "on-primary-fixed": "#001a42",
+                      "on-primary-fixed-variant": "#004395",
+                      "on-background": "#d3e4fe",
+                      "on-secondary-fixed": "#191c22",
+                      "on-tertiary": "#502400",
+                      "surface": "#031427",
+                      "surface-bright": "#2a3a4f",
+                      "on-surface": "#d3e4fe",
+                      "tertiary-fixed-dim": "#ffb786",
+                      "on-secondary": "#2e3037",
+                      "tertiary": "#ffb786",
+                      "on-surface-variant": "#c2c6d6"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "container-margin": "16px",
+                      "unit": "4px",
+                      "input-height": "40px",
+                      "gutter": "12px",
+                      "card-padding": "16px"
+              },
+              "fontFamily": {
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "data-sm": [
+                              "JetBrains Mono"
+                      ],
+                      "h1": [
+                              "Inter"
+                      ],
+                      "data-lg": [
+                              "JetBrains Mono"
+                      ],
+                      "label-caps": [
+                              "JetBrains Mono"
+                      ],
+                      "h2": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "data-sm": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "h1": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "data-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.08em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "h2": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-lg">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center px-4 justify-between bg-slate-950 border-b border-slate-800 h-[56px] docked full-width">
+<button class="text-blue-500 dark:text-blue-400 hover:bg-slate-900 transition-colors active:opacity-80 p-1 rounded-DEFAULT flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">shield</span>
+</button>
+<h1 class="font-['JetBrains_Mono'] font-bold text-blue-500 tracking-tighter uppercase text-xs tracking-widest">BENIN CYBER SHIELD</h1>
+<button class="text-blue-500 dark:text-blue-400 hover:bg-slate-900 transition-colors active:opacity-80 p-1 rounded-DEFAULT flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">settings</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow flex flex-col items-center justify-center pt-[56px] px-container-margin pb-[64px]">
+<!-- Error Focus Container -->
+<div class="flex flex-col items-center justify-center w-full max-w-md space-y-6">
+<!-- Primary Error Indicator -->
+<div class="flex flex-col items-center space-y-4">
+<div class="w-24 h-24 rounded-full border border-outline flex items-center justify-center bg-surface-container-highest">
+<span class="material-symbols-outlined text-[48px] text-secondary">wifi_off</span>
+</div>
+<div class="text-center space-y-1">
+<h2 class="font-h2 text-h2 text-on-surface">Connexion indisponible</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Vérifiez votre connexion et réessayez.</p>
+</div>
+</div>
+<!-- Retry Action -->
+<button class="bg-surface border border-outline hover:bg-surface-bright transition-colors text-on-surface px-6 py-2 rounded-DEFAULT flex items-center space-x-2 font-data-sm text-data-sm">
+<span class="material-symbols-outlined text-[18px]">refresh</span>
+<span>Réessayer</span>
+</button>
+<!-- Informational Note Card -->
+<div class="bg-surface border border-surface-bright p-card-padding rounded-DEFAULT w-full flex items-start space-x-3 mt-4">
+<span class="material-symbols-outlined text-tertiary-container mt-0.5">info</span>
+<div>
+<h3 class="font-label-caps text-label-caps text-on-surface mb-1">MODE HORS LIGNE ACTIF</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">La détection des menaces en arrière-plan continue de fonctionner. La synchronisation reprendra dès le rétablissement du réseau.</p>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Hidden on md, visible on small screens) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center bg-slate-900 pb-safe h-[64px] border-t border-slate-800">
+<!-- VÉRIFIER (Active - closest intent for a connection check screen) -->
+<a class="flex flex-col items-center justify-center text-blue-500 border-t-2 border-blue-500 pt-1 w-full h-full hover:text-blue-400 scale-95 transition-transform duration-75" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">security</span>
+<span class="font-['Inter'] text-[10px] font-medium tracking-tight">Vérifier</span>
+</a>
+<!-- HISTORIQUE -->
+<a class="flex flex-col items-center justify-center text-slate-500 pt-1 w-full h-full hover:text-blue-400 scale-95 transition-transform duration-75" href="#">
+<span class="material-symbols-outlined mb-1">history</span>
+<span class="font-['Inter'] text-[10px] font-medium tracking-tight">Historique</span>
+</a>
+<!-- À PROPOS -->
+<a class="flex flex-col items-center justify-center text-slate-500 pt-1 w-full h-full hover:text-blue-400 scale-95 transition-transform duration-75" href="#">
+<span class="material-symbols-outlined mb-1">info</span>
+<span class="font-['Inter'] text-[10px] font-medium tracking-tight">À propos</span>
+</a>
+</nav>
+</body></html>

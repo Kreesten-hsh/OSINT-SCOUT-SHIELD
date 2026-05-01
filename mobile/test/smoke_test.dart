@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 void main() {
   testWidgets('boots BENIN CYBER SHIELD app shell', (WidgetTester tester) async {
     await tester.pumpWidget(const ProviderScope(child: BeninCyberShieldApp()));
-    expect(find.text('BENIN CYBER SHIELD'), findsOneWidget);
+    expect(find.textContaining('BENIN CYBER'), findsOneWidget);
+    expect(find.textContaining('SHIELD'), findsOneWidget);
   });
 }

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Historique - BENIN CYBER SHIELD</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;family=Space+Grotesk:wght@700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#ffdcc6",
+                        "primary": "#adc6ff",
+                        "on-error-container": "#ffdad6",
+                        "secondary-fixed": "#e0e1f2",
+                        "error": "#ffb4ab",
+                        "surface-container-highest": "#32353c",
+                        "surface-container": "#1d2027",
+                        "tertiary": "#ffb786",
+                        "background": "#10131a",
+                        "outline": "#8c909f",
+                        "surface-dim": "#10131a",
+                        "inverse-on-surface": "#2e3038",
+                        "on-secondary-container": "#b2b4c4",
+                        "primary-container": "#4d8eff",
+                        "secondary-container": "#434653",
+                        "on-tertiary-container": "#461f00",
+                        "on-tertiary": "#502400",
+                        "on-primary-fixed-variant": "#004395",
+                        "surface-container-low": "#191b23",
+                        "surface-container-high": "#272a31",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-error": "#690005",
+                        "inverse-surface": "#e1e2ec",
+                        "on-surface": "#e1e2ec",
+                        "on-tertiary-fixed": "#311400",
+                        "surface-variant": "#32353c",
+                        "surface-container-lowest": "#0b0e15",
+                        "on-primary-fixed": "#001a42",
+                        "outline-variant": "#424754",
+                        "surface-bright": "#363941",
+                        "tertiary-container": "#df7412",
+                        "primary-fixed": "#d8e2ff",
+                        "tertiary-fixed-dim": "#ffb786",
+                        "surface": "#10131a",
+                        "on-tertiary-fixed-variant": "#723600",
+                        "on-background": "#e1e2ec",
+                        "on-primary-container": "#00285d",
+                        "on-secondary-fixed-variant": "#434653",
+                        "on-primary": "#002e6a",
+                        "error-container": "#93000a",
+                        "inverse-primary": "#005ac2",
+                        "on-secondary-fixed": "#181b27",
+                        "secondary-fixed-dim": "#c4c5d5",
+                        "surface-tint": "#adc6ff",
+                        "secondary": "#c4c5d5",
+                        "on-secondary": "#2d303c",
+                        "on-surface-variant": "#c2c6d6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-md": "16px",
+                        "stack-lg": "32px",
+                        "stack-sm": "8px",
+                        "unit": "4px",
+                        "margin-page": "24px",
+                        "padding-card": "20px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Manrope"],
+                        "body-md": ["Manrope"],
+                        "code-sm": ["JetBrains Mono"],
+                        "headline-xl": ["Manrope"],
+                        "label-caps": ["Space Grotesk"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }],
+                        "code-sm": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-card {
+            background-color: rgba(14, 18, 30, 0.72);
+            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(16px);
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-[120px] font-body-md text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="fixed z-50 bg-transparent dark:bg-[#07090F]/80 backdrop-blur-xl docked full-width top-0 h-[60px] border-b border-white/5 shadow-none flex items-center justify-between px-6 w-full max-w-none">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-blue-500 dark:text-[#3B82F6]" style="font-variation-settings: 'FILL' 1;">security</span>
+<h1 class="text-blue-500 dark:text-[#3B82F6] font-bold text-xl tracking-tighter">BENIN CYBER SHIELD</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="hover:opacity-80 transition-opacity active:scale-95 transition-transform text-slate-400">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="pt-[92px] px-margin-page max-w-3xl mx-auto flex flex-col gap-stack-lg">
+<!-- Header & Filters -->
+<section class="flex flex-col gap-stack-md">
+<div class="flex flex-col gap-stack-sm">
+<h2 class="font-headline-xl text-headline-xl text-on-surface">Historique</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Journal des analyses et menaces bloquées</p>
+</div>
+<div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+<button class="px-5 py-2 rounded-full bg-primary-container text-on-primary-container font-label-caps text-label-caps border border-transparent whitespace-nowrap active:scale-95 transition-transform">Tous</button>
+<button class="px-5 py-2 rounded-full glass-card text-on-surface font-label-caps text-label-caps border border-outline-variant whitespace-nowrap hover:bg-white/5 active:scale-95 transition-transform">Signalés</button>
+<button class="px-5 py-2 rounded-full glass-card text-on-surface font-label-caps text-label-caps border border-outline-variant whitespace-nowrap hover:bg-white/5 active:scale-95 transition-transform">Sécurisés</button>
+<button class="px-5 py-2 rounded-full glass-card text-on-surface font-label-caps text-label-caps border border-outline-variant whitespace-nowrap hover:bg-white/5 active:scale-95 transition-transform">Documents</button>
+</div>
+</section>
+<!-- History List -->
+<section class="flex flex-col gap-stack-md">
+<!-- High Risk Card -->
+<article class="relative glass-card rounded-[24px] p-padding-card overflow-hidden hover:bg-white/5 transition-colors cursor-pointer group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
+<div class="flex justify-between items-start mb-4 pl-2">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center border border-error/20">
+<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="font-body-md text-body-md font-semibold text-on-surface truncate max-w-[180px] sm:max-w-[300px]">wa.me/free-data-mouv</h3>
+<p class="font-code-sm text-code-sm text-on-surface-variant">Aujourd'hui, 14:32</p>
+</div>
+</div>
+<div class="bg-error/12 text-error px-3 py-1 rounded-full font-label-caps text-label-caps flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">gpp_bad</span>
+                        Signalé
+                    </div>
+</div>
+<div class="pl-2 flex items-center gap-6 border-t border-white/5 pt-4 mt-2">
+<div class="flex items-center gap-2 text-error">
+<span class="material-symbols-outlined text-[18px]">bug_report</span>
+<span class="font-label-caps text-label-caps">Phishing SMS</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">speed</span>
+<span class="font-code-sm text-code-sm">Score: 12/100</span>
+</div>
+</div>
+</article>
+<!-- Medium Risk Card -->
+<article class="relative glass-card rounded-[24px] p-padding-card overflow-hidden hover:bg-white/5 transition-colors cursor-pointer group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-tertiary"></div>
+<div class="flex justify-between items-start mb-4 pl-2">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-tertiary/10 flex items-center justify-center border border-tertiary/20">
+<span class="material-symbols-outlined text-tertiary" style="font-variation-settings: 'FILL' 1;">help</span>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="font-body-md text-body-md font-semibold text-on-surface truncate max-w-[180px] sm:max-w-[300px]">Document_Fiscal_2025.pdf</h3>
+<p class="font-code-sm text-code-sm text-on-surface-variant">Hier, 09:15</p>
+</div>
+</div>
+<div class="bg-tertiary/12 text-tertiary px-3 py-1 rounded-full font-label-caps text-label-caps flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">info</span>
+                        Suspect
+                    </div>
+</div>
+<div class="pl-2 flex items-center gap-6 border-t border-white/5 pt-4 mt-2">
+<div class="flex items-center gap-2 text-tertiary">
+<span class="material-symbols-outlined text-[18px]">policy</span>
+<span class="font-label-caps text-label-caps">Macros Inconnues</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">speed</span>
+<span class="font-code-sm text-code-sm">Score: 45/100</span>
+</div>
+</div>
+</article>
+<!-- Low Risk Card -->
+<article class="relative glass-card rounded-[24px] p-padding-card overflow-hidden hover:bg-white/5 transition-colors cursor-pointer group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+<div class="flex justify-between items-start mb-4 pl-2">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="font-body-md text-body-md font-semibold text-on-surface truncate max-w-[180px] sm:max-w-[300px]">https://gouv.bj/services</h3>
+<p class="font-code-sm text-code-sm text-on-surface-variant">12 Octobre, 16:40</p>
+</div>
+</div>
+<div class="bg-primary/12 text-primary px-3 py-1 rounded-full font-label-caps text-label-caps flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+                        Sécurisé
+                    </div>
+</div>
+<div class="pl-2 flex items-center gap-6 border-t border-white/5 pt-4 mt-2">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-[18px]">shield</span>
+<span class="font-label-caps text-label-caps">Certificat Valide</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">speed</span>
+<span class="font-code-sm text-code-sm">Score: 98/100</span>
+</div>
+</div>
+</article>
+<!-- Repeated High Risk Card for scrolling -->
+<article class="relative glass-card rounded-[24px] p-padding-card overflow-hidden hover:bg-white/5 transition-colors cursor-pointer group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
+<div class="flex justify-between items-start mb-4 pl-2">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center border border-error/20">
+<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">priority_high</span>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="font-body-md text-body-md font-semibold text-on-surface truncate max-w-[180px] sm:max-w-[300px]">0022998765432 (Appel)</h3>
+<p class="font-code-sm text-code-sm text-on-surface-variant">11 Octobre, 10:05</p>
+</div>
+</div>
+<div class="bg-error/12 text-error px-3 py-1 rounded-full font-label-caps text-label-caps flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">report</span>
+                        Récidive
+                    </div>
+</div>
+<div class="pl-2 flex items-center gap-6 border-t border-white/5 pt-4 mt-2">
+<div class="flex items-center gap-2 text-error">
+<span class="material-symbols-outlined text-[18px]">call_end</span>
+<span class="font-label-caps text-label-caps">Arnaque Téléphonique</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">speed</span>
+<span class="font-code-sm text-code-sm">Score: 05/100</span>
+</div>
+</div>
+</article>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="bg-[#0E1220]/78 backdrop-blur-[32px] fixed bottom-4 left-1/2 -translate-x-1/2 w-[90%] max-w-[400px] h-[68px] rounded-full border border-white/10 shadow-2xl shadow-black/50 z-50 flex justify-around items-center mx-auto">
+<!-- Item 1: Vérifier -->
+<a class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-300 px-6 py-2 transition-colors hover:bg-white/5 rounded-full active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined mb-1">shield</span>
+<span class="font-['Manrope'] text-[10px] font-medium tracking-wide uppercase">Vérifier</span>
+</a>
+<!-- Item 2: Historique (Active) -->
+<a class="flex flex-col items-center justify-center bg-blue-500/18 text-blue-400 rounded-full px-6 py-2 transition-all duration-300 hover:bg-white/5 active:scale-90" href="#">
+<span class="material-symbols-outlined mb-1 text-blue-500 dark:text-[#3B82F6]" style="font-variation-settings: 'FILL' 1;">history</span>
+<span class="font-['Manrope'] text-[10px] font-medium tracking-wide uppercase text-blue-500 dark:text-[#3B82F6]">Historique</span>
+</a>
+<!-- Item 3: À propos -->
+<a class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-300 px-6 py-2 transition-colors hover:bg-white/5 rounded-full active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined mb-1">info</span>
+<span class="font-['Manrope'] text-[10px] font-medium tracking-wide uppercase">À propos</span>
+</a>
+</nav>
+</body></html>

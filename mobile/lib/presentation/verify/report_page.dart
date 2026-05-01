@@ -5,9 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../application/providers.dart';
+import '../../core/theme/app_theme.dart';
 import '../../data/models/verify_result.dart';
 import '../shared/app_panel.dart';
-import '../shared/page_header.dart';
+import '../shared/brand_bar.dart';
 
 class ReportPage extends ConsumerStatefulWidget {
   const ReportPage({super.key});
@@ -20,6 +21,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
   final ImagePicker _picker = ImagePicker();
   final List<XFile> _files = <XFile>[];
   bool _initializedFromDraft = false;
+  int _interactionSelection = 1;
 
   void _seedDraftAttachments(VerifyDraft draft) {
     if (_initializedFromDraft) {
@@ -82,6 +84,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
 
   @override
   Widget build(BuildContext context) {
+    final BeninShieldColors colors = context.shieldColors;
     final VerifyState verifyState = ref.watch(verifyControllerProvider);
     final ReportState reportState = ref.watch(reportControllerProvider);
     final VerifyDraft? draft = verifyState.draft;
@@ -89,23 +92,31 @@ class _ReportPageState extends ConsumerState<ReportPage> {
 
     if (draft == null || result == null) {
       return Scaffold(
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: <Widget>[
-                const PageHeader(
-                  title: 'Signalement indisponible',
-                  subtitle: 'Aucune verification mobile active a transformer en signalement.',
+        body: Column(
+          children: <Widget>[
+            const BrandBar(),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text('Signalement indisponible', style: Theme.of(context).textTheme.headlineLarge),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Aucune vérification mobile active à transformer en signalement.',
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                    const SizedBox(height: 24),
+                    FilledButton(
+                      onPressed: () => context.go('/verify'),
+                      child: const Text('RETOUR'),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: () => context.go('/verify'),
-                  child: const Text('Retour'),
-                ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       );
     }
@@ -113,81 +124,180 @@ class _ReportPageState extends ConsumerState<ReportPage> {
     _seedDraftAttachments(draft);
 
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              const PageHeader(
-                title: 'Signalement formel',
-                subtitle: 'Confirme les donnees, joins des captures et envoie le dossier au systeme.',
-              ),
-              const SizedBox(height: 16),
-              AppPanel(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text('MESSAGE', style: Theme.of(context).textTheme.labelMedium),
-                    const SizedBox(height: 8),
-                    Text(draft.message, style: Theme.of(context).textTheme.bodyLarge),
-                    const SizedBox(height: 16),
-                    Text('NUMERO', style: Theme.of(context).textTheme.labelMedium),
-                    const SizedBox(height: 8),
-                    Text(draft.phone, style: Theme.of(context).textTheme.bodyLarge),
-                    const SizedBox(height: 16),
-                    Text('SCORE ACTUEL', style: Theme.of(context).textTheme.labelMedium),
-                    const SizedBox(height: 8),
-                    Text('${result.riskScore}/100 - ${result.riskLevel}', style: Theme.of(context).textTheme.bodyLarge),
-                    const SizedBox(height: 16),
-                    Text('CAPTURES COMPLEMENTAIRES', style: Theme.of(context).textTheme.labelMedium),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Les captures ajoutees pendant la verification sont deja reprises ici.',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+      body: Column(
+        children: <Widget>[
+          const BrandBar(),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text('Signaler une menace', style: Theme.of(context).textTheme.headlineLarge),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Aide-nous à sécuriser l écosystème en rapportant les comportements suspects.',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: colors.muted),
+                  ),
+                  const SizedBox(height: 20),
+                  AppPanel(
+                    padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        for (final XFile file in _files)
-                          Chip(
-                            label: Text(file.name),
-                            onDeleted: () {
-                              setState(() {
-                                _files.remove(file);
-                              });
-                            },
+                        Icon(Icons.info_outline_rounded, color: colors.primary),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text('ANALYSE REQUISE', style: Theme.of(context).textTheme.labelMedium),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Les informations soumises seront traitées par la cellule de cyberdéfense.',
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: colors.muted),
+                              ),
+                            ],
                           ),
-                        OutlinedButton.icon(
-                          onPressed: _pickImage,
-                          icon: const Icon(Icons.add_photo_alternate_outlined),
-                          label: const Text('Ajouter'),
                         ),
                       ],
                     ),
-                    if (reportState.errorMessage != null) ...<Widget>[
-                      const SizedBox(height: 12),
-                      Text(
-                        reportState.errorMessage!,
-                        style: TextStyle(color: Theme.of(context).colorScheme.error),
-                      ),
-                    ],
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: reportState.isSubmitting ? null : _submit,
-                        child: Text(reportState.isSubmitting ? 'Envoi en cours...' : 'Envoyer le signalement'),
+                  ),
+                  const SizedBox(height: 20),
+                  AppPanel(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: <Widget>[
+                            Text('CIBLE DÉTECTÉE', style: Theme.of(context).textTheme.labelMedium),
+                            Chip(label: Text(result.riskLevel == 'HIGH' ? 'SUSPECT' : 'À VÉRIFIER')),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        Divider(color: colors.outlineSoft),
+                        const SizedBox(height: 14),
+                        Text('Message / URL', style: Theme.of(context).textTheme.bodyMedium),
+                        const SizedBox(height: 8),
+                        Text(
+                          draft.url?.isNotEmpty == true ? draft.url! : draft.message,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                        const SizedBox(height: 18),
+                        Text('Catégorie présumée', style: Theme.of(context).textTheme.bodyMedium),
+                        const SizedBox(height: 8),
+                        Text(
+                          result.categoriesDetected.isEmpty
+                              ? 'Fraude mobile suspecte'
+                              : result.categoriesDetected.first.replaceAll('_', ' '),
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text('AVEZ-VOUS INTERAGI AVEC LA MENACE ?', style: Theme.of(context).textTheme.labelMedium),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: colors.surfaceHighest.withValues(alpha: 0.9),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: colors.outlineSoft),
+                    ),
+                    child: Row(
+                      children: List<Widget>.generate(
+                        3,
+                        (int index) {
+                          final bool selected = _interactionSelection == index;
+                          final String label = switch (index) {
+                            0 => 'Oui',
+                            1 => 'Non',
+                            _ => 'Sais pas',
+                          };
+                          return Expanded(
+                            child: GestureDetector(
+                              onTap: () => setState(() => _interactionSelection = index),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                decoration: BoxDecoration(
+                                  color: selected ? colors.surface : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: selected ? Border.all(color: colors.outline) : null,
+                                ),
+                                child: Text(
+                                  label,
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(context).textTheme.labelLarge,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text('PREUVES SUPPLÉMENTAIRES', style: Theme.of(context).textTheme.labelMedium),
+                  const SizedBox(height: 10),
+                  AppPanel(
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      children: <Widget>[
+                        OutlinedButton.icon(
+                          onPressed: _pickImage,
+                          icon: const Icon(Icons.cloud_upload_outlined),
+                          label: const Text('DÉPOSER UNE CAPTURE'),
+                        ),
+                        const SizedBox(height: 14),
+                        if (_files.isEmpty)
+                          Text(
+                            'PNG ou JPG. Les captures ajoutées pendant la vérification sont reprises automatiquement ici.',
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: colors.muted),
+                            textAlign: TextAlign.center,
+                          )
+                        else
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: <Widget>[
+                              for (final XFile file in _files)
+                                Chip(
+                                  label: Text(file.name),
+                                  onDeleted: () {
+                                    setState(() {
+                                      _files.remove(file);
+                                    });
+                                  },
+                                ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (reportState.errorMessage != null) ...<Widget>[
+                    const SizedBox(height: 14),
+                    Text(
+                      reportState.errorMessage!,
+                      style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    ),
                   ],
-                ),
+                  const SizedBox(height: 26),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: reportState.isSubmitting ? null : _submit,
+                      child: Text(reportState.isSubmitting ? 'ENVOI EN COURS...' : 'ENVOYER LE SIGNALEMENT'),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
