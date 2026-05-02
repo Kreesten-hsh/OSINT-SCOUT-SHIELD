@@ -21,24 +21,24 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   static const List<({String title, String body, IconData icon})> _pages =
       <({String title, String body, IconData icon})>[
     (
-      title: 'Détecter vite',
-      body: 'Analyse un SMS, un message WhatsApp ou une notification douteuse sans créer de compte.',
+      title: 'Veille locale',
+      body: 'Le mobile sert de bouclier citoyen pour surveiller les messages entrants les plus exposés.',
       icon: Icons.shield_outlined,
     ),
     (
-      title: 'Comprendre le risque',
-      body: 'Le score, les indices suspects, la catégorie et les conseils s affichent en quelques secondes.',
-      icon: Icons.radar_outlined,
+      title: 'Canaux chauds',
+      body: 'SMS, WhatsApp et Mobile Money restent les flux critiques que l application t aide à lire plus vite.',
+      icon: Icons.notifications_active_outlined,
     ),
     (
-      title: 'Signaler avec preuves',
-      body: 'Ajoute une URL et des captures pour transformer la vérification en signalement exploitable.',
-      icon: Icons.file_present_outlined,
+      title: 'Portail web dédié',
+      body: 'Le signalement manuel complet se fait sur le portail citoyen pour joindre des preuves et garder un parcours plus net.',
+      icon: Icons.open_in_browser_rounded,
     ),
     (
-      title: 'Partager et suivre',
-      body: 'Diffuse l alerte sur WhatsApp puis retrouve tes vérifications dans l historique mobile.',
-      icon: Icons.share_outlined,
+      title: 'Historique mobile',
+      body: 'Chaque installation conserve un journal pseudonyme des vérifications et signalements qui lui sont liés.',
+      icon: Icons.history_toggle_off_rounded,
     ),
   ];
 
@@ -47,7 +47,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     if (!mounted) {
       return;
     }
-    context.go('/verify');
+    context.go('/home');
   }
 
   @override
@@ -60,7 +60,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
         children: <Widget>[
           BrandBar(
             compact: true,
-            showSettingsShortcut: false,
             trailing: TextButton(
               onPressed: _finish,
               child: const Text('Passer'),
@@ -176,7 +175,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                           curve: Curves.easeOutCubic,
                         );
                       },
-                      child: Text(isLast ? 'COMMENCER' : 'SUIVANT'),
+                      child: Text(isLast ? 'ENTRER DANS LE BOUCLIER' : 'SUIVANT'),
                     ),
                   ),
                 ],

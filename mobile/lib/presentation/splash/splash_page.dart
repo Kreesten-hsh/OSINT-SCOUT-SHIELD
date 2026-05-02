@@ -29,7 +29,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
     if (!mounted) {
       return;
     }
-    context.go(onboardingCompleted ? '/verify' : '/onboarding');
+    context.go(onboardingCompleted ? '/home' : '/onboarding');
   }
 
   @override

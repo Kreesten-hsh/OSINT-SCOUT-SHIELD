@@ -3,33 +3,36 @@ import 'package:google_fonts/google_fonts.dart';
 
 ThemeData buildBeninCyberShieldTheme() {
   const BeninShieldColors palette = BeninShieldColors(
-    background: Color(0xFF090C14),
-    backgroundSoft: Color(0xFF111622),
-    surfaceLow: Color(0xFF121724),
-    surface: Color(0xFF171C29),
-    surfaceHigh: Color(0xFF1D2230),
-    surfaceHighest: Color(0xFF2A3040),
-    outline: Color(0xFF3A4153),
-    outlineSoft: Color(0xFF242B39),
-    primary: Color(0xFF4D8EFF),
-    primarySoft: Color(0xFFADC6FF),
-    onSurface: Color(0xFFE6E9F2),
-    muted: Color(0xFFAAB0C0),
-    success: Color(0xFF40D992),
-    warning: Color(0xFFFFA63D),
-    danger: Color(0xFFFFAAA3),
+    background: Color(0xFF06070C),
+    backgroundSoft: Color(0xFF10131A),
+    surfaceLow: Color(0xFF131722),
+    surface: Color(0xFF171B26),
+    surfaceHigh: Color(0xFF1C2130),
+    surfaceHighest: Color(0xFF262C3E),
+    outline: Color(0xFF383F53),
+    outlineSoft: Color(0xFF232839),
+    primary: Color(0xFFE4FF43),
+    primarySoft: Color(0xFFF4FF9A),
+    brand: Color(0xFF5B8CFF),
+    brandSoft: Color(0xFFAEC3FF),
+    onSurface: Color(0xFFF3F5FB),
+    muted: Color(0xFF9EA7BC),
+    success: Color(0xFFE4FF43),
+    warning: Color(0xFFFFA93A),
+    danger: Color(0xFFFF625C),
+    info: Color(0xFF76A4FF),
   );
 
   final ColorScheme colorScheme = const ColorScheme.dark(
     brightness: Brightness.dark,
-    primary: Color(0xFF4D8EFF),
-    onPrimary: Color(0xFF0B1220),
-    secondary: Color(0xFFADC6FF),
-    onSecondary: Color(0xFF111622),
-    surface: Color(0xFF171C29),
-    onSurface: Color(0xFFE6E9F2),
-    error: Color(0xFFFFB4AB),
-    onError: Color(0xFF690005),
+    primary: Color(0xFFE4FF43),
+    onPrimary: Color(0xFF111300),
+    secondary: Color(0xFF5B8CFF),
+    onSecondary: Color(0xFF0C1324),
+    surface: Color(0xFF171B26),
+    onSurface: Color(0xFFF3F5FB),
+    error: Color(0xFFFF625C),
+    onError: Color(0xFF2A0807),
   );
 
   final TextTheme baseTextTheme = ThemeData.dark(useMaterial3: true).textTheme;
@@ -42,70 +45,71 @@ ThemeData buildBeninCyberShieldTheme() {
     scaffoldBackgroundColor: palette.background,
     textTheme: manropeTextTheme.copyWith(
       headlineLarge: GoogleFonts.manrope(
-        fontSize: 32,
-        fontWeight: FontWeight.w700,
-        height: 1.1,
-        letterSpacing: -0.7,
+        fontSize: 26,
+        fontWeight: FontWeight.w800,
+        height: 1.05,
+        letterSpacing: -0.8,
         color: palette.onSurface,
       ),
       headlineMedium: GoogleFonts.manrope(
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: FontWeight.w700,
-        height: 1.16,
-        letterSpacing: -0.4,
+        height: 1.08,
+        letterSpacing: -0.45,
         color: palette.onSurface,
       ),
       headlineSmall: GoogleFonts.manrope(
-        fontSize: 20,
-        fontWeight: FontWeight.w600,
-        height: 1.2,
+        fontSize: 17,
+        fontWeight: FontWeight.w700,
+        height: 1.15,
         color: palette.onSurface,
       ),
       bodyLarge: GoogleFonts.manrope(
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: FontWeight.w500,
-        height: 1.45,
+        height: 1.42,
         color: palette.onSurface,
       ),
       bodyMedium: GoogleFonts.manrope(
-        fontSize: 14,
-        fontWeight: FontWeight.w400,
-        height: 1.5,
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+        height: 1.45,
         color: palette.muted,
       ),
       bodySmall: GoogleFonts.manrope(
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: FontWeight.w500,
-        height: 1.4,
+        height: 1.35,
         color: palette.muted,
       ),
       labelLarge: GoogleFonts.manrope(
-        fontSize: 15,
-        fontWeight: FontWeight.w600,
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+        height: 1.2,
         color: palette.onSurface,
       ),
       labelMedium: GoogleFonts.spaceGrotesk(
-        fontSize: 12,
+        fontSize: 10,
         fontWeight: FontWeight.w700,
-        letterSpacing: 1.8,
-        color: palette.primarySoft,
+        letterSpacing: 1.5,
+        color: palette.brandSoft,
       ),
       labelSmall: GoogleFonts.jetBrainsMono(
-        fontSize: 13,
+        fontSize: 11,
         fontWeight: FontWeight.w500,
-        letterSpacing: 0.2,
+        letterSpacing: 0.1,
         color: palette.muted,
       ),
     ),
     appBarTheme: AppBarTheme(
-      backgroundColor: palette.background.withValues(alpha: 0.96),
+      backgroundColor: palette.background,
       foregroundColor: palette.onSurface,
       elevation: 0,
       centerTitle: false,
       titleTextStyle: GoogleFonts.manrope(
-        fontSize: 18,
-        fontWeight: FontWeight.w700,
-        color: palette.primary,
+        fontSize: 16,
+        fontWeight: FontWeight.w800,
+        color: palette.brand,
       ),
     ),
     cardTheme: CardThemeData(
@@ -113,7 +117,7 @@ ThemeData buildBeninCyberShieldTheme() {
       elevation: 0,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(22),
         side: BorderSide(color: palette.outlineSoft),
       ),
     ),
@@ -124,60 +128,59 @@ ThemeData buildBeninCyberShieldTheme() {
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: palette.surfaceLow.withValues(alpha: 0.92),
+      fillColor: palette.surfaceLow.withValues(alpha: 0.96),
       hintStyle: GoogleFonts.manrope(
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: FontWeight.w400,
         fontStyle: FontStyle.italic,
-        color: palette.muted.withValues(alpha: 0.72),
+        color: palette.muted.withValues(alpha: 0.76),
       ),
       labelStyle: GoogleFonts.spaceGrotesk(
-        fontSize: 11,
+        fontSize: 10,
         fontWeight: FontWeight.w700,
-        letterSpacing: 1.5,
+        letterSpacing: 1.4,
         color: palette.muted,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(24),
         borderSide: BorderSide(color: palette.outlineSoft),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(28),
-        borderSide: BorderSide(color: palette.primary.withValues(alpha: 0.85), width: 1.25),
+        borderRadius: BorderRadius.circular(24),
+        borderSide: BorderSide(color: palette.brand.withValues(alpha: 0.9), width: 1.2),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(24),
         borderSide: BorderSide(color: palette.danger),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(24),
         borderSide: BorderSide(color: palette.danger),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
     ),
     chipTheme: ChipThemeData(
       backgroundColor: palette.surfaceLow,
-      selectedColor: palette.primary.withValues(alpha: 0.18),
+      selectedColor: palette.primary.withValues(alpha: 0.16),
       side: BorderSide(color: palette.outlineSoft),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
       labelStyle: GoogleFonts.jetBrainsMono(
-        fontSize: 13,
+        fontSize: 11,
         fontWeight: FontWeight.w500,
         color: palette.onSurface,
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
     ),
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: Colors.transparent,
-      indicatorColor: palette.primary.withValues(alpha: 0.16),
+      indicatorColor: Colors.transparent,
       height: 72,
       labelTextStyle: WidgetStateProperty.resolveWith<TextStyle?>(
         (Set<WidgetState> states) {
           final bool selected = states.contains(WidgetState.selected);
-          return GoogleFonts.spaceGrotesk(
+          return GoogleFonts.manrope(
             fontSize: 11,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.1,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
             color: selected ? palette.primary : palette.muted,
           );
         },
@@ -187,7 +190,7 @@ ThemeData buildBeninCyberShieldTheme() {
           final bool selected = states.contains(WidgetState.selected);
           return IconThemeData(
             color: selected ? palette.primary : palette.muted,
-            size: 24,
+            size: 22,
           );
         },
       ),
@@ -195,37 +198,37 @@ ThemeData buildBeninCyberShieldTheme() {
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         backgroundColor: palette.primary,
-        foregroundColor: const Color(0xFF0A1120),
-        minimumSize: const Size.fromHeight(60),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+        foregroundColor: const Color(0xFF111300),
+        minimumSize: const Size.fromHeight(52),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
         textStyle: GoogleFonts.spaceGrotesk(
-          fontSize: 16,
+          fontSize: 14,
           fontWeight: FontWeight.w700,
-          letterSpacing: 1.2,
+          letterSpacing: 0.8,
         ),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: palette.onSurface,
-        minimumSize: const Size.fromHeight(60),
+        minimumSize: const Size.fromHeight(50),
         side: BorderSide(color: palette.outline),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
         textStyle: GoogleFonts.manrope(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
         ),
       ),
     ),
     snackBarTheme: SnackBarThemeData(
       backgroundColor: palette.surfaceHighest,
       behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       contentTextStyle: GoogleFonts.manrope(
-        fontSize: 14,
-        fontWeight: FontWeight.w500,
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
         color: palette.onSurface,
       ),
     ),
@@ -238,6 +241,14 @@ ThemeData buildBeninCyberShieldTheme() {
         (Set<WidgetState> states) =>
             states.contains(WidgetState.selected) ? palette.primary : palette.outlineSoft,
       ),
+      trackOutlineColor: const WidgetStatePropertyAll<Color>(Colors.transparent),
+    ),
+    sliderTheme: SliderThemeData(
+      activeTrackColor: palette.primary,
+      inactiveTrackColor: palette.outlineSoft,
+      thumbColor: palette.primary,
+      overlayColor: palette.primary.withValues(alpha: 0.16),
+      trackHeight: 4,
     ),
     extensions: const <ThemeExtension<dynamic>>[palette],
   );
@@ -256,11 +267,14 @@ class BeninShieldColors extends ThemeExtension<BeninShieldColors> {
     required this.outlineSoft,
     required this.primary,
     required this.primarySoft,
+    required this.brand,
+    required this.brandSoft,
     required this.onSurface,
     required this.muted,
     required this.success,
     required this.warning,
     required this.danger,
+    required this.info,
   });
 
   final Color background;
@@ -273,11 +287,14 @@ class BeninShieldColors extends ThemeExtension<BeninShieldColors> {
   final Color outlineSoft;
   final Color primary;
   final Color primarySoft;
+  final Color brand;
+  final Color brandSoft;
   final Color onSurface;
   final Color muted;
   final Color success;
   final Color warning;
   final Color danger;
+  final Color info;
 
   @override
   BeninShieldColors copyWith({
@@ -291,11 +308,14 @@ class BeninShieldColors extends ThemeExtension<BeninShieldColors> {
     Color? outlineSoft,
     Color? primary,
     Color? primarySoft,
+    Color? brand,
+    Color? brandSoft,
     Color? onSurface,
     Color? muted,
     Color? success,
     Color? warning,
     Color? danger,
+    Color? info,
   }) {
     return BeninShieldColors(
       background: background ?? this.background,
@@ -308,11 +328,14 @@ class BeninShieldColors extends ThemeExtension<BeninShieldColors> {
       outlineSoft: outlineSoft ?? this.outlineSoft,
       primary: primary ?? this.primary,
       primarySoft: primarySoft ?? this.primarySoft,
+      brand: brand ?? this.brand,
+      brandSoft: brandSoft ?? this.brandSoft,
       onSurface: onSurface ?? this.onSurface,
       muted: muted ?? this.muted,
       success: success ?? this.success,
       warning: warning ?? this.warning,
       danger: danger ?? this.danger,
+      info: info ?? this.info,
     );
   }
 
@@ -332,11 +355,14 @@ class BeninShieldColors extends ThemeExtension<BeninShieldColors> {
       outlineSoft: Color.lerp(outlineSoft, other.outlineSoft, t) ?? outlineSoft,
       primary: Color.lerp(primary, other.primary, t) ?? primary,
       primarySoft: Color.lerp(primarySoft, other.primarySoft, t) ?? primarySoft,
+      brand: Color.lerp(brand, other.brand, t) ?? brand,
+      brandSoft: Color.lerp(brandSoft, other.brandSoft, t) ?? brandSoft,
       onSurface: Color.lerp(onSurface, other.onSurface, t) ?? onSurface,
       muted: Color.lerp(muted, other.muted, t) ?? muted,
       success: Color.lerp(success, other.success, t) ?? success,
       warning: Color.lerp(warning, other.warning, t) ?? warning,
       danger: Color.lerp(danger, other.danger, t) ?? danger,
+      info: Color.lerp(info, other.info, t) ?? info,
     );
   }
 }

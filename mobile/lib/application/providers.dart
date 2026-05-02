@@ -256,3 +256,69 @@ final historyProvider = FutureProvider<List<HistoryEntry>>((Ref ref) async {
         .toList(growable: false);
   }
 });
+
+class MobileShieldSettings {
+  const MobileShieldSettings({
+    this.monitorSms = true,
+    this.monitorWhatsapp = true,
+    this.monitorMessenger = true,
+    this.alertThreshold = 70,
+    this.alertMedium = true,
+  });
+
+  final bool monitorSms;
+  final bool monitorWhatsapp;
+  final bool monitorMessenger;
+  final int alertThreshold;
+  final bool alertMedium;
+
+  bool get hasActiveMonitoring => monitorSms || monitorWhatsapp || monitorMessenger;
+
+  int get activeChannelCount =>
+      <bool>[monitorSms, monitorWhatsapp, monitorMessenger].where((bool item) => item).length;
+
+  MobileShieldSettings copyWith({
+    bool? monitorSms,
+    bool? monitorWhatsapp,
+    bool? monitorMessenger,
+    int? alertThreshold,
+    bool? alertMedium,
+  }) {
+    return MobileShieldSettings(
+      monitorSms: monitorSms ?? this.monitorSms,
+      monitorWhatsapp: monitorWhatsapp ?? this.monitorWhatsapp,
+      monitorMessenger: monitorMessenger ?? this.monitorMessenger,
+      alertThreshold: alertThreshold ?? this.alertThreshold,
+      alertMedium: alertMedium ?? this.alertMedium,
+    );
+  }
+}
+
+class MobileShieldSettingsController extends StateNotifier<MobileShieldSettings> {
+  MobileShieldSettingsController() : super(const MobileShieldSettings());
+
+  void setSms(bool value) {
+    state = state.copyWith(monitorSms: value);
+  }
+
+  void setWhatsapp(bool value) {
+    state = state.copyWith(monitorWhatsapp: value);
+  }
+
+  void setMessenger(bool value) {
+    state = state.copyWith(monitorMessenger: value);
+  }
+
+  void setThreshold(double value) {
+    state = state.copyWith(alertThreshold: value.round());
+  }
+
+  void setAlertMedium(bool value) {
+    state = state.copyWith(alertMedium: value);
+  }
+}
+
+final mobileShieldSettingsProvider =
+    StateNotifierProvider<MobileShieldSettingsController, MobileShieldSettings>(
+  (Ref ref) => MobileShieldSettingsController(),
+);

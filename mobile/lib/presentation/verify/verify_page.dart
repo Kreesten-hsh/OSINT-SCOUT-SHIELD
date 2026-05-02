@@ -1,325 +1,530 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../application/providers.dart';
-import '../../core/constants/benin_departments.dart';
+import '../../core/config/app_config.dart';
 import '../../core/theme/app_theme.dart';
-import '../../data/models/bootstrap_data.dart';
+import '../../data/models/history_entry.dart';
 import '../shared/app_panel.dart';
 import '../shared/brand_bar.dart';
 
-class VerifyPage extends ConsumerStatefulWidget {
+class VerifyPage extends ConsumerWidget {
   const VerifyPage({super.key});
 
-  @override
-  ConsumerState<VerifyPage> createState() => _VerifyPageState();
-}
-
-class _VerifyPageState extends ConsumerState<VerifyPage> {
-  final TextEditingController _messageController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _urlController = TextEditingController();
-  final ImagePicker _imagePicker = ImagePicker();
-  final List<XFile> _attachments = <XFile>[];
-  String? _department;
-
-  static const List<({IconData icon, String title, String body})> _tips =
-      <({IconData icon, String title, String body})>[
-    (
-      icon: Icons.wallet_giftcard_outlined,
-      title: 'Gains inattendus',
-      body: 'Ignore les messages qui annoncent un gain ou un remboursement non attendu.',
-    ),
-    (
-      icon: Icons.timer_outlined,
-      title: 'Pression temporelle',
-      body: 'Les fraudeurs imposent souvent une urgence artificielle pour te faire agir vite.',
-    ),
-    (
-      icon: Icons.link_off_rounded,
-      title: 'Liens inconnus',
-      body: 'N ouvre jamais un lien douteux qui te demande de verifier un compte ou un paiement.',
-    ),
-  ];
-
-  @override
-  void dispose() {
-    _messageController.dispose();
-    _phoneController.dispose();
-    _urlController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _pickImage() async {
-    final XFile? file = await _imagePicker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
+  Future<void> _openCitizenPortal(BuildContext context) async {
+    final bool launched = await launchUrl(
+      Uri.parse(AppConfig.citizenPortalUrl),
+      mode: LaunchMode.externalApplication,
     );
-    if (file == null) {
+    if (launched || !context.mounted) {
       return;
     }
-    setState(() {
-      _attachments.add(file);
-    });
+    await Clipboard.setData(ClipboardData(text: AppConfig.citizenPortalUrl));
+    if (!context.mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Lien du portail copié.')),
+    );
   }
 
-  Future<void> _submit() async {
-    await ref.read(verifyControllerProvider.notifier).submit(
-          message: _messageController.text,
-          phone: _phoneController.text,
-          attachments: _attachments
-              .map(
-                (XFile file) => DraftAttachment(
-                  path: file.path,
-                  name: file.name,
-                ),
-              )
-              .toList(growable: false),
-          department: _department,
-          url: _urlController.text.trim().isEmpty ? null : _urlController.text.trim(),
-        );
-    final VerifyState state = ref.read(verifyControllerProvider);
-    if (!mounted || state.result == null) {
-      return;
+  int _severityWeight(String riskLevel) {
+    return switch (riskLevel) {
+      'HIGH' => 3,
+      'MEDIUM' => 2,
+      'LOW' => 1,
+      _ => 0,
+    };
+  }
+
+  String _ago(DateTime? value) {
+    if (value == null) {
+      return '—';
     }
-    context.go('/verify/result');
+    final Duration delta = DateTime.now().difference(value);
+    if (delta.inMinutes < 1) {
+      return 'maint.';
+    }
+    if (delta.inHours < 1) {
+      return '${delta.inMinutes} min';
+    }
+    if (delta.inDays < 1) {
+      return '${delta.inHours} h';
+    }
+    return '${delta.inDays} j';
+  }
+
+  Color _riskColor(BeninShieldColors colors, String riskLevel) {
+    return switch (riskLevel) {
+      'HIGH' => colors.danger,
+      'MEDIUM' => colors.warning,
+      _ => colors.info,
+    };
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final BeninShieldColors colors = context.shieldColors;
-    final VerifyState verifyState = ref.watch(verifyControllerProvider);
-    final AsyncValue<BootstrapData> bootstrapAsync = ref.watch(bootstrapProvider);
-    final List<String> departments = bootstrapAsync.valueOrNull?.departments ?? beninDepartments;
+    final MobileShieldSettings settings = ref.watch(mobileShieldSettingsProvider);
+    final AsyncValue<List<HistoryEntry>> historyAsync = ref.watch(historyProvider);
+
+    final List<HistoryEntry> sortedItems = (historyAsync.valueOrNull ?? const <HistoryEntry>[])
+        .toList(growable: false)
+      ..sort((HistoryEntry a, HistoryEntry b) {
+        final int severityCompare = _severityWeight(b.riskLevel).compareTo(_severityWeight(a.riskLevel));
+        if (severityCompare != 0) {
+          return severityCompare;
+        }
+        return b.createdAt.compareTo(a.createdAt);
+      });
+
+    final DateTime now = DateTime.now();
+    final int alertsToday = sortedItems
+        .where(
+          (HistoryEntry item) =>
+              item.createdAt.year == now.year &&
+              item.createdAt.month == now.month &&
+              item.createdAt.day == now.day &&
+              item.riskLevel != 'LOW',
+        )
+        .length;
+    final int analyzedCount = sortedItems.length;
+    final int threatCount = sortedItems.where((HistoryEntry item) => item.riskLevel == 'HIGH').length;
+    final DateTime? lastScan = sortedItems.isEmpty ? null : sortedItems.first.createdAt;
+    final List<HistoryEntry> recentItems = sortedItems.take(4).toList(growable: false);
 
     return Scaffold(
       body: Column(
         children: <Widget>[
-          const BrandBar(),
+          BrandBar(
+            trailing: _StatusPill(
+              active: settings.hasActiveMonitoring,
+              label: settings.hasActiveMonitoring ? 'Actif' : 'Pause',
+            ),
+          ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 132),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
+                  const SizedBox(height: 6),
                   Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: colors.surfaceLow,
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: colors.outlineSoft),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Container(
-                            width: 10,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: colors.success,
-                              shape: BoxShape.circle,
-                              boxShadow: <BoxShadow>[
-                                BoxShadow(
-                                  color: colors.success.withValues(alpha: 0.45),
-                                  blurRadius: 10,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            'PROTECTION ACTIVE',
-                            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                  color: colors.onSurface,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  AppPanel(
-                    padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
-                    glowColor: colors.primary,
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
+                        _ShieldOrb(active: settings.hasActiveMonitoring),
+                        const SizedBox(height: 16),
                         Text(
-                          'Vous avez reçu un message suspect ?',
-                          style: Theme.of(context).textTheme.headlineSmall,
+                          '$alertsToday',
+                          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                                fontSize: 52,
+                                color: colors.onSurface,
+                              ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 4),
                         Text(
-                          'Colle le texte, le numéro, un département et des preuves facultatives pour déclencher une analyse immédiate.',
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: colors.muted),
+                          alertsToday > 1 ? 'alertes aujourd’hui' : 'alerte aujourd’hui',
+                          style: Theme.of(context).textTheme.bodyMedium,
                         ),
-                        const SizedBox(height: 24),
-                        Text('CONTENU DU MESSAGE', style: Theme.of(context).textTheme.labelMedium),
-                        const SizedBox(height: 10),
-                        TextField(
-                          key: const Key('message-input'),
-                          controller: _messageController,
-                          minLines: 5,
-                          maxLines: 8,
-                          decoration: const InputDecoration(
-                            hintText: 'Ex: Cliquez ici pour réclamer votre gain MTN de 50 000 FCFA...',
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        Text('NUMÉRO DE L EXPÉDITEUR', style: Theme.of(context).textTheme.labelMedium),
-                        const SizedBox(height: 10),
-                        TextField(
-                          key: const Key('phone-input'),
-                          controller: _phoneController,
-                          keyboardType: TextInputType.phone,
-                          decoration: InputDecoration(
-                            hintText: '+229 00 00 00 00',
-                            prefixIcon: Padding(
-                              padding: const EdgeInsets.only(left: 18, right: 10),
-                              child: Center(
-                                widthFactor: 1,
-                                child: Text(
-                                  '🇧🇯',
-                                  style: Theme.of(context).textTheme.bodyLarge,
-                                ),
-                              ),
-                            ),
-                            suffixIcon: Icon(Icons.contact_phone_outlined, color: colors.muted),
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        Text('DÉPARTEMENT', style: Theme.of(context).textTheme.labelMedium),
-                        const SizedBox(height: 10),
-                        DropdownButtonFormField<String>(
-                          initialValue: _department,
-                          dropdownColor: colors.surfaceHighest,
-                          items: departments
-                              .map(
-                                (String item) => DropdownMenuItem<String>(
-                                  value: item,
-                                  child: Text(item),
-                                ),
-                              )
-                              .toList(growable: false),
-                          onChanged: (String? value) {
-                            setState(() {
-                              _department = value;
-                            });
-                          },
-                          decoration: const InputDecoration(
-                            hintText: 'Sélectionne un département',
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        Text('URL SUSPECTE', style: Theme.of(context).textTheme.labelMedium),
-                        const SizedBox(height: 10),
-                        TextField(
-                          controller: _urlController,
-                          decoration: const InputDecoration(
-                            hintText: 'https://...',
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        Text('PREUVES COMPLÉMENTAIRES', style: Theme.of(context).textTheme.labelMedium),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: <Widget>[
-                            for (final XFile file in _attachments)
-                              Chip(
-                                label: Text(file.name),
-                                onDeleted: () {
-                                  setState(() {
-                                    _attachments.remove(file);
-                                  });
-                                },
-                              ),
-                            OutlinedButton.icon(
-                              onPressed: _pickImage,
-                              icon: const Icon(Icons.add_photo_alternate_outlined),
-                              label: const Text('Ajouter une capture'),
-                            ),
-                          ],
-                        ),
-                        if (verifyState.errorMessage != null) ...<Widget>[
-                          const SizedBox(height: 14),
-                          Text(
-                            verifyState.errorMessage!,
-                            style: TextStyle(color: Theme.of(context).colorScheme.error),
-                          ),
-                        ],
-                        const SizedBox(height: 24),
-                        SizedBox(
-                          width: double.infinity,
-                          child: FilledButton.icon(
-                            onPressed: verifyState.isSubmitting ? null : _submit,
-                            icon: verifyState.isSubmitting
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  )
-                                : const Icon(Icons.arrow_forward_rounded),
-                            label: Text(
-                              verifyState.isSubmitting
-                                  ? 'ANALYSE EN COURS...'
-                                  : 'ANALYSER LE MESSAGE',
-                            ),
-                          ),
+                        const SizedBox(height: 6),
+                        Text(
+                          settings.hasActiveMonitoring
+                              ? 'Vous êtes protégé'
+                              : 'Activez vos canaux de surveillance',
+                          style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 22),
                   Row(
                     children: <Widget>[
-                      Icon(Icons.lightbulb_outline_rounded, color: colors.primarySoft),
+                      Expanded(
+                        child: _MetricCard(
+                          label: 'Analysés',
+                          value: '$analyzedCount',
+                          caption: 'messages',
+                        ),
+                      ),
                       const SizedBox(width: 10),
-                      Text('Conseils anti-fraude', style: Theme.of(context).textTheme.headlineSmall),
+                      Expanded(
+                        child: _MetricCard(
+                          label: 'Menaces',
+                          value: '$threatCount',
+                          caption: 'score élevé',
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _MetricCard(
+                          label: 'Dernier',
+                          value: _ago(lastScan),
+                          caption: 'scan',
+                        ),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  for (final ({IconData icon, String title, String body}) tip in _tips) ...<Widget>[
-                    AppPanel(
-                      padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: colors.surfaceHighest.withValues(alpha: 0.65),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: colors.outlineSoft),
+                  const SizedBox(height: 18),
+                  AppPanel(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                    radius: 20,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Row(
+                          children: <Widget>[
+                            Text('Apps surveillées', style: Theme.of(context).textTheme.labelLarge),
+                            const Spacer(),
+                            Text(
+                              '${settings.activeChannelCount}/3',
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(color: colors.primary),
                             ),
-                            child: Icon(tip.icon, color: colors.muted),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Text(tip.title, style: Theme.of(context).textTheme.labelLarge),
-                                const SizedBox(height: 8),
-                                Text(tip.body, style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: colors.muted)),
-                              ],
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: <Widget>[
+                            _WatchChip(
+                              label: 'SMS',
+                              active: settings.monitorSms,
+                              icon: Icons.sms_rounded,
                             ),
-                          ),
-                        ],
-                      ),
+                            _WatchChip(
+                              label: 'WhatsApp',
+                              active: settings.monitorWhatsapp,
+                              icon: Icons.forum_rounded,
+                            ),
+                            _WatchChip(
+                              label: 'Messenger',
+                              active: settings.monitorMessenger,
+                              icon: Icons.chat_bubble_rounded,
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 14),
-                  ],
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: <Widget>[
+                      Text('Récents', style: Theme.of(context).textTheme.labelLarge),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () => _openCitizenPortal(context),
+                        child: const Text('Signaler manuellement'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (historyAsync.isLoading)
+                    const _RecentListSkeleton()
+                  else if (recentItems.isEmpty)
+                    AppPanel(
+                      padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+                      radius: 20,
+                      child: Text(
+                        'Aucune activité récente. La sentinelle commencera à remplir ce journal dès les premiers messages analysés.',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    )
+                  else
+                    Column(
+                      children: recentItems
+                          .map(
+                            (HistoryEntry item) => Padding(
+                              padding: EdgeInsets.only(bottom: item == recentItems.last ? 0 : 10),
+                              child: _RecentAlertCard(
+                                item: item,
+                                accent: _riskColor(colors, item.riskLevel),
+                              ),
+                            ),
+                          )
+                          .toList(growable: false),
+                    ),
                 ],
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({
+    required this.active,
+    required this.label,
+  });
+
+  final bool active;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final BeninShieldColors colors = context.shieldColors;
+    final Color tone = active ? colors.primary : colors.warning;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: tone.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: tone.withValues(alpha: 0.24)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: tone,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label.toUpperCase(),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: tone,
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ShieldOrb extends StatelessWidget {
+  const _ShieldOrb({
+    required this.active,
+  });
+
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    final BeninShieldColors colors = context.shieldColors;
+    final Color tone = active ? colors.primary : colors.warning;
+    return Container(
+      width: 124,
+      height: 124,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: <Color>[
+            tone.withValues(alpha: 0.24),
+            tone.withValues(alpha: 0.08),
+            colors.surfaceLow,
+          ],
+        ),
+        border: Border.all(color: colors.outlineSoft),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: tone.withValues(alpha: 0.14),
+            blurRadius: 30,
+            spreadRadius: 4,
+          ),
+        ],
+      ),
+      child: Center(
+        child: Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: colors.background.withValues(alpha: 0.54),
+            shape: BoxShape.circle,
+            border: Border.all(color: tone.withValues(alpha: 0.2)),
+          ),
+          child: Icon(
+            active ? Icons.shield_outlined : Icons.shield_moon_outlined,
+            color: tone,
+            size: 26,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MetricCard extends StatelessWidget {
+  const _MetricCard({
+    required this.label,
+    required this.value,
+    required this.caption,
+  });
+
+  final String label;
+  final String value;
+  final String caption;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppPanel(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+      radius: 18,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(label.toUpperCase(), style: Theme.of(context).textTheme.labelMedium),
+          const SizedBox(height: 10),
+          Text(value, style: Theme.of(context).textTheme.headlineMedium),
+          const SizedBox(height: 2),
+          Text(caption, style: Theme.of(context).textTheme.bodySmall),
+        ],
+      ),
+    );
+  }
+}
+
+class _WatchChip extends StatelessWidget {
+  const _WatchChip({
+    required this.label,
+    required this.active,
+    required this.icon,
+  });
+
+  final String label;
+  final bool active;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final BeninShieldColors colors = context.shieldColors;
+    final Color tone = active ? colors.primary : colors.outline;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: active ? colors.primary.withValues(alpha: 0.08) : colors.surfaceLow,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: active ? colors.primary.withValues(alpha: 0.2) : colors.outlineSoft),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(icon, size: 15, color: tone),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: active ? colors.primary : colors.muted,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecentAlertCard extends StatelessWidget {
+  const _RecentAlertCard({
+    required this.item,
+    required this.accent,
+  });
+
+  final HistoryEntry item;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final BeninShieldColors colors = context.shieldColors;
+    final bool isElevated = item.riskLevel == 'HIGH' || item.riskLevel == 'MEDIUM';
+    return AppPanel(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      radius: 18,
+      child: Row(
+        children: <Widget>[
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.14),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              item.type == HistoryEntryType.report ? Icons.flag_rounded : Icons.notifications_active_rounded,
+              color: accent,
+              size: 15,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  item.maskedPhone,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  item.primaryCategory ?? 'Message surveillé',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  isElevated ? '${item.riskScore} · ${item.riskLevel}' : '${item.riskScore}',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: accent,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                DateFormat('HH:mm').format(item.createdAt),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecentListSkeleton extends StatelessWidget {
+  const _RecentListSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final BeninShieldColors colors = context.shieldColors;
+    return Column(
+      children: List<Widget>.generate(
+        3,
+        (int index) => Padding(
+          padding: EdgeInsets.only(bottom: index == 2 ? 0 : 10),
+          child: Container(
+            height: 70,
+            decoration: BoxDecoration(
+              color: colors.surfaceLow,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: colors.outlineSoft),
+            ),
+          ),
+        ),
       ),
     );
   }

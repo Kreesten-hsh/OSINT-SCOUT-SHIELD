@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -12,9 +14,9 @@ class RootShell extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
 
   static const List<(IconData, String)> _destinations = <(IconData, String)>[
-    (Icons.shield_outlined, 'Vérifier'),
-    (Icons.history_toggle_off_rounded, 'Historique'),
-    (Icons.info_outline_rounded, 'À propos'),
+    (Icons.home_rounded, 'Accueil'),
+    (Icons.history_rounded, 'Historique'),
+    (Icons.tune_rounded, 'Paramètres'),
   ];
 
   @override
@@ -24,14 +26,13 @@ class RootShell extends StatelessWidget {
       extendBody: true,
       body: DecoratedBox(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
+          gradient: RadialGradient(
             colors: <Color>[
-              colors.background,
               colors.backgroundSoft,
               colors.background,
             ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            radius: 1.35,
+            center: const Alignment(0, -0.9),
           ),
         ),
         child: SafeArea(
@@ -42,37 +43,102 @@ class RootShell extends StatelessWidget {
       bottomNavigationBar: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: colors.surfaceLow.withValues(alpha: 0.96),
-              borderRadius: BorderRadius.circular(32),
-              border: Border.all(color: colors.outlineSoft),
-              boxShadow: <BoxShadow>[
-                BoxShadow(
-                  color: colors.background.withValues(alpha: 0.45),
-                  blurRadius: 24,
-                  offset: const Offset(0, 12),
-                ),
-              ],
-            ),
-            child: NavigationBar(
-              selectedIndex: navigationShell.currentIndex,
-              onDestinationSelected: (int index) {
-                navigationShell.goBranch(
-                  index,
-                  initialLocation: index == navigationShell.currentIndex,
-                );
-              },
-              destinations: _destinations
-                  .map(
-                    ((IconData, String) item) => NavigationDestination(
-                      icon: Icon(item.$1),
-                      label: item.$2,
+          padding: const EdgeInsets.fromLTRB(18, 8, 18, 16),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                decoration: BoxDecoration(
+                  color: colors.surfaceLow.withValues(alpha: 0.76),
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(color: colors.outlineSoft.withValues(alpha: 0.95)),
+                  boxShadow: <BoxShadow>[
+                    BoxShadow(
+                      color: colors.background.withValues(alpha: 0.36),
+                      blurRadius: 26,
+                      offset: const Offset(0, 10),
                     ),
-                  )
-                  .toList(growable: false),
+                  ],
+                ),
+                child: Row(
+                  children: List<Widget>.generate(_destinations.length, (int index) {
+                    final (IconData, String) item = _destinations[index];
+                    final bool selected = navigationShell.currentIndex == index;
+                    return Expanded(
+                      child: _GlassNavItem(
+                        icon: item.$1,
+                        label: item.$2,
+                        selected: selected,
+                        onTap: () {
+                          navigationShell.goBranch(
+                            index,
+                            initialLocation: index == navigationShell.currentIndex,
+                          );
+                        },
+                      ),
+                    );
+                  }),
+                ),
+              ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GlassNavItem extends StatelessWidget {
+  const _GlassNavItem({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final BeninShieldColors colors = context.shieldColors;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          decoration: BoxDecoration(
+            color: selected ? colors.primary.withValues(alpha: 0.12) : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+            border: selected
+                ? Border.all(color: colors.primary.withValues(alpha: 0.28))
+                : Border.all(color: Colors.transparent),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(
+                icon,
+                size: 20,
+                color: selected ? colors.primary : colors.muted,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: selected ? colors.primary : colors.muted,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    ),
+              ),
+            ],
           ),
         ),
       ),

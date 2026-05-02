@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../application/providers.dart';
+import '../../core/config/app_config.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/history_entry.dart';
 import '../shared/app_panel.dart';
 import '../shared/brand_bar.dart';
+
+enum _HistoryFilter { all, high, medium, low }
 
 class HistoryPage extends ConsumerStatefulWidget {
   const HistoryPage({super.key});
@@ -16,14 +21,163 @@ class HistoryPage extends ConsumerStatefulWidget {
 }
 
 class _HistoryPageState extends ConsumerState<HistoryPage> {
-  HistoryEntryType? _filter;
+  _HistoryFilter _filter = _HistoryFilter.all;
 
-  Color _accentForRisk(BeninShieldColors colors, String riskLevel) {
+  int _severityWeight(String riskLevel) {
+    return switch (riskLevel) {
+      'HIGH' => 3,
+      'MEDIUM' => 2,
+      'LOW' => 1,
+      _ => 0,
+    };
+  }
+
+  Color _riskColor(BeninShieldColors colors, String riskLevel) {
     return switch (riskLevel) {
       'HIGH' => colors.danger,
       'MEDIUM' => colors.warning,
-      _ => colors.primarySoft,
+      _ => colors.info,
     };
+  }
+
+  String _displayFilterLabel(_HistoryFilter filter) {
+    return switch (filter) {
+      _HistoryFilter.all => 'Tout',
+      _HistoryFilter.high => 'Élevé',
+      _HistoryFilter.medium => 'Moyen',
+      _HistoryFilter.low => 'Faible',
+    };
+  }
+
+  bool _matchesFilter(HistoryEntry item) {
+    return switch (_filter) {
+      _HistoryFilter.all => true,
+      _HistoryFilter.high => item.riskLevel == 'HIGH',
+      _HistoryFilter.medium => item.riskLevel == 'MEDIUM',
+      _HistoryFilter.low => item.riskLevel == 'LOW',
+    };
+  }
+
+  Future<void> _openPortal() async {
+    await launchUrl(
+      Uri.parse(AppConfig.citizenPortalUrl),
+      mode: LaunchMode.externalApplication,
+    );
+  }
+
+  Future<void> _showDetails(
+    BuildContext context,
+    HistoryEntry item,
+  ) async {
+    final BeninShieldColors colors = context.shieldColors;
+    final Color accent = _riskColor(colors, item.riskLevel);
+    await showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      backgroundColor: colors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (BuildContext context) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      item.type == HistoryEntryType.report
+                          ? Icons.flag_rounded
+                          : Icons.notifications_active_rounded,
+                      color: accent,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      item.maskedPhone,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      item.riskLevel,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: accent,
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Text(
+                item.primaryCategory ?? 'Aucune catégorie spécifique',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                DateFormat('dd MMM yyyy · HH:mm').format(item.createdAt),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 18),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: <Widget>[
+                  _DetailPill(label: 'Score ${item.riskScore}/100'),
+                  if (item.publicReference != null)
+                    _DetailPill(label: item.publicReference!),
+                  if (item.status != null) _DetailPill(label: item.status!),
+                ],
+              ),
+              const SizedBox(height: 22),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _openPortal,
+                  icon: const Icon(Icons.open_in_new_rounded),
+                  label: const Text('Ouvrir le portail BCS'),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    await Clipboard.setData(ClipboardData(text: item.maskedPhone));
+                    if (!context.mounted) {
+                      return;
+                    }
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Référence copiée.')),
+                    );
+                  },
+                  icon: const Icon(Icons.copy_rounded),
+                  label: const Text('Copier le repère'),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -37,58 +191,66 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
           const BrandBar(),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 132),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text('Historique', style: Theme.of(context).textTheme.headlineLarge),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   Text(
-                    'Journal des analyses et signalements liés à ton installation mobile.',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: colors.muted),
+                    'Registre des alertes et vérifications archivées sur ce mobile.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: colors.muted),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 16),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
-                      children: <Widget>[
-                        ChoiceChip(
-                          label: const Text('Tous'),
-                          selected: _filter == null,
-                          onSelected: (_) => setState(() => _filter = null),
-                        ),
-                        const SizedBox(width: 10),
-                        ChoiceChip(
-                          label: const Text('Signalés'),
-                          selected: _filter == HistoryEntryType.report,
-                          onSelected: (_) => setState(() => _filter = HistoryEntryType.report),
-                        ),
-                        const SizedBox(width: 10),
-                        ChoiceChip(
-                          label: const Text('Vérifiés'),
-                          selected: _filter == HistoryEntryType.verify,
-                          onSelected: (_) => setState(() => _filter = HistoryEntryType.verify),
-                        ),
-                      ],
+                      children: _HistoryFilter.values
+                          .map(
+                            (_HistoryFilter filter) => Padding(
+                              padding: EdgeInsets.only(
+                                right: filter == _HistoryFilter.values.last ? 0 : 8,
+                              ),
+                              child: ChoiceChip(
+                                label: Text(_displayFilterLabel(filter)),
+                                selected: _filter == filter,
+                                onSelected: (_) => setState(() => _filter = filter),
+                              ),
+                            ),
+                          )
+                          .toList(growable: false),
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 16),
                   Expanded(
                     child: historyAsync.when(
                       data: (List<HistoryEntry> items) {
-                        final List<HistoryEntry> filtered = _filter == null
-                            ? items
-                            : items.where((HistoryEntry item) => item.type == _filter).toList(growable: false);
+                        final List<HistoryEntry> filtered = items
+                            .where(_matchesFilter)
+                            .toList(growable: false)
+                          ..sort((HistoryEntry a, HistoryEntry b) {
+                            final int severityCompare =
+                                _severityWeight(b.riskLevel).compareTo(_severityWeight(a.riskLevel));
+                            if (severityCompare != 0) {
+                              return severityCompare;
+                            }
+                            return b.createdAt.compareTo(a.createdAt);
+                          });
+
                         if (filtered.isEmpty) {
                           return AppPanel(
+                            padding: const EdgeInsets.all(18),
+                            radius: 20,
                             child: Center(
                               child: Text(
-                                'Aucun élément dans l historique mobile.',
+                                'Aucune entrée pour le filtre ${_displayFilterLabel(_filter).toLowerCase()}.',
                                 style: Theme.of(context).textTheme.bodyLarge,
+                                textAlign: TextAlign.center,
                               ),
                             ),
                           );
                         }
+
                         return RefreshIndicator(
                           onRefresh: () async {
                             ref.invalidate(historyProvider);
@@ -96,122 +258,110 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                           },
                           child: ListView.separated(
                             itemCount: filtered.length,
-                            separatorBuilder: (_, _) => const SizedBox(height: 14),
+                            separatorBuilder: (_, _) => const SizedBox(height: 10),
                             itemBuilder: (BuildContext context, int index) {
                               final HistoryEntry item = filtered[index];
-                              final Color accent = _accentForRisk(colors, item.riskLevel);
-                              return Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(28),
-                                  boxShadow: <BoxShadow>[
-                                    BoxShadow(
-                                      color: colors.background.withValues(alpha: 0.36),
-                                      blurRadius: 22,
-                                      offset: const Offset(0, 12),
-                                    ),
-                                  ],
-                                ),
-                                child: Stack(
-                                  children: <Widget>[
-                                    Positioned.fill(
-                                      child: Align(
-                                        alignment: Alignment.centerLeft,
-                                        child: Container(
-                                          width: 6,
-                                          margin: const EdgeInsets.symmetric(vertical: 16),
+                              final Color accent = _riskColor(colors, item.riskLevel);
+                              return Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(18),
+                                  onTap: () => _showDetails(context, item),
+                                  child: AppPanel(
+                                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                                    radius: 18,
+                                    child: Row(
+                                      children: <Widget>[
+                                        Container(
+                                          width: 30,
+                                          height: 30,
                                           decoration: BoxDecoration(
+                                            color: accent.withValues(alpha: 0.12),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            item.type == HistoryEntryType.report
+                                                ? Icons.flag_rounded
+                                                : Icons.notifications_active_rounded,
                                             color: accent,
-                                            borderRadius: BorderRadius.circular(999),
+                                            size: 16,
                                           ),
                                         ),
-                                      ),
-                                    ),
-                                    AppPanel(
-                                      padding: const EdgeInsets.fromLTRB(24, 22, 20, 20),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: <Widget>[
-                                          Row(
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: <Widget>[
-                                              Container(
-                                                width: 56,
-                                                height: 56,
-                                                decoration: BoxDecoration(
-                                                  shape: BoxShape.circle,
-                                                  color: accent.withValues(alpha: 0.12),
-                                                  border: Border.all(color: accent.withValues(alpha: 0.35)),
-                                                ),
-                                                child: Icon(
-                                                  item.type == HistoryEntryType.report
-                                                      ? Icons.warning_amber_rounded
-                                                      : Icons.verified_outlined,
-                                                  color: accent,
-                                                ),
+                                              Text(
+                                                item.maskedPhone,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: Theme.of(context).textTheme.labelLarge,
                                               ),
-                                              const SizedBox(width: 16),
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: <Widget>[
-                                                    Text(
-                                                      item.maskedPhone,
-                                                      style: Theme.of(context).textTheme.headlineSmall,
-                                                    ),
-                                                    const SizedBox(height: 4),
-                                                    Text(
-                                                      DateFormat('dd MMM yyyy, HH:mm').format(item.createdAt),
-                                                      style: Theme.of(context).textTheme.labelSmall,
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              Chip(
-                                                label: Text(
-                                                  item.type == HistoryEntryType.report ? 'Signalé' : 'Vérifié',
-                                                ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                item.primaryCategory ?? 'Signal mobile',
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: Theme.of(context).textTheme.bodySmall,
                                               ),
                                             ],
                                           ),
-                                          const SizedBox(height: 18),
-                                          Divider(color: colors.outlineSoft),
-                                          const SizedBox(height: 16),
-                                          Wrap(
-                                            spacing: 18,
-                                            runSpacing: 10,
-                                            children: <Widget>[
-                                              if (item.primaryCategory != null)
-                                                _HistoryMeta(
-                                                  icon: Icons.policy_outlined,
-                                                  label: item.primaryCategory!,
-                                                ),
-                                              _HistoryMeta(
-                                                icon: Icons.speed_rounded,
-                                                label: 'Score ${item.riskScore}/100',
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.end,
+                                          children: <Widget>[
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: accent.withValues(alpha: 0.12),
+                                                borderRadius: BorderRadius.circular(999),
                                               ),
-                                              if (item.publicReference != null)
-                                                _HistoryMeta(
-                                                  icon: Icons.badge_outlined,
-                                                  label: item.publicReference!,
-                                                ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
+                                              child: Text(
+                                                '${item.riskScore}',
+                                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                                      color: accent,
+                                                      fontWeight: FontWeight.w700,
+                                                    ),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              DateFormat('HH:mm').format(item.createdAt),
+                                              style: Theme.of(context).textTheme.bodySmall,
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
-                                  ],
+                                  ),
                                 ),
                               );
                             },
                           ),
                         );
                       },
-                      loading: () => const Center(child: CircularProgressIndicator()),
+                      loading: () => ListView.separated(
+                        itemCount: 5,
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
+                        itemBuilder: (_, __) => Container(
+                          height: 68,
+                          decoration: BoxDecoration(
+                            color: colors.surfaceLow,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(color: colors.outlineSoft),
+                          ),
+                        ),
+                      ),
                       error: (_, _) => AppPanel(
+                        padding: const EdgeInsets.all(18),
+                        radius: 20,
                         child: Center(
                           child: Text(
-                            'Impossible de charger l historique mobile.',
+                            'Impossible de charger l’historique mobile.',
                             style: Theme.of(context).textTheme.bodyLarge,
+                            textAlign: TextAlign.center,
                           ),
                         ),
                       ),
@@ -227,29 +377,27 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
   }
 }
 
-class _HistoryMeta extends StatelessWidget {
-  const _HistoryMeta({
-    required this.icon,
+class _DetailPill extends StatelessWidget {
+  const _DetailPill({
     required this.label,
   });
 
-  final IconData icon;
   final String label;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Icon(icon, size: 18, color: Theme.of(context).textTheme.bodyMedium?.color),
-        const SizedBox(width: 8),
-        Flexible(
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.labelLarge,
-          ),
-        ),
-      ],
+    final BeninShieldColors colors = context.shieldColors;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: colors.surfaceLow,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: colors.outlineSoft),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: colors.onSurface),
+      ),
     );
   }
 }
