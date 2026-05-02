@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../application/providers.dart';
@@ -25,7 +27,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
     if (!mounted) {
       return;
     }
-    await Future<void>.delayed(const Duration(milliseconds: 1200));
+    await Future<void>.delayed(const Duration(milliseconds: 1100));
     if (!mounted) {
       return;
     }
@@ -43,7 +45,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
               colors.backgroundSoft,
               colors.background,
             ],
-            radius: 1.05,
+            radius: 1.08,
           ),
         ),
         child: Center(
@@ -52,74 +54,61 @@ class _SplashPageState extends ConsumerState<SplashPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                SizedBox(
-                  width: 228,
-                  height: 228,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: <Widget>[
-                      Container(
-                        width: 228,
-                        height: 228,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: colors.primary.withValues(alpha: 0.42), width: 3),
-                        ),
-                      ),
-                      Container(
-                        width: 154,
-                        height: 154,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: colors.primary.withValues(alpha: 0.6), width: 2),
-                          boxShadow: <BoxShadow>[
-                            BoxShadow(
-                              color: colors.primary.withValues(alpha: 0.12),
-                              blurRadius: 28,
-                              spreadRadius: 6,
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        width: 96,
-                        height: 96,
-                        decoration: BoxDecoration(
-                          color: colors.surfaceLow.withValues(alpha: 0.96),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: colors.outlineSoft),
-                        ),
-                        child: Icon(Icons.shield_outlined, size: 44, color: colors.primarySoft),
+                Container(
+                  width: 198,
+                  height: 198,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: <Color>[
+                        colors.primary.withValues(alpha: 0.2),
+                        colors.brand.withValues(alpha: 0.08),
+                        colors.background,
+                      ],
+                    ),
+                    border: Border.all(color: colors.outlineSoft),
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                        color: colors.brand.withValues(alpha: 0.14),
+                        blurRadius: 34,
+                        spreadRadius: 6,
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 36),
+                  child: Center(
+                    child: SvgPicture.asset(
+                      'assets/brand/bcs_mark.svg',
+                      width: 110,
+                      height: 110,
+                    ),
+                  ),
+                ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack).fadeIn(),
+                const SizedBox(height: 32),
                 Text(
                   'BENIN CYBER\nSHIELD',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                        fontSize: 42,
-                        letterSpacing: 1.8,
-                        height: 1.14,
+                        fontSize: 38,
+                        letterSpacing: 1.1,
+                        height: 1.08,
                       ),
-                ),
-                const SizedBox(height: 18),
+                ).animate().fadeIn(duration: 360.ms).slideY(begin: 0.08, end: 0),
+                const SizedBox(height: 14),
                 Text(
-                  'Protéger · Détecter · Certifier',
+                  'Sentinelle mobile contre la fraude et les faux messages.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: colors.muted),
-                ),
-                const SizedBox(height: 42),
+                ).animate().fadeIn(delay: 100.ms, duration: 360.ms),
+                const SizedBox(height: 32),
                 SizedBox(
-                  width: 30,
-                  height: 30,
+                  width: 26,
+                  height: 26,
                   child: CircularProgressIndicator(
                     strokeWidth: 2.4,
                     color: colors.primary,
                   ),
                 ),
-                const SizedBox(height: 64),
+                const SizedBox(height: 46),
                 Text(
                   'v1.0.0',
                   style: Theme.of(context).textTheme.labelSmall,

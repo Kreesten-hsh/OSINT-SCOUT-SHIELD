@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:material_symbols_icons/symbols.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../application/providers.dart';
@@ -20,8 +23,29 @@ class HistoryPage extends ConsumerStatefulWidget {
   ConsumerState<HistoryPage> createState() => _HistoryPageState();
 }
 
-class _HistoryPageState extends ConsumerState<HistoryPage> {
+class _HistoryPageState extends ConsumerState<HistoryPage> with WidgetsBindingObserver {
   _HistoryFilter _filter = _HistoryFilter.all;
+  String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) {
+      return;
+    }
+    ref.invalidate(historyProvider);
+  }
 
   int _severityWeight(String riskLevel) {
     return switch (riskLevel) {
@@ -43,7 +67,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
   String _displayFilterLabel(_HistoryFilter filter) {
     return switch (filter) {
       _HistoryFilter.all => 'Tout',
-      _HistoryFilter.high => 'Élevé',
+      _HistoryFilter.high => 'Eleve',
       _HistoryFilter.medium => 'Moyen',
       _HistoryFilter.low => 'Faible',
     };
@@ -58,6 +82,19 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     };
   }
 
+  bool _matchesQuery(HistoryEntry item) {
+    if (_query.trim().isEmpty) {
+      return true;
+    }
+    final String haystack = <String>[
+      item.maskedPhone,
+      item.primaryCategory ?? '',
+      item.publicReference ?? '',
+      item.status ?? '',
+    ].join(' ').toLowerCase();
+    return haystack.contains(_query.trim().toLowerCase());
+  }
+
   Future<void> _openPortal() async {
     await launchUrl(
       Uri.parse(AppConfig.citizenPortalUrl),
@@ -65,10 +102,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     );
   }
 
-  Future<void> _showDetails(
-    BuildContext context,
-    HistoryEntry item,
-  ) async {
+  Future<void> _showDetails(BuildContext context, HistoryEntry item) async {
     final BeninShieldColors colors = context.shieldColors;
     final Color accent = _riskColor(colors, item.riskLevel);
     await showModalBottomSheet<void>(
@@ -88,18 +122,18 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
               Row(
                 children: <Widget>[
                   Container(
-                    width: 38,
-                    height: 38,
+                    width: 42,
+                    height: 42,
                     decoration: BoxDecoration(
                       color: accent.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       item.type == HistoryEntryType.report
-                          ? Icons.flag_rounded
-                          : Icons.notifications_active_rounded,
+                          ? Symbols.flag_rounded
+                          : Symbols.notifications_active_rounded,
                       color: accent,
-                      size: 18,
+                      size: 20,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -119,7 +153,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                       item.riskLevel,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             color: accent,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w800,
                           ),
                     ),
                   ),
@@ -127,12 +161,12 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
               ),
               const SizedBox(height: 18),
               Text(
-                item.primaryCategory ?? 'Aucune catégorie spécifique',
+                item.primaryCategory ?? 'Aucune categorie specifique',
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
               const SizedBox(height: 10),
               Text(
-                DateFormat('dd MMM yyyy · HH:mm').format(item.createdAt),
+                DateFormat('dd MMM yyyy - HH:mm').format(item.createdAt),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 18),
@@ -141,8 +175,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                 runSpacing: 10,
                 children: <Widget>[
                   _DetailPill(label: 'Score ${item.riskScore}/100'),
-                  if (item.publicReference != null)
-                    _DetailPill(label: item.publicReference!),
+                  if (item.publicReference != null) _DetailPill(label: item.publicReference!),
                   if (item.status != null) _DetailPill(label: item.status!),
                 ],
               ),
@@ -151,7 +184,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                 width: double.infinity,
                 child: FilledButton.icon(
                   onPressed: _openPortal,
-                  icon: const Icon(Icons.open_in_new_rounded),
+                  icon: const Icon(Symbols.open_in_new_rounded, size: 18),
                   label: const Text('Ouvrir le portail BCS'),
                 ),
               ),
@@ -166,11 +199,11 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                     }
                     Navigator.of(context).pop();
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Référence copiée.')),
+                      const SnackBar(content: Text('Repere copie.')),
                     );
                   },
-                  icon: const Icon(Icons.copy_rounded),
-                  label: const Text('Copier le repère'),
+                  icon: const Icon(Symbols.content_copy_rounded, size: 18),
+                  label: const Text('Copier le repere'),
                 ),
               ),
             ],
@@ -195,38 +228,48 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text('Historique', style: Theme.of(context).textTheme.headlineLarge),
-                  const SizedBox(height: 10),
+                  Text('Historique', style: Theme.of(context).textTheme.headlineLarge)
+                      .animate()
+                      .fadeIn(duration: 260.ms)
+                      .slideY(begin: 0.08, end: 0),
+                  const SizedBox(height: 8),
                   Text(
-                    'Registre des alertes et vérifications archivées sur ce mobile.',
+                    'Registre des alertes et verifications utiles conservees sur ce mobile.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: colors.muted),
-                  ),
+                  ).animate().fadeIn(delay: 60.ms, duration: 260.ms),
                   const SizedBox(height: 16),
+                  SearchBar(
+                    leading: const Icon(Symbols.search_rounded, size: 20),
+                    hintText: 'Rechercher un numero, une categorie ou une reference',
+                    onChanged: (String value) => setState(() => _query = value),
+                  ).animate().fadeIn(delay: 90.ms, duration: 260.ms),
+                  const SizedBox(height: 14),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: _HistoryFilter.values
+                    child: SegmentedButton<_HistoryFilter>(
+                      segments: _HistoryFilter.values
                           .map(
-                            (_HistoryFilter filter) => Padding(
-                              padding: EdgeInsets.only(
-                                right: filter == _HistoryFilter.values.last ? 0 : 8,
-                              ),
-                              child: ChoiceChip(
-                                label: Text(_displayFilterLabel(filter)),
-                                selected: _filter == filter,
-                                onSelected: (_) => setState(() => _filter = filter),
-                              ),
+                            (_HistoryFilter filter) => ButtonSegment<_HistoryFilter>(
+                              value: filter,
+                              label: Text(_displayFilterLabel(filter)),
                             ),
                           )
                           .toList(growable: false),
+                      selected: <_HistoryFilter>{_filter},
+                      onSelectionChanged: (Set<_HistoryFilter> selection) {
+                        setState(() {
+                          _filter = selection.first;
+                        });
+                      },
                     ),
-                  ),
+                  ).animate().fadeIn(delay: 120.ms, duration: 260.ms),
                   const SizedBox(height: 16),
                   Expanded(
                     child: historyAsync.when(
                       data: (List<HistoryEntry> items) {
                         final List<HistoryEntry> filtered = items
                             .where(_matchesFilter)
+                            .where(_matchesQuery)
                             .toList(growable: false)
                           ..sort((HistoryEntry a, HistoryEntry b) {
                             final int severityCompare =
@@ -243,7 +286,9 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                             radius: 20,
                             child: Center(
                               child: Text(
-                                'Aucune entrée pour le filtre ${_displayFilterLabel(_filter).toLowerCase()}.',
+                                _query.isNotEmpty
+                                    ? 'Aucun resultat pour cette recherche.'
+                                    : 'Aucune entree pour le filtre ${_displayFilterLabel(_filter).toLowerCase()}.',
                                 style: Theme.of(context).textTheme.bodyLarge,
                                 textAlign: TextAlign.center,
                               ),
@@ -273,18 +318,18 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                                     child: Row(
                                       children: <Widget>[
                                         Container(
-                                          width: 30,
-                                          height: 30,
+                                          width: 34,
+                                          height: 34,
                                           decoration: BoxDecoration(
                                             color: accent.withValues(alpha: 0.12),
                                             shape: BoxShape.circle,
                                           ),
                                           child: Icon(
                                             item.type == HistoryEntryType.report
-                                                ? Icons.flag_rounded
-                                                : Icons.notifications_active_rounded,
+                                                ? Symbols.flag_rounded
+                                                : Symbols.notifications_active_rounded,
                                             color: accent,
-                                            size: 16,
+                                            size: 17,
                                           ),
                                         ),
                                         const SizedBox(width: 10),
@@ -322,7 +367,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                                                 '${item.riskScore}',
                                                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                                       color: accent,
-                                                      fontWeight: FontWeight.w700,
+                                                      fontWeight: FontWeight.w800,
                                                     ),
                                               ),
                                             ),
@@ -337,20 +382,27 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                                     ),
                                   ),
                                 ),
-                              );
+                              ).animate(delay: (index * 45).ms).fadeIn(duration: 220.ms).slideY(
+                                    begin: 0.08,
+                                    end: 0,
+                                  );
                             },
                           ),
                         );
                       },
-                      loading: () => ListView.separated(
-                        itemCount: 5,
-                        separatorBuilder: (_, _) => const SizedBox(height: 10),
-                        itemBuilder: (_, __) => Container(
-                          height: 68,
-                          decoration: BoxDecoration(
-                            color: colors.surfaceLow,
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: colors.outlineSoft),
+                      loading: () => Shimmer.fromColors(
+                        baseColor: colors.surfaceLow,
+                        highlightColor: colors.surfaceHighest,
+                        child: ListView.separated(
+                          itemCount: 5,
+                          separatorBuilder: (_, _) => const SizedBox(height: 10),
+                          itemBuilder: (_, index) => Container(
+                            height: 68,
+                            decoration: BoxDecoration(
+                              color: colors.surfaceLow,
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(color: colors.outlineSoft),
+                            ),
                           ),
                         ),
                       ),
@@ -359,7 +411,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                         radius: 20,
                         child: Center(
                           child: Text(
-                            'Impossible de charger l’historique mobile.',
+                            'Impossible de charger l historique mobile.',
                             style: Theme.of(context).textTheme.bodyLarge,
                             textAlign: TextAlign.center,
                           ),

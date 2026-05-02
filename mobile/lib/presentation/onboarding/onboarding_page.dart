@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import '../../application/providers.dart';
 import '../../core/theme/app_theme.dart';
@@ -21,33 +24,36 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   static const List<({String title, String body, IconData icon})> _pages =
       <({String title, String body, IconData icon})>[
     (
-      title: 'Veille locale',
-      body: 'Le mobile sert de bouclier citoyen pour surveiller les messages entrants les plus exposés.',
-      icon: Icons.shield_outlined,
+      title: 'Bouclier local',
+      body: 'L application tourne comme une sentinelle Android et observe les notifications les plus exposees.',
+      icon: Symbols.shield_rounded,
     ),
     (
-      title: 'Canaux chauds',
-      body: 'SMS, WhatsApp et Mobile Money restent les flux critiques que l application t aide à lire plus vite.',
-      icon: Icons.notifications_active_outlined,
+      title: 'Canaux critiques',
+      body: 'SMS, WhatsApp et Messenger sont suivis sans formulaire lourd ni parcours web parasite.',
+      icon: Symbols.notifications_active_rounded,
     ),
     (
-      title: 'Portail web dédié',
-      body: 'Le signalement manuel complet se fait sur le portail citoyen pour joindre des preuves et garder un parcours plus net.',
-      icon: Icons.open_in_browser_rounded,
+      title: 'Alertes utiles',
+      body: 'Seules les detections suspectes meritent ton attention avec un score clair et une action simple.',
+      icon: Symbols.bolt_rounded,
     ),
     (
-      title: 'Historique mobile',
-      body: 'Chaque installation conserve un journal pseudonyme des vérifications et signalements qui lui sont liés.',
-      icon: Icons.history_toggle_off_rounded,
+      title: 'Portail detaille',
+      body: 'Le portail BCS reste disponible pour les preuves, la verification poussee et le signalement manuel.',
+      icon: Symbols.open_in_new_rounded,
     ),
   ];
 
   Future<void> _finish() async {
     await ref.read(installStoreProvider).setOnboardingCompleted(true);
+    await ref.read(nativeShieldBridgeProvider).requestPostNotificationsPermission();
     if (!mounted) {
       return;
     }
     context.go('/home');
+    await Future<void>.delayed(const Duration(milliseconds: 320));
+    await ref.read(nativeShieldBridgeProvider).openNotificationAccessSettings();
   }
 
   @override
@@ -67,7 +73,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
               child: Column(
                 children: <Widget>[
                   Expanded(
@@ -86,55 +92,61 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                           children: <Widget>[
                             Container(
                               width: double.infinity,
-                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                               decoration: BoxDecoration(
-                                color: colors.surfaceLow,
+                                color: colors.surfaceLow.withValues(alpha: 0.78),
                                 borderRadius: BorderRadius.circular(999),
                                 border: Border.all(color: colors.outlineSoft),
                               ),
                               child: Text(
-                                'ÉTAPE ${index + 1} / ${_pages.length}',
+                                'ETAPE ${index + 1} / ${_pages.length}',
                                 style: Theme.of(context).textTheme.labelMedium,
                                 textAlign: TextAlign.center,
                               ),
-                            ),
-                            const SizedBox(height: 20),
+                            ).animate().fadeIn(duration: 250.ms),
+                            const SizedBox(height: 18),
                             Expanded(
                               child: AppPanel(
-                                padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
-                                glowColor: colors.primary,
+                                padding: const EdgeInsets.fromLTRB(24, 30, 24, 28),
+                                glowColor: colors.brand,
+                                radius: 28,
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: <Widget>[
                                     Container(
-                                      width: 108,
-                                      height: 108,
+                                      width: 112,
+                                      height: 112,
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
-                                        color: colors.surfaceLow,
+                                        gradient: RadialGradient(
+                                          colors: <Color>[
+                                            colors.primary.withValues(alpha: 0.2),
+                                            colors.brand.withValues(alpha: 0.06),
+                                            colors.surfaceLow,
+                                          ],
+                                        ),
                                         border: Border.all(color: colors.outlineSoft),
-                                        boxShadow: <BoxShadow>[
-                                          BoxShadow(
-                                            color: colors.primary.withValues(alpha: 0.18),
-                                            blurRadius: 24,
-                                            spreadRadius: 4,
-                                          ),
-                                        ],
                                       ),
-                                      child: Icon(page.icon, size: 52, color: colors.primarySoft),
-                                    ),
-                                    const SizedBox(height: 30),
+                                      child: Icon(
+                                        page.icon,
+                                        size: 46,
+                                        color: colors.primary,
+                                      ),
+                                    ).animate().scale(duration: 300.ms, curve: Curves.easeOutBack),
+                                    const SizedBox(height: 28),
                                     Text(
                                       page.title,
                                       style: Theme.of(context).textTheme.headlineLarge,
                                       textAlign: TextAlign.center,
-                                    ),
-                                    const SizedBox(height: 16),
+                                    ).animate().fadeIn(duration: 280.ms).slideY(begin: 0.08, end: 0),
+                                    const SizedBox(height: 14),
                                     Text(
                                       page.body,
-                                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: colors.muted),
+                                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                            color: colors.muted,
+                                          ),
                                       textAlign: TextAlign.center,
-                                    ),
+                                    ).animate().fadeIn(duration: 320.ms).slideY(begin: 0.1, end: 0),
                                   ],
                                 ),
                               ),
@@ -145,20 +157,16 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                     ),
                   ),
                   const SizedBox(height: 18),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List<Widget>.generate(
-                      _pages.length,
-                      (int index) => AnimatedContainer(
-                        duration: const Duration(milliseconds: 220),
-                        margin: const EdgeInsets.symmetric(horizontal: 5),
-                        width: index == _currentIndex ? 32 : 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: index == _currentIndex ? colors.primary : colors.outline,
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                      ),
+                  AnimatedSmoothIndicator(
+                    activeIndex: _currentIndex,
+                    count: _pages.length,
+                    effect: ExpandingDotsEffect(
+                      dotHeight: 8,
+                      dotWidth: 8,
+                      spacing: 8,
+                      expansionFactor: 3.4,
+                      activeDotColor: colors.primary,
+                      dotColor: colors.outline,
                     ),
                   ),
                   const SizedBox(height: 18),
@@ -171,11 +179,11 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                           return;
                         }
                         await _controller.nextPage(
-                          duration: const Duration(milliseconds: 260),
+                          duration: const Duration(milliseconds: 280),
                           curve: Curves.easeOutCubic,
                         );
                       },
-                      child: Text(isLast ? 'ENTRER DANS LE BOUCLIER' : 'SUIVANT'),
+                      child: Text(isLast ? 'ACTIVER MON BOUCLIER' : 'SUIVANT'),
                     ),
                   ),
                 ],

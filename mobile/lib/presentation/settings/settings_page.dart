@@ -1,15 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../application/providers.dart';
 import '../../core/config/app_config.dart';
 import '../../core/theme/app_theme.dart';
+import '../../data/models/mobile_shield_settings.dart';
+import '../../data/models/native_shield_status.dart';
 import '../shared/app_panel.dart';
 import '../shared/brand_bar.dart';
 
-class SettingsPage extends ConsumerWidget {
+class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
+
+  @override
+  ConsumerState<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) {
+      return;
+    }
+    ref.invalidate(nativeShieldStatusProvider);
+  }
 
   Future<void> _openCitizenPortal() async {
     await launchUrl(
@@ -19,11 +48,13 @@ class SettingsPage extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final BeninShieldColors colors = context.shieldColors;
     final MobileShieldSettings settings = ref.watch(mobileShieldSettingsProvider);
+    final AsyncValue<NativeShieldStatus> statusAsync = ref.watch(nativeShieldStatusProvider);
     final MobileShieldSettingsController controller =
         ref.read(mobileShieldSettingsProvider.notifier);
+    final NativeShieldStatus? nativeStatus = statusAsync.valueOrNull;
 
     return Scaffold(
       body: Column(
@@ -35,24 +66,32 @@ class SettingsPage extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text('Paramètres', style: Theme.of(context).textTheme.headlineLarge),
-                  const SizedBox(height: 10),
+                  Text('Parametres', style: Theme.of(context).textTheme.headlineLarge)
+                      .animate()
+                      .fadeIn(duration: 260.ms)
+                      .slideY(begin: 0.08, end: 0),
+                  const SizedBox(height: 8),
                   Text(
-                    'Contrôle du service, apps surveillées et règles d’alerte.',
+                    'Controle du service, applications surveillees et niveau d alerte.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: colors.muted),
-                  ),
+                  ).animate().fadeIn(delay: 60.ms, duration: 260.ms),
                   const SizedBox(height: 18),
-                  Text('Protection', style: Theme.of(context).textTheme.labelLarge),
+                  _SectionHeader(
+                    icon: Symbols.shield_rounded,
+                    label: 'Protection',
+                  ),
                   const SizedBox(height: 10),
                   AppPanel(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                    radius: 20,
+                    radius: 22,
                     child: Column(
                       children: <Widget>[
                         _SettingSwitchRow(
+                          icon: Symbols.shield_rounded,
                           title: 'Service actif',
-                          subtitle: 'Surveillance des apps sélectionnées',
-                          value: settings.hasActiveMonitoring,
+                          subtitle: 'Surveillance des applications selectionnees',
+                          value: settings.hasActiveMonitoring &&
+                              (nativeStatus?.notificationAccessGranted ?? false),
                           onChanged: (_) {},
                           enabled: false,
                         ),
@@ -60,31 +99,86 @@ class SettingsPage extends ConsumerWidget {
                         Divider(color: colors.outlineSoft),
                         const SizedBox(height: 14),
                         _StatusInlineRow(
+                          icon: Symbols.notifications_active_rounded,
                           title: 'Notifications',
-                          value: 'Autorisées',
-                          color: colors.primary,
+                          value: nativeStatus?.notificationAccessGranted == true ? 'Accordees' : 'A activer',
+                          color: nativeStatus?.notificationAccessGranted == true
+                              ? colors.primary
+                              : colors.warning,
                         ),
                         const SizedBox(height: 10),
                         _StatusInlineRow(
+                          icon: Symbols.battery_saver_rounded,
                           title: 'Batterie',
-                          value: 'À optimiser',
-                          color: colors.warning,
+                          value: nativeStatus?.batteryOptimizationIgnored == true ? 'Protègee' : 'A verifier',
+                          color: nativeStatus?.batteryOptimizationIgnored == true
+                              ? colors.primary
+                              : colors.warning,
                         ),
+                        const SizedBox(height: 14),
+                        Divider(color: colors.outlineSoft),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () async {
+                                  await ref.read(nativeShieldBridgeProvider).openNotificationAccessSettings();
+                                  ref.invalidate(nativeShieldStatusProvider);
+                                },
+                                icon: const Icon(Symbols.settings_rounded, size: 18),
+                                label: const Text('Notifications'),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () async {
+                                  await ref
+                                      .read(nativeShieldBridgeProvider)
+                                      .requestIgnoreBatteryOptimizations();
+                                  ref.invalidate(nativeShieldStatusProvider);
+                                },
+                                icon: const Icon(Symbols.battery_saver_rounded, size: 18),
+                                label: const Text('Batterie'),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if ((nativeStatus?.postNotificationsGranted ?? true) == false) ...<Widget>[
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton.icon(
+                              onPressed: () async {
+                                await ref
+                                    .read(nativeShieldBridgeProvider)
+                                    .requestPostNotificationsPermission();
+                                ref.invalidate(nativeShieldStatusProvider);
+                              },
+                              icon: const Icon(Symbols.notifications_rounded, size: 18),
+                              label: const Text('Autoriser les alertes'),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
-                  ),
+                  ).animate().fadeIn(delay: 90.ms, duration: 260.ms).slideY(begin: 0.1, end: 0),
                   const SizedBox(height: 18),
-                  Text('Apps surveillées', style: Theme.of(context).textTheme.labelLarge),
+                  _SectionHeader(
+                    icon: Symbols.apps_rounded,
+                    label: 'Apps surveillees',
+                  ),
                   const SizedBox(height: 10),
                   AppPanel(
                     padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-                    radius: 20,
+                    radius: 22,
                     child: Row(
                       children: <Widget>[
                         Expanded(
                           child: _AppToggleTile(
                             label: 'SMS',
-                            icon: Icons.sms_rounded,
+                            icon: Symbols.sms_rounded,
                             active: settings.monitorSms,
                             onTap: () => controller.setSms(!settings.monitorSms),
                           ),
@@ -93,7 +187,7 @@ class SettingsPage extends ConsumerWidget {
                         Expanded(
                           child: _AppToggleTile(
                             label: 'WhatsApp',
-                            icon: Icons.forum_rounded,
+                            icon: Symbols.forum_rounded,
                             active: settings.monitorWhatsapp,
                             onTap: () => controller.setWhatsapp(!settings.monitorWhatsapp),
                           ),
@@ -102,20 +196,23 @@ class SettingsPage extends ConsumerWidget {
                         Expanded(
                           child: _AppToggleTile(
                             label: 'Messenger',
-                            icon: Icons.chat_bubble_rounded,
+                            icon: Symbols.chat_rounded,
                             active: settings.monitorMessenger,
                             onTap: () => controller.setMessenger(!settings.monitorMessenger),
                           ),
                         ),
                       ],
                     ),
-                  ),
+                  ).animate().fadeIn(delay: 120.ms, duration: 260.ms).slideY(begin: 0.1, end: 0),
                   const SizedBox(height: 18),
-                  Text('Alertes', style: Theme.of(context).textTheme.labelLarge),
+                  _SectionHeader(
+                    icon: Symbols.tune_rounded,
+                    label: 'Alertes',
+                  ),
                   const SizedBox(height: 10),
                   AppPanel(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                    radius: 20,
+                    radius: 22,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
@@ -128,18 +225,25 @@ class SettingsPage extends ConsumerWidget {
                                   Text('Seuil de notification', style: Theme.of(context).textTheme.labelLarge),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Alerte si score ≥ ${settings.alertThreshold}',
+                                    'Alerte si le score atteint ${settings.alertThreshold}',
                                     style: Theme.of(context).textTheme.bodySmall,
                                   ),
                                 ],
                               ),
                             ),
-                            Text(
-                              '${settings.alertThreshold}',
-                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: colors.primary,
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: colors.primary.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                '${settings.alertThreshold}',
+                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                      color: colors.primary,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                              ),
                             ),
                           ],
                         ),
@@ -150,8 +254,9 @@ class SettingsPage extends ConsumerWidget {
                           divisions: 11,
                           onChanged: controller.setThreshold,
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 4),
                         _SettingSwitchRow(
+                          icon: Symbols.warning_rounded,
                           title: 'Alertes moyen',
                           subtitle: 'Notifier aussi les scores moyens',
                           value: settings.alertMedium,
@@ -159,20 +264,23 @@ class SettingsPage extends ConsumerWidget {
                         ),
                       ],
                     ),
-                  ),
+                  ).animate().fadeIn(delay: 150.ms, duration: 260.ms).slideY(begin: 0.1, end: 0),
                   const SizedBox(height: 18),
-                  Text('À propos', style: Theme.of(context).textTheme.labelLarge),
+                  _SectionHeader(
+                    icon: Symbols.info_rounded,
+                    label: 'A propos',
+                  ),
                   const SizedBox(height: 10),
                   AppPanel(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                    radius: 20,
+                    radius: 22,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text('Plateforme web BCS', style: Theme.of(context).textTheme.labelLarge),
                         const SizedBox(height: 8),
                         Text(
-                          'Le portail web sert à la vérification détaillée, aux preuves et au signalement formel.',
+                          'Le portail web sert a la verification poussee, aux preuves et au signalement formel.',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                         const SizedBox(height: 14),
@@ -180,18 +288,18 @@ class SettingsPage extends ConsumerWidget {
                           width: double.infinity,
                           child: OutlinedButton.icon(
                             onPressed: _openCitizenPortal,
-                            icon: const Icon(Icons.open_in_new_rounded),
+                            icon: const Icon(Symbols.open_in_new_rounded, size: 18),
                             label: const Text('Visiter la plateforme web'),
                           ),
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'BENIN CYBER SHIELD · v1.0.0',
+                          'BENIN CYBER SHIELD - v1.0.0',
                           style: Theme.of(context).textTheme.labelSmall,
                         ),
                       ],
                     ),
-                  ),
+                  ).animate().fadeIn(delay: 180.ms, duration: 260.ms).slideY(begin: 0.1, end: 0),
                 ],
               ),
             ),
@@ -202,8 +310,31 @@ class SettingsPage extends ConsumerWidget {
   }
 }
 
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({
+    required this.icon,
+    required this.label,
+  });
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final BeninShieldColors colors = context.shieldColors;
+    return Row(
+      children: <Widget>[
+        Icon(icon, color: colors.brand, size: 16),
+        const SizedBox(width: 8),
+        Text(label, style: Theme.of(context).textTheme.labelLarge),
+      ],
+    );
+  }
+}
+
 class _SettingSwitchRow extends StatelessWidget {
   const _SettingSwitchRow({
+    required this.icon,
     required this.title,
     required this.subtitle,
     required this.value,
@@ -211,6 +342,7 @@ class _SettingSwitchRow extends StatelessWidget {
     this.enabled = true,
   });
 
+  final IconData icon;
   final String title;
   final String subtitle;
   final bool value;
@@ -219,8 +351,20 @@ class _SettingSwitchRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final BeninShieldColors colors = context.shieldColors;
     return Row(
       children: <Widget>[
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: colors.surfaceLow,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: colors.outlineSoft),
+          ),
+          child: Icon(icon, size: 18, color: colors.brand),
+        ),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -242,19 +386,33 @@ class _SettingSwitchRow extends StatelessWidget {
 
 class _StatusInlineRow extends StatelessWidget {
   const _StatusInlineRow({
+    required this.icon,
     required this.title,
     required this.value,
     required this.color,
   });
 
+  final IconData icon;
   final String title;
   final String value;
   final Color color;
 
   @override
   Widget build(BuildContext context) {
+    final BeninShieldColors colors = context.shieldColors;
     return Row(
       children: <Widget>[
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: colors.surfaceLow,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: colors.outlineSoft),
+          ),
+          child: Icon(icon, size: 18, color: color),
+        ),
+        const SizedBox(width: 12),
         Expanded(
           child: Text(title, style: Theme.of(context).textTheme.bodyLarge),
         ),
@@ -268,7 +426,7 @@ class _StatusInlineRow extends StatelessWidget {
             value,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: color,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w800,
                 ),
           ),
         ),

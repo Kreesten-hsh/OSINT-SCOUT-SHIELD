@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
@@ -5,10 +6,14 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/constants/benin_departments.dart';
+import '../core/config/app_config.dart';
+import '../core/platform/native_shield_bridge.dart';
 import '../core/storage/install_store.dart';
 import '../data/api/mobile_api_client.dart';
 import '../data/models/bootstrap_data.dart';
 import '../data/models/history_entry.dart';
+import '../data/models/mobile_shield_settings.dart';
+import '../data/models/native_shield_status.dart';
 import '../data/models/report_result.dart';
 import '../data/models/verify_result.dart';
 
@@ -18,6 +23,10 @@ final installStoreProvider = Provider<InstallStore>((Ref ref) {
 
 final apiClientProvider = Provider<MobileApiClient>((Ref ref) {
   return MobileApiClient();
+});
+
+final nativeShieldBridgeProvider = Provider<NativeShieldBridge>((Ref ref) {
+  return const NativeShieldBridge();
 });
 
 final deviceInstallIdProvider = FutureProvider<String>((Ref ref) async {
@@ -47,6 +56,19 @@ final bootstrapProvider = FutureProvider<BootstrapData>((Ref ref) async {
     return const BootstrapData(
       departments: beninDepartments,
       minimumSupportedVersion: '1.0.0',
+    );
+  }
+});
+
+final nativeShieldStatusProvider = FutureProvider<NativeShieldStatus>((Ref ref) async {
+  try {
+    return await ref.watch(nativeShieldBridgeProvider).getShieldStatus();
+  } catch (_) {
+    return const NativeShieldStatus(
+      notificationAccessGranted: false,
+      batteryOptimizationIgnored: false,
+      postNotificationsGranted: true,
+      serviceReady: false,
     );
   }
 });
@@ -233,6 +255,16 @@ final reportControllerProvider =
 });
 
 final historyProvider = FutureProvider<List<HistoryEntry>>((Ref ref) async {
+  try {
+    final NativeShieldBridge nativeBridge = ref.watch(nativeShieldBridgeProvider);
+    final List<HistoryEntry> nativeItems = await nativeBridge.fetchLocalHistory(limit: 80);
+    if (nativeItems.isNotEmpty) {
+      return nativeItems;
+    }
+  } catch (_) {
+    // Fallback to backend or cached history below.
+  }
+
   final InstallStore store = ref.watch(installStoreProvider);
   final String deviceInstallId = await ref.watch(deviceInstallIdProvider.future);
   final MobileApiClient client = ref.watch(apiClientProvider);
@@ -257,68 +289,68 @@ final historyProvider = FutureProvider<List<HistoryEntry>>((Ref ref) async {
   }
 });
 
-class MobileShieldSettings {
-  const MobileShieldSettings({
-    this.monitorSms = true,
-    this.monitorWhatsapp = true,
-    this.monitorMessenger = true,
-    this.alertThreshold = 70,
-    this.alertMedium = true,
-  });
-
-  final bool monitorSms;
-  final bool monitorWhatsapp;
-  final bool monitorMessenger;
-  final int alertThreshold;
-  final bool alertMedium;
-
-  bool get hasActiveMonitoring => monitorSms || monitorWhatsapp || monitorMessenger;
-
-  int get activeChannelCount =>
-      <bool>[monitorSms, monitorWhatsapp, monitorMessenger].where((bool item) => item).length;
-
-  MobileShieldSettings copyWith({
-    bool? monitorSms,
-    bool? monitorWhatsapp,
-    bool? monitorMessenger,
-    int? alertThreshold,
-    bool? alertMedium,
-  }) {
-    return MobileShieldSettings(
-      monitorSms: monitorSms ?? this.monitorSms,
-      monitorWhatsapp: monitorWhatsapp ?? this.monitorWhatsapp,
-      monitorMessenger: monitorMessenger ?? this.monitorMessenger,
-      alertThreshold: alertThreshold ?? this.alertThreshold,
-      alertMedium: alertMedium ?? this.alertMedium,
-    );
-  }
-}
-
 class MobileShieldSettingsController extends StateNotifier<MobileShieldSettings> {
-  MobileShieldSettingsController() : super(const MobileShieldSettings());
+  MobileShieldSettingsController(this._ref) : super(const MobileShieldSettings()) {
+    unawaited(_hydrate());
+  }
+
+  final Ref _ref;
+
+  Future<void> _hydrate() async {
+    try {
+      final MobileShieldSettings loaded =
+          await _ref.read(nativeShieldBridgeProvider).getShieldSettings();
+      state = loaded;
+      await _syncToNative();
+    } catch (_) {
+      state = const MobileShieldSettings();
+    }
+  }
+
+  Future<void> _syncToNative() async {
+    try {
+      final String deviceInstallId = await _ref.read(deviceInstallIdProvider.future);
+      final MobileShieldSettings synced =
+          await _ref.read(nativeShieldBridgeProvider).syncShieldSettings(
+                settings: state,
+                deviceInstallId: deviceInstallId,
+                apiBaseUrl: AppConfig.apiBaseUrl,
+                citizenPortalUrl: AppConfig.citizenPortalUrl,
+              );
+      state = synced;
+      _ref.invalidate(nativeShieldStatusProvider);
+    } catch (_) {
+      return;
+    }
+  }
 
   void setSms(bool value) {
     state = state.copyWith(monitorSms: value);
+    unawaited(_syncToNative());
   }
 
   void setWhatsapp(bool value) {
     state = state.copyWith(monitorWhatsapp: value);
+    unawaited(_syncToNative());
   }
 
   void setMessenger(bool value) {
     state = state.copyWith(monitorMessenger: value);
+    unawaited(_syncToNative());
   }
 
   void setThreshold(double value) {
     state = state.copyWith(alertThreshold: value.round());
+    unawaited(_syncToNative());
   }
 
   void setAlertMedium(bool value) {
     state = state.copyWith(alertMedium: value);
+    unawaited(_syncToNative());
   }
 }
 
 final mobileShieldSettingsProvider =
     StateNotifierProvider<MobileShieldSettingsController, MobileShieldSettings>(
-  (Ref ref) => MobileShieldSettingsController(),
+  (Ref ref) => MobileShieldSettingsController(ref),
 );

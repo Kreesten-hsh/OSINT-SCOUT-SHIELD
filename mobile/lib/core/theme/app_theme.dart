@@ -1,115 +1,144 @@
+import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 ThemeData buildBeninCyberShieldTheme() {
   const BeninShieldColors palette = BeninShieldColors(
-    background: Color(0xFF06070C),
-    backgroundSoft: Color(0xFF10131A),
-    surfaceLow: Color(0xFF131722),
-    surface: Color(0xFF171B26),
-    surfaceHigh: Color(0xFF1C2130),
-    surfaceHighest: Color(0xFF262C3E),
-    outline: Color(0xFF383F53),
-    outlineSoft: Color(0xFF232839),
-    primary: Color(0xFFE4FF43),
-    primarySoft: Color(0xFFF4FF9A),
+    background: Color(0xFF05070C),
+    backgroundSoft: Color(0xFF0D1017),
+    surfaceLow: Color(0xFF111621),
+    surface: Color(0xFF141A27),
+    surfaceHigh: Color(0xFF1A2030),
+    surfaceHighest: Color(0xFF21283A),
+    outline: Color(0xFF394156),
+    outlineSoft: Color(0xFF232A39),
+    primary: Color(0xFF45E08A),
+    primarySoft: Color(0xFFB8F7CF),
     brand: Color(0xFF5B8CFF),
-    brandSoft: Color(0xFFAEC3FF),
-    onSurface: Color(0xFFF3F5FB),
-    muted: Color(0xFF9EA7BC),
-    success: Color(0xFFE4FF43),
-    warning: Color(0xFFFFA93A),
+    brandSoft: Color(0xFFA8BEFF),
+    onSurface: Color(0xFFF5F7FC),
+    muted: Color(0xFF97A2B8),
+    success: Color(0xFF45E08A),
+    warning: Color(0xFFFF8E47),
     danger: Color(0xFFFF625C),
-    info: Color(0xFF76A4FF),
+    info: Color(0xFF79A6FF),
   );
 
-  final ColorScheme colorScheme = const ColorScheme.dark(
-    brightness: Brightness.dark,
-    primary: Color(0xFFE4FF43),
-    onPrimary: Color(0xFF111300),
-    secondary: Color(0xFF5B8CFF),
-    onSecondary: Color(0xFF0C1324),
-    surface: Color(0xFF171B26),
-    onSurface: Color(0xFFF3F5FB),
-    error: Color(0xFFFF625C),
-    onError: Color(0xFF2A0807),
-  );
-
-  final TextTheme baseTextTheme = ThemeData.dark(useMaterial3: true).textTheme;
-  final TextTheme manropeTextTheme = GoogleFonts.manropeTextTheme(baseTextTheme);
-
-  return ThemeData(
+  final ThemeData base = FlexThemeData.dark(
     useMaterial3: true,
+    colors: const FlexSchemeColor(
+      primary: Color(0xFF45E08A),
+      primaryContainer: Color(0xFF113523),
+      secondary: Color(0xFF5B8CFF),
+      secondaryContainer: Color(0xFF15233F),
+      tertiary: Color(0xFF79A6FF),
+      tertiaryContainer: Color(0xFF16263E),
+      appBarColor: Color(0xFF05070C),
+      error: Color(0xFFFF625C),
+    ),
+    visualDensity: FlexColorScheme.comfortablePlatformDensity,
+    surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
+    blendLevel: 22,
+  );
+
+  final ColorScheme colorScheme = base.colorScheme.copyWith(
     brightness: Brightness.dark,
+    primary: palette.primary,
+    onPrimary: const Color(0xFF06110B),
+    primaryContainer: const Color(0xFF113523),
+    secondary: palette.brand,
+    onSecondary: const Color(0xFF091222),
+    secondaryContainer: const Color(0xFF15233F),
+    tertiary: palette.info,
+    tertiaryContainer: const Color(0xFF16263E),
+    surface: palette.surface,
+    onSurface: palette.onSurface,
+    outline: palette.outline,
+    outlineVariant: palette.outlineSoft,
+    error: palette.danger,
+    onError: const Color(0xFF220809),
+  );
+
+  final TextTheme baseTextTheme = GoogleFonts.interTextTheme(base.textTheme);
+  final TextTheme textTheme = baseTextTheme.copyWith(
+    headlineLarge: GoogleFonts.inter(
+      fontSize: 28,
+      fontWeight: FontWeight.w800,
+      height: 1.02,
+      letterSpacing: -0.9,
+      color: palette.onSurface,
+    ),
+    headlineMedium: GoogleFonts.inter(
+      fontSize: 22,
+      fontWeight: FontWeight.w700,
+      height: 1.08,
+      letterSpacing: -0.5,
+      color: palette.onSurface,
+    ),
+    headlineSmall: GoogleFonts.inter(
+      fontSize: 18,
+      fontWeight: FontWeight.w700,
+      height: 1.14,
+      color: palette.onSurface,
+    ),
+    titleLarge: GoogleFonts.inter(
+      fontSize: 16,
+      fontWeight: FontWeight.w700,
+      letterSpacing: -0.2,
+      color: palette.onSurface,
+    ),
+    bodyLarge: GoogleFonts.inter(
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+      height: 1.42,
+      color: palette.onSurface,
+    ),
+    bodyMedium: GoogleFonts.inter(
+      fontSize: 13,
+      fontWeight: FontWeight.w500,
+      height: 1.45,
+      color: palette.muted,
+    ),
+    bodySmall: GoogleFonts.inter(
+      fontSize: 11,
+      fontWeight: FontWeight.w500,
+      height: 1.35,
+      color: palette.muted,
+    ),
+    labelLarge: GoogleFonts.inter(
+      fontSize: 13,
+      fontWeight: FontWeight.w700,
+      height: 1.2,
+      color: palette.onSurface,
+    ),
+    labelMedium: GoogleFonts.inter(
+      fontSize: 10,
+      fontWeight: FontWeight.w800,
+      letterSpacing: 1.1,
+      color: palette.brandSoft,
+    ),
+    labelSmall: GoogleFonts.inter(
+      fontSize: 11,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.05,
+      color: palette.muted,
+    ),
+  );
+
+  return base.copyWith(
     colorScheme: colorScheme,
     scaffoldBackgroundColor: palette.background,
-    textTheme: manropeTextTheme.copyWith(
-      headlineLarge: GoogleFonts.manrope(
-        fontSize: 26,
-        fontWeight: FontWeight.w800,
-        height: 1.05,
-        letterSpacing: -0.8,
-        color: palette.onSurface,
-      ),
-      headlineMedium: GoogleFonts.manrope(
-        fontSize: 22,
-        fontWeight: FontWeight.w700,
-        height: 1.08,
-        letterSpacing: -0.45,
-        color: palette.onSurface,
-      ),
-      headlineSmall: GoogleFonts.manrope(
-        fontSize: 17,
-        fontWeight: FontWeight.w700,
-        height: 1.15,
-        color: palette.onSurface,
-      ),
-      bodyLarge: GoogleFonts.manrope(
-        fontSize: 14,
-        fontWeight: FontWeight.w500,
-        height: 1.42,
-        color: palette.onSurface,
-      ),
-      bodyMedium: GoogleFonts.manrope(
-        fontSize: 13,
-        fontWeight: FontWeight.w500,
-        height: 1.45,
-        color: palette.muted,
-      ),
-      bodySmall: GoogleFonts.manrope(
-        fontSize: 11,
-        fontWeight: FontWeight.w500,
-        height: 1.35,
-        color: palette.muted,
-      ),
-      labelLarge: GoogleFonts.manrope(
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
-        height: 1.2,
-        color: palette.onSurface,
-      ),
-      labelMedium: GoogleFonts.spaceGrotesk(
-        fontSize: 10,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 1.5,
-        color: palette.brandSoft,
-      ),
-      labelSmall: GoogleFonts.jetBrainsMono(
-        fontSize: 11,
-        fontWeight: FontWeight.w500,
-        letterSpacing: 0.1,
-        color: palette.muted,
-      ),
-    ),
+    textTheme: textTheme,
+    splashColor: palette.primary.withValues(alpha: 0.12),
+    highlightColor: Colors.transparent,
     appBarTheme: AppBarTheme(
-      backgroundColor: palette.background,
+      backgroundColor: Colors.transparent,
       foregroundColor: palette.onSurface,
       elevation: 0,
       centerTitle: false,
-      titleTextStyle: GoogleFonts.manrope(
-        fontSize: 16,
-        fontWeight: FontWeight.w800,
+      titleTextStyle: textTheme.headlineSmall?.copyWith(
         color: palette.brand,
+        fontWeight: FontWeight.w800,
       ),
     ),
     cardTheme: CardThemeData(
@@ -117,7 +146,7 @@ ThemeData buildBeninCyberShieldTheme() {
       elevation: 0,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         side: BorderSide(color: palette.outlineSoft),
       ),
     ),
@@ -128,26 +157,21 @@ ThemeData buildBeninCyberShieldTheme() {
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: palette.surfaceLow.withValues(alpha: 0.96),
-      hintStyle: GoogleFonts.manrope(
-        fontSize: 14,
-        fontWeight: FontWeight.w400,
-        fontStyle: FontStyle.italic,
-        color: palette.muted.withValues(alpha: 0.76),
+      fillColor: palette.surfaceLow.withValues(alpha: 0.94),
+      hintStyle: textTheme.bodyMedium?.copyWith(
+        color: palette.muted.withValues(alpha: 0.72),
       ),
-      labelStyle: GoogleFonts.spaceGrotesk(
-        fontSize: 10,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 1.4,
-        color: palette.muted,
-      ),
+      labelStyle: textTheme.labelMedium,
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(24),
         borderSide: BorderSide(color: palette.outlineSoft),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(24),
-        borderSide: BorderSide(color: palette.brand.withValues(alpha: 0.9), width: 1.2),
+        borderSide: BorderSide(
+          color: palette.primary.withValues(alpha: 0.9),
+          width: 1.25,
+        ),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(24),
@@ -159,16 +183,37 @@ ThemeData buildBeninCyberShieldTheme() {
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
     ),
+    searchBarTheme: SearchBarThemeData(
+      backgroundColor: WidgetStatePropertyAll<Color>(
+        palette.surfaceLow.withValues(alpha: 0.96),
+      ),
+      elevation: const WidgetStatePropertyAll<double>(0),
+      shadowColor: const WidgetStatePropertyAll<Color>(Colors.transparent),
+      surfaceTintColor: const WidgetStatePropertyAll<Color>(Colors.transparent),
+      padding: const WidgetStatePropertyAll<EdgeInsets>(
+        EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+      ),
+      textStyle: WidgetStatePropertyAll<TextStyle?>(textTheme.bodyLarge),
+      hintStyle: WidgetStatePropertyAll<TextStyle?>(
+        textTheme.bodyMedium?.copyWith(
+          color: palette.muted.withValues(alpha: 0.72),
+        ),
+      ),
+      side: WidgetStatePropertyAll<BorderSide>(
+        BorderSide(color: palette.outlineSoft),
+      ),
+      shape: WidgetStatePropertyAll<RoundedRectangleBorder>(
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      ),
+    ),
     chipTheme: ChipThemeData(
       backgroundColor: palette.surfaceLow,
-      selectedColor: palette.primary.withValues(alpha: 0.16),
+      selectedColor: palette.primary.withValues(alpha: 0.14),
       side: BorderSide(color: palette.outlineSoft),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-      labelStyle: GoogleFonts.jetBrainsMono(
-        fontSize: 11,
-        fontWeight: FontWeight.w500,
-        color: palette.onSurface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(999),
       ),
+      labelStyle: textTheme.labelSmall?.copyWith(color: palette.onSurface),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
     ),
     navigationBarTheme: NavigationBarThemeData(
@@ -178,34 +223,47 @@ ThemeData buildBeninCyberShieldTheme() {
       labelTextStyle: WidgetStateProperty.resolveWith<TextStyle?>(
         (Set<WidgetState> states) {
           final bool selected = states.contains(WidgetState.selected);
-          return GoogleFonts.manrope(
-            fontSize: 11,
-            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+          return textTheme.bodySmall?.copyWith(
             color: selected ? palette.primary : palette.muted,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
           );
         },
       ),
-      iconTheme: WidgetStateProperty.resolveWith<IconThemeData?>(
-        (Set<WidgetState> states) {
-          final bool selected = states.contains(WidgetState.selected);
-          return IconThemeData(
-            color: selected ? palette.primary : palette.muted,
-            size: 22,
-          );
-        },
+    ),
+    segmentedButtonTheme: SegmentedButtonThemeData(
+      style: ButtonStyle(
+        backgroundColor: WidgetStateProperty.resolveWith<Color?>(
+          (Set<WidgetState> states) => states.contains(WidgetState.selected)
+              ? palette.primary.withValues(alpha: 0.14)
+              : palette.surfaceLow,
+        ),
+        foregroundColor: WidgetStateProperty.resolveWith<Color?>(
+          (Set<WidgetState> states) =>
+              states.contains(WidgetState.selected) ? palette.primary : palette.muted,
+        ),
+        side: WidgetStatePropertyAll<BorderSide>(
+          BorderSide(color: palette.outlineSoft),
+        ),
+        padding: const WidgetStatePropertyAll<EdgeInsets>(
+          EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        ),
+        textStyle: WidgetStatePropertyAll<TextStyle?>(textTheme.bodySmall?.copyWith(
+          fontWeight: FontWeight.w700,
+        )),
+        shape: WidgetStatePropertyAll<RoundedRectangleBorder>(
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
       ),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         backgroundColor: palette.primary,
-        foregroundColor: const Color(0xFF111300),
+        foregroundColor: const Color(0xFF08120C),
         minimumSize: const Size.fromHeight(52),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-        textStyle: GoogleFonts.spaceGrotesk(
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.8,
+        textStyle: textTheme.labelLarge?.copyWith(
+          fontWeight: FontWeight.w800,
         ),
       ),
     ),
@@ -216,20 +274,15 @@ ThemeData buildBeninCyberShieldTheme() {
         side: BorderSide(color: palette.outline),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-        textStyle: GoogleFonts.manrope(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-        ),
+        textStyle: textTheme.labelLarge,
       ),
     ),
     snackBarTheme: SnackBarThemeData(
       backgroundColor: palette.surfaceHighest,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      contentTextStyle: GoogleFonts.manrope(
-        fontSize: 13,
+      contentTextStyle: textTheme.bodyLarge?.copyWith(
         fontWeight: FontWeight.w600,
-        color: palette.onSurface,
       ),
     ),
     switchTheme: SwitchThemeData(
@@ -247,7 +300,7 @@ ThemeData buildBeninCyberShieldTheme() {
       activeTrackColor: palette.primary,
       inactiveTrackColor: palette.outlineSoft,
       thumbColor: palette.primary,
-      overlayColor: palette.primary.withValues(alpha: 0.16),
+      overlayColor: palette.primary.withValues(alpha: 0.14),
       trackHeight: 4,
     ),
     extensions: const <ThemeExtension<dynamic>>[palette],
