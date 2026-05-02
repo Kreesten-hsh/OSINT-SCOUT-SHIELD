@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/theme/app_theme.dart';
@@ -47,10 +46,9 @@ class BrandBar extends StatelessWidget {
                 ),
               ],
             ),
-          ).animate().fadeIn(duration: 260.ms).slideX(begin: -0.08, end: 0),
+          ),
           const Spacer(),
-          if (trailing != null)
-            trailing!.animate().fadeIn(duration: 240.ms).slideX(begin: 0.08, end: 0),
+          if (trailing != null) trailing!,
         ],
       ),
     );

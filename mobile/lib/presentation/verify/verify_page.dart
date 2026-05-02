@@ -1,12 +1,9 @@
-import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../application/providers.dart';
@@ -162,51 +159,36 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with WidgetsBindingObse
                     radius: 30,
                     glowColor: protectionActive ? colors.primary : colors.brand,
                     backgroundOpacity: 0.98,
-                    child: PageTransitionSwitcher(
-                      duration: 260.ms,
-                      transitionBuilder: (
-                        Widget child,
-                        Animation<double> animation,
-                        Animation<double> secondaryAnimation,
-                      ) {
-                        return FadeThroughTransition(
-                          animation: animation,
-                          secondaryAnimation: secondaryAnimation,
-                          child: child,
-                        );
-                      },
-                      child: Column(
-                        key: ValueKey<bool>(protectionActive),
-                        children: <Widget>[
-                          _ShieldOrb(active: protectionActive),
-                          const SizedBox(height: 16),
-                          Text(
-                            '$alertsToday',
-                            style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                                  fontSize: 54,
-                                  letterSpacing: -1.6,
-                                  color: colors.onSurface,
-                                ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            alertsToday > 1 ? 'alertes aujourd hui' : 'alerte aujourd hui',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            settings.hasActiveMonitoring
-                                ? protectionActive
-                                    ? 'Votre protection est active'
-                                    : 'Autorise le service Android pour demarrer la veille'
-                                : 'Active au moins un canal pour lancer la surveillance',
-                            style: Theme.of(context).textTheme.bodySmall,
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
+                    child: Column(
+                      children: <Widget>[
+                        _ShieldOrb(active: protectionActive),
+                        const SizedBox(height: 16),
+                        Text(
+                          '$alertsToday',
+                          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                                fontSize: 54,
+                                letterSpacing: -1.6,
+                                color: colors.onSurface,
+                              ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          alertsToday > 1 ? 'alertes aujourd hui' : 'alerte aujourd hui',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          settings.hasActiveMonitoring
+                              ? protectionActive
+                                  ? 'Votre protection est active'
+                                  : 'Autorise le service Android pour demarrer la veille'
+                              : 'Active au moins un canal pour lancer la surveillance',
+                          style: Theme.of(context).textTheme.bodySmall,
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
-                  ).animate().fadeIn(duration: 280.ms),
+                  ),
                   const SizedBox(height: 22),
                   Row(
                     children: <Widget>[
@@ -237,7 +219,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with WidgetsBindingObse
                         ),
                       ),
                     ],
-                  ).animate().fadeIn(duration: 280.ms).slideY(begin: 0.12, end: 0),
+                  ),
                   if (nativeStatus != null && !nativeStatus.notificationAccessGranted) ...<Widget>[
                     const SizedBox(height: 18),
                     AppPanel(
@@ -333,7 +315,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with WidgetsBindingObse
                         ),
                       ],
                     ),
-                  ).animate().fadeIn(delay: 80.ms, duration: 280.ms).slideY(begin: 0.12, end: 0),
+                  ),
                   const SizedBox(height: 18),
                   AppPanel(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
@@ -376,7 +358,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with WidgetsBindingObse
                         ),
                       ],
                     ),
-                  ).animate().fadeIn(delay: 120.ms, duration: 280.ms).slideY(begin: 0.12, end: 0),
+                  ),
                   const SizedBox(height: 18),
                   Row(
                     children: <Widget>[
@@ -400,12 +382,12 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with WidgetsBindingObse
                             : 'Aucune menace recente. Active les canaux pour demarrer la veille.',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
-                    ).animate().fadeIn(delay: 160.ms, duration: 280.ms)
+                    )
                   else
                     _RecentAlertCard(
                       item: latestThreat,
                       accent: _riskColor(colors, latestThreat.riskLevel),
-                    ).animate().fadeIn(delay: 160.ms, duration: 280.ms).slideY(begin: 0.08, end: 0),
+                    ),
                   const SizedBox(height: 18),
                   Row(
                     children: <Widget>[
@@ -547,12 +529,7 @@ class _ShieldOrb extends StatelessWidget {
             ),
           ),
         ),
-      ).animate(onPlay: (AnimationController controller) => controller.repeat(reverse: true)).scaleXY(
-            begin: 0.98,
-            end: 1.01,
-            duration: 1400.ms,
-            curve: Curves.easeInOut,
-          ),
+      ),
     );
   }
 }
@@ -735,21 +712,17 @@ class _RecentListSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final BeninShieldColors colors = context.shieldColors;
-    return Shimmer.fromColors(
-      baseColor: colors.surfaceLow,
-      highlightColor: colors.surfaceHighest,
-      child: Column(
-        children: List<Widget>.generate(
-          3,
-          (int index) => Padding(
-            padding: EdgeInsets.only(bottom: index == 2 ? 0 : 10),
-            child: Container(
-              height: 72,
-              decoration: BoxDecoration(
-                color: colors.surfaceLow,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: colors.outlineSoft),
-              ),
+    return Column(
+      children: List<Widget>.generate(
+        3,
+        (int index) => Padding(
+          padding: EdgeInsets.only(bottom: index == 2 ? 0 : 10),
+          child: Container(
+            height: 72,
+            decoration: BoxDecoration(
+              color: colors.surfaceLow,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: colors.outlineSoft),
             ),
           ),
         ),

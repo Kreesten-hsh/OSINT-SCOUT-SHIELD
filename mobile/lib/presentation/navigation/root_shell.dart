@@ -1,7 +1,6 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
@@ -47,7 +46,7 @@ class RootShell extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(38),
+            borderRadius: BorderRadius.circular(42),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
               child: Container(
@@ -55,14 +54,14 @@ class RootShell extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: <Color>[
-                      Colors.white.withValues(alpha: 0.14),
-                      colors.surfaceHighest.withValues(alpha: 0.52),
-                      colors.surface.withValues(alpha: 0.78),
+                      Colors.white.withValues(alpha: 0.12),
+                      Colors.white.withValues(alpha: 0.05),
+                      Colors.transparent,
                     ],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(38),
+                  borderRadius: BorderRadius.circular(42),
                   border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
                   boxShadow: <BoxShadow>[
                     BoxShadow(
@@ -114,7 +113,7 @@ class RootShell extends StatelessWidget {
                 ),
               ),
             ),
-          ).animate().fadeIn(duration: 280.ms).slideY(begin: 0.24, end: 0),
+          ),
         ),
       ),
     );
@@ -171,7 +170,7 @@ class _GlassNavItem extends StatelessWidget {
                 icon,
                 size: 21,
                 color: selected ? colors.primary : colors.muted,
-              ).animate(target: selected ? 1 : 0).scaleXY(begin: 0.94, end: 1),
+              ),
               const SizedBox(height: 4),
               Text(
                 label,
