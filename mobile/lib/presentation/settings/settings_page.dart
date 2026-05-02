@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -178,7 +179,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
                         Expanded(
                           child: _AppToggleTile(
                             label: 'SMS',
-                            icon: Symbols.sms_rounded,
+                            assetName: 'assets/brand/logo_sms.svg',
                             active: settings.monitorSms,
                             onTap: () => controller.setSms(!settings.monitorSms),
                           ),
@@ -187,7 +188,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
                         Expanded(
                           child: _AppToggleTile(
                             label: 'WhatsApp',
-                            icon: Symbols.forum_rounded,
+                            assetName: 'assets/brand/logo_whatsapp.svg',
                             active: settings.monitorWhatsapp,
                             onTap: () => controller.setWhatsapp(!settings.monitorWhatsapp),
                           ),
@@ -196,7 +197,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
                         Expanded(
                           child: _AppToggleTile(
                             label: 'Messenger',
-                            icon: Symbols.chat_rounded,
+                            assetName: 'assets/brand/logo_messenger.svg',
                             active: settings.monitorMessenger,
                             onTap: () => controller.setMessenger(!settings.monitorMessenger),
                           ),
@@ -438,13 +439,13 @@ class _StatusInlineRow extends StatelessWidget {
 class _AppToggleTile extends StatelessWidget {
   const _AppToggleTile({
     required this.label,
-    required this.icon,
+    required this.assetName,
     required this.active,
     required this.onTap,
   });
 
   final String label;
-  final IconData icon;
+  final String assetName;
   final bool active;
   final VoidCallback onTap;
 
@@ -468,7 +469,11 @@ class _AppToggleTile extends StatelessWidget {
           ),
           child: Column(
             children: <Widget>[
-              Icon(icon, color: tone, size: 18),
+              SvgPicture.asset(
+                assetName,
+                width: 18,
+                height: 18,
+              ),
               const SizedBox(height: 8),
               Text(
                 label,

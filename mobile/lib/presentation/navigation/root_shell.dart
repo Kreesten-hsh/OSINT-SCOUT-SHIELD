@@ -45,50 +45,72 @@ class RootShell extends StatelessWidget {
       bottomNavigationBar: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(38),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+              filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: <Color>[
-                      colors.surfaceHighest.withValues(alpha: 0.54),
-                      colors.surface.withValues(alpha: 0.82),
+                      Colors.white.withValues(alpha: 0.14),
+                      colors.surfaceHighest.withValues(alpha: 0.52),
+                      colors.surface.withValues(alpha: 0.78),
                     ],
-                    begin: Alignment.topLeft,
+                    begin: Alignment.topCenter,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: colors.outlineSoft.withValues(alpha: 0.98)),
+                  borderRadius: BorderRadius.circular(38),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
                   boxShadow: <BoxShadow>[
                     BoxShadow(
                       color: colors.background.withValues(alpha: 0.42),
-                      blurRadius: 28,
-                      offset: const Offset(0, 14),
+                      blurRadius: 36,
+                      offset: const Offset(0, 16),
                     ),
                   ],
                 ),
-                child: Row(
-                  children: List<Widget>.generate(_destinations.length, (int index) {
-                    final (IconData, String) item = _destinations[index];
-                    final bool selected = navigationShell.currentIndex == index;
-                    return Expanded(
-                      child: _GlassNavItem(
-                        icon: item.$1,
-                        label: item.$2,
-                        selected: selected,
-                        onTap: () {
-                          navigationShell.goBranch(
-                            index,
-                            initialLocation: index == navigationShell.currentIndex,
-                          );
-                        },
+                child: Stack(
+                  children: <Widget>[
+                    Positioned(
+                      left: 18,
+                      right: 18,
+                      top: 0,
+                      child: Container(
+                        height: 1.2,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: <Color>[
+                              Colors.transparent,
+                              Colors.white.withValues(alpha: 0.32),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
                       ),
-                    );
-                  }),
+                    ),
+                    Row(
+                      children: List<Widget>.generate(_destinations.length, (int index) {
+                        final (IconData, String) item = _destinations[index];
+                        final bool selected = navigationShell.currentIndex == index;
+                        return Expanded(
+                          child: _GlassNavItem(
+                            icon: item.$1,
+                            label: item.$2,
+                            selected: selected,
+                            onTap: () {
+                              navigationShell.goBranch(
+                                index,
+                                initialLocation: index == navigationShell.currentIndex,
+                              );
+                            },
+                          ),
+                        );
+                      }),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -123,22 +145,23 @@ class _GlassNavItem extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
           decoration: BoxDecoration(
             gradient: selected
                 ? LinearGradient(
                     colors: <Color>[
+                      Colors.white.withValues(alpha: 0.12),
                       colors.primary.withValues(alpha: 0.18),
                       colors.brand.withValues(alpha: 0.08),
                     ],
-                    begin: Alignment.topLeft,
+                    begin: Alignment.topCenter,
                     end: Alignment.bottomRight,
                   )
                 : null,
             color: selected ? null : Colors.transparent,
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: selected ? colors.primary.withValues(alpha: 0.24) : Colors.transparent,
+              color: selected ? Colors.white.withValues(alpha: 0.16) : Colors.transparent,
             ),
           ),
           child: Column(

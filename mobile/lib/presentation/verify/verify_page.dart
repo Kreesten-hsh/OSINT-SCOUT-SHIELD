@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:shimmer/shimmer.dart';
@@ -156,48 +157,54 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with WidgetsBindingObse
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  PageTransitionSwitcher(
-                    duration: 260.ms,
-                    transitionBuilder: (
-                      Widget child,
-                      Animation<double> animation,
-                      Animation<double> secondaryAnimation,
-                    ) {
-                      return FadeThroughTransition(
-                        animation: animation,
-                        secondaryAnimation: secondaryAnimation,
-                        child: child,
-                      );
-                    },
-                    child: Column(
-                      key: ValueKey<bool>(protectionActive),
-                      children: <Widget>[
-                        _ShieldOrb(active: protectionActive),
-                        const SizedBox(height: 16),
-                        Text(
-                          '$alertsToday',
-                          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                                fontSize: 54,
-                                letterSpacing: -1.6,
-                                color: colors.onSurface,
-                              ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          alertsToday > 1 ? 'alertes aujourd hui' : 'alerte aujourd hui',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          settings.hasActiveMonitoring
-                              ? protectionActive
-                                  ? 'Votre protection est active'
-                                  : 'Autorise le service Android pour demarrer la veille'
-                              : 'Active au moins un canal pour lancer la surveillance',
-                          style: Theme.of(context).textTheme.bodySmall,
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+                  AppPanel(
+                    padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
+                    radius: 30,
+                    glowColor: protectionActive ? colors.primary : colors.brand,
+                    backgroundOpacity: 0.98,
+                    child: PageTransitionSwitcher(
+                      duration: 260.ms,
+                      transitionBuilder: (
+                        Widget child,
+                        Animation<double> animation,
+                        Animation<double> secondaryAnimation,
+                      ) {
+                        return FadeThroughTransition(
+                          animation: animation,
+                          secondaryAnimation: secondaryAnimation,
+                          child: child,
+                        );
+                      },
+                      child: Column(
+                        key: ValueKey<bool>(protectionActive),
+                        children: <Widget>[
+                          _ShieldOrb(active: protectionActive),
+                          const SizedBox(height: 16),
+                          Text(
+                            '$alertsToday',
+                            style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                                  fontSize: 54,
+                                  letterSpacing: -1.6,
+                                  color: colors.onSurface,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            alertsToday > 1 ? 'alertes aujourd hui' : 'alerte aujourd hui',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            settings.hasActiveMonitoring
+                                ? protectionActive
+                                    ? 'Votre protection est active'
+                                    : 'Autorise le service Android pour demarrer la veille'
+                                : 'Active au moins un canal pour lancer la surveillance',
+                            style: Theme.of(context).textTheme.bodySmall,
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
                     ),
                   ).animate().fadeIn(duration: 280.ms),
                   const SizedBox(height: 22),
@@ -310,17 +317,17 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with WidgetsBindingObse
                             _WatchChip(
                               label: 'SMS',
                               active: settings.monitorSms,
-                              icon: Symbols.sms_rounded,
+                              assetName: 'assets/brand/logo_sms.svg',
                             ),
                             _WatchChip(
                               label: 'WhatsApp',
                               active: settings.monitorWhatsapp,
-                              icon: Symbols.forum_rounded,
+                              assetName: 'assets/brand/logo_whatsapp.svg',
                             ),
                             _WatchChip(
                               label: 'Messenger',
                               active: settings.monitorMessenger,
-                              icon: Symbols.chat_rounded,
+                              assetName: 'assets/brand/logo_messenger.svg',
                             ),
                           ],
                         ),
@@ -600,12 +607,12 @@ class _WatchChip extends StatelessWidget {
   const _WatchChip({
     required this.label,
     required this.active,
-    required this.icon,
+    required this.assetName,
   });
 
   final String label;
   final bool active;
-  final IconData icon;
+  final String assetName;
 
   @override
   Widget build(BuildContext context) {
@@ -623,7 +630,11 @@ class _WatchChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(icon, size: 16, color: tone),
+          SvgPicture.asset(
+            assetName,
+            width: 16,
+            height: 16,
+          ),
           const SizedBox(width: 6),
           Text(
             label,
