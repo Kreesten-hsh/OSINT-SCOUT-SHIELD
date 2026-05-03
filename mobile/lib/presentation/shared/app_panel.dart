@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
@@ -25,36 +23,30 @@ class AppPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final BeninShieldColors colors = context.shieldColors;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(radius),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: padding,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: <Color>[
-                colors.surfaceHighest.withValues(alpha: backgroundOpacity * 0.46),
-                colors.surface.withValues(alpha: backgroundOpacity),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(radius),
-            border: Border.all(
-              color: showInnerBorder ? colors.outlineSoft.withValues(alpha: 0.92) : Colors.transparent,
-            ),
-            boxShadow: <BoxShadow>[
-              BoxShadow(
-                color: (glowColor ?? colors.background).withValues(alpha: 0.22),
-                blurRadius: 22,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: child,
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: <Color>[
+            colors.surfaceHighest.withValues(alpha: backgroundOpacity * 0.42),
+            colors.surface.withValues(alpha: backgroundOpacity * 0.9),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(
+          color: showInnerBorder ? colors.outlineSoft.withValues(alpha: 0.92) : Colors.transparent,
+        ),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: (glowColor ?? colors.background).withValues(alpha: 0.18),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
+      child: child,
     );
   }
 }

@@ -38,6 +38,13 @@ export function Topbar({ onMenuToggle }: TopbarProps) {
           >
             <Menu className="h-4 w-4" />
           </button>
+          <div className="brand-mark-frame hidden h-10 w-10 rounded-xl p-1 sm:block">
+            <img
+              src="/logo-bcs.png"
+              alt="BENIN CYBER SHIELD"
+              className="h-full w-full rounded-[0.7rem] object-cover"
+            />
+          </div>
           <div>
             <p className="text-xs uppercase tracking-[0.16em] text-primary/90">Admin Workspace</p>
             <h1 className="font-display text-base font-semibold leading-tight sm:text-lg">{title}</h1>

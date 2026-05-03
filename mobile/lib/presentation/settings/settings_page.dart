@@ -56,6 +56,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
     final MobileShieldSettingsController controller =
         ref.read(mobileShieldSettingsProvider.notifier);
     final NativeShieldStatus? nativeStatus = statusAsync.valueOrNull;
+    final int pendingQueueCount = nativeStatus?.pendingQueueCount ?? 0;
 
     return Scaffold(
       body: Column(
@@ -95,6 +96,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
                               (nativeStatus?.notificationAccessGranted ?? false),
                           onChanged: (_) {},
                           enabled: false,
+                        ),
+                        const SizedBox(height: 10),
+                        _StatusInlineRow(
+                          icon: Symbols.sync_rounded,
+                          title: 'File locale',
+                          value: pendingQueueCount > 0
+                              ? '$pendingQueueCount en attente'
+                              : 'Aucune attente',
+                          color: pendingQueueCount > 0 ? colors.warning : colors.primary,
                         ),
                         const SizedBox(height: 14),
                         Divider(color: colors.outlineSoft),

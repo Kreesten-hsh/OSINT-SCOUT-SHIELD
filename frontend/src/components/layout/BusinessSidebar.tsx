@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { AlertTriangle, FileText, FolderKanban, LogOut, ShieldCheck, UserCircle2, X } from 'lucide-react';
 
+import { BrandLockup } from '@/components/brand/BrandLockup';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
@@ -40,20 +41,10 @@ export function BusinessSidebar({ mobileOpen, onClose }: BusinessSidebarProps) {
       >
         <div className="flex h-16 items-center justify-between border-b border-border/70 px-5">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl border border-primary/30 bg-primary/15 p-2 text-primary">
-              <ShieldCheck className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="font-display text-sm font-semibold uppercase tracking-wide text-primary/90">
-                BENIN CYBER SHIELD
-              </p>
-              <div className="mt-0.5 flex items-center gap-2">
-                <p className="text-xs text-muted-foreground">Espace PME</p>
-                <Badge variant="outline" className="h-5 border-primary/30 bg-primary/10 text-[10px] uppercase text-primary">
-                  PME
-                </Badge>
-              </div>
-            </div>
+            <BrandLockup compact subtitle="Espace PME" />
+            <Badge variant="outline" className="h-5 border-primary/30 bg-primary/10 text-[10px] uppercase text-primary">
+              PME
+            </Badge>
           </div>
           <button
             type="button"

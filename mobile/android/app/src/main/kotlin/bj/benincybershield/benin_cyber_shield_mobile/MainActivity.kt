@@ -12,16 +12,19 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import kotlin.concurrent.thread
 
 class MainActivity : FlutterActivity() {
     private lateinit var configStore: ShieldConfigStore
     private lateinit var historyStore: ShieldHistoryStore
+    private lateinit var orchestrator: ShieldNotificationOrchestrator
     private var pendingNotificationPermissionResult: MethodChannel.Result? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         configStore = ShieldConfigStore(this)
         historyStore = ShieldHistoryStore(this)
+        orchestrator = ShieldNotificationOrchestrator(this)
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -42,6 +45,7 @@ class MainActivity : FlutterActivity() {
                         "battery_optimization_ignored" to status.batteryOptimizationIgnored,
                         "post_notifications_granted" to status.postNotificationsGranted,
                         "service_ready" to status.serviceReady,
+                        "pending_queue_count" to orchestrator.pendingCount(),
                     ),
                 )
             }
@@ -58,6 +62,15 @@ class MainActivity : FlutterActivity() {
                 val arguments = call.arguments as? Map<*, *>
                 val limit = (arguments?.get("limit") as? Number)?.toInt() ?: 60
                 result.success(historyStore.listRecords(limit))
+            }
+
+            "flushPendingQueue" -> {
+                thread(name = "bcs-flush-pending", isDaemon = true) {
+                    val pending = orchestrator.flushPendingQueue()
+                    runOnUiThread {
+                        result.success(pending)
+                    }
+                }
             }
 
             "openNotificationAccessSettings" -> {

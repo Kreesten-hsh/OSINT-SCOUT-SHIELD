@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import type { AxiosError } from 'axios';
-import { Building2, Loader2, ShieldCheck } from 'lucide-react';
+import { Building2, Loader2 } from 'lucide-react';
 
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
+import { BrandLockup } from '@/components/brand/BrandLockup';
 import { useToast } from '@/components/ui/use-toast';
 import type { PmeRegistrationData } from '@/types';
 
@@ -89,10 +90,13 @@ export default function PmeRegisterPage() {
         <section className="panel overflow-hidden border-primary/20 p-0">
           <div className="grid gap-0 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="space-y-5 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.18),transparent_55%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.14),transparent_45%)] px-6 py-8 sm:px-8">
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-primary">
-                <ShieldCheck className="h-3.5 w-3.5" />
-                BENIN CYBER SHIELD
-              </div>
+              <BrandLockup
+                compact
+                subtitle="Plateforme de veille et de signalement"
+                className="w-fit rounded-2xl border border-primary/20 bg-card/45 px-3 py-2 backdrop-blur-sm"
+                markClassName="h-10 w-10 rounded-xl p-1"
+                titleClassName="text-[11px]"
+              />
               <div className="space-y-3">
                 <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Inscription PME</h1>
                 <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/theme/app_theme.dart';
 
@@ -30,10 +29,14 @@ class BrandBar extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                SvgPicture.asset(
-                  'assets/brand/bcs_mark.svg',
-                  width: 20,
-                  height: 20,
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.asset(
+                    'assets/brand/bcs_mark.png',
+                    width: 22,
+                    height: 22,
+                    fit: BoxFit.cover,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Text(

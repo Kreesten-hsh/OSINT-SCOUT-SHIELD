@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../application/providers.dart';
@@ -55,32 +54,30 @@ class _SplashPageState extends ConsumerState<SplashPage> {
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 Container(
-                  width: 198,
-                  height: 198,
+                  padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
+                    borderRadius: BorderRadius.circular(32),
+                    gradient: LinearGradient(
                       colors: <Color>[
-                        colors.primary.withValues(alpha: 0.2),
-                        colors.brand.withValues(alpha: 0.08),
-                        colors.background,
+                        colors.surfaceHighest.withValues(alpha: 0.82),
+                        colors.surface.withValues(alpha: 0.94),
                       ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
                     border: Border.all(color: colors.outlineSoft),
                     boxShadow: <BoxShadow>[
                       BoxShadow(
-                        color: colors.brand.withValues(alpha: 0.14),
-                        blurRadius: 34,
-                        spreadRadius: 6,
+                        color: colors.brand.withValues(alpha: 0.18),
+                        blurRadius: 40,
+                        spreadRadius: 2,
                       ),
                     ],
                   ),
-                  child: Center(
-                    child: SvgPicture.asset(
-                      'assets/brand/bcs_mark.svg',
-                      width: 110,
-                      height: 110,
-                    ),
+                  child: Image.asset(
+                    'assets/brand/logo_bcs.png',
+                    width: 292,
+                    fit: BoxFit.contain,
                   ),
                 ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack).fadeIn(),
                 const SizedBox(height: 32),

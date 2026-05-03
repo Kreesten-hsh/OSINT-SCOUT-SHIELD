@@ -1,27 +1,39 @@
 package bj.benincybershield.benin_cyber_shield_mobile
 
 import android.app.Notification
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.thread
 
 class ShieldNotificationListenerService : NotificationListenerService() {
     private lateinit var configStore: ShieldConfigStore
-    private lateinit var historyStore: ShieldHistoryStore
-    private lateinit var analysisClient: ShieldAnalysisClient
-    private lateinit var localNotifier: ShieldLocalNotifier
+    private lateinit var orchestrator: ShieldNotificationOrchestrator
+    private var connectivityManager: ConnectivityManager? = null
+    private val networkCallback =
+        object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                flushPendingAsync("network")
+            }
+        }
 
     override fun onCreate() {
         super.onCreate()
         configStore = ShieldConfigStore(this)
-        historyStore = ShieldHistoryStore(this)
-        analysisClient = ShieldAnalysisClient()
-        localNotifier = ShieldLocalNotifier(this)
+        orchestrator = ShieldNotificationOrchestrator(this)
+        connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            connectivityManager?.registerDefaultNetworkCallback(networkCallback)
+        }
+    }
+
+    override fun onListenerConnected() {
+        super.onListenerConnected()
+        flushPendingAsync("listener-connected")
     }
 
     override fun onNotificationPosted(statusBarNotification: StatusBarNotification?) {
@@ -57,57 +69,25 @@ class ShieldNotificationListenerService : NotificationListenerService() {
 
         val sourceApp = configStore.resolveSourceApp(sbn.packageName)
         val safeSender = if (sender.isBlank()) sourceApp else sender
+        orchestrator.handleLiveNotification(
+            message = message,
+            sender = safeSender,
+            sourceApp = sourceApp,
+        )
+    }
 
-        thread(name = "bcs-analyze-notification", isDaemon = true) {
-            val analysis = analysisClient.analyzeNotification(
-                apiBaseUrl = config.apiBaseUrl,
-                deviceInstallId = config.deviceInstallId,
-                message = message,
-                sender = safeSender,
-                sourceApp = sourceApp,
-            ) ?: return@thread
-
-            val preview = buildPreview(message, analysis)
-            historyStore.appendRecord(
-                ShieldHistoryRecord(
-                    createdAt = isoTimestamp(),
-                    riskScore = analysis.riskScore,
-                    riskLevel = analysis.riskLevel,
-                    maskedPhone = maskSender(safeSender),
-                    primaryCategory = preview,
-                    status = sourceApp,
-                ),
-            )
-
-            if (shouldNotify(config, analysis)) {
-                localNotifier.showThreatAlert(
-                    sourceApp = sourceApp,
-                    sender = maskSender(safeSender),
-                    preview = preview,
-                    riskScore = analysis.riskScore,
-                    riskLevel = analysis.riskLevel,
-                )
+    override fun onDestroy() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            runCatching {
+                connectivityManager?.unregisterNetworkCallback(networkCallback)
             }
         }
+        super.onDestroy()
     }
 
-    private fun buildPreview(message: String, analysis: ShieldAnalysisResult): String {
-        val category = analysis.categories.firstOrNull()?.trim().orEmpty()
-        val body = message.replace('\n', ' ').trim().take(88)
-        return when {
-            category.isNotBlank() -> "$category · $body"
-            else -> body
-        }
-    }
-
-    private fun shouldNotify(config: ShieldConfig, analysis: ShieldAnalysisResult): Boolean {
-        if (analysis.riskScore < config.alertThreshold) {
-            return false
-        }
-        return when (analysis.riskLevel.uppercase()) {
-            "HIGH" -> true
-            "MEDIUM" -> config.alertMedium
-            else -> false
+    private fun flushPendingAsync(reason: String) {
+        thread(name = "bcs-flush-$reason", isDaemon = true) {
+            orchestrator.flushPendingQueue()
         }
     }
 
@@ -122,23 +102,6 @@ class ShieldNotificationListenerService : NotificationListenerService() {
             }
         }
         return previous != null && now - previous < DEDUPE_WINDOW_MS
-    }
-
-    private fun isoTimestamp(): String {
-        val formatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
-        formatter.timeZone = TimeZone.getTimeZone("UTC")
-        return formatter.format(Date())
-    }
-
-    private fun maskSender(sender: String): String {
-        val digits = sender.filter(Char::isDigit)
-        return if (digits.length >= 6) {
-            val prefix = digits.take(3)
-            val suffix = digits.takeLast(2)
-            "$prefix ${"*".repeat((digits.length - 5).coerceAtLeast(2))} $suffix"
-        } else {
-            sender.take(28)
-        }
     }
 
     companion object {

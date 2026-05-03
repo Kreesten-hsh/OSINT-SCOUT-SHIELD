@@ -72,6 +72,11 @@ class NativeShieldBridge {
         .toList(growable: false);
   }
 
+  Future<int> flushPendingQueue() async {
+    final int? pending = await _channel.invokeMethod<int>('flushPendingQueue');
+    return pending ?? 0;
+  }
+
   Future<void> openNotificationAccessSettings() {
     return _channel.invokeMethod<void>('openNotificationAccessSettings');
   }

@@ -28,13 +28,19 @@ export function InstallPWA() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex max-w-xs items-center gap-3 rounded-xl border border-slate-600 bg-slate-800 px-4 py-3 text-slate-200 shadow-2xl">
-      <span className="text-2xl">📲</span>
+    <div className="fixed bottom-4 right-4 z-50 flex max-w-xs items-center gap-3 rounded-2xl border border-border/80 bg-card/95 px-4 py-3 text-foreground shadow-2xl backdrop-blur-xl">
+      <div className="brand-mark-frame h-11 w-11 shrink-0 rounded-xl p-1">
+        <img
+          src="/logo-bcs.png"
+          alt="BENIN CYBER SHIELD"
+          className="h-full w-full rounded-[0.8rem] object-cover"
+        />
+      </div>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-white">
+        <p className="text-sm font-semibold text-foreground">
           Installer l&apos;application
         </p>
-        <p className="truncate text-xs text-slate-400">
+        <p className="truncate text-xs text-muted-foreground">
           BENIN CYBER SHIELD
         </p>
       </div>
@@ -48,13 +54,13 @@ export function InstallPWA() {
               setDeferredPrompt(null)
             }
           }}
-          className="whitespace-nowrap rounded-lg bg-red-700 px-3 py-1 text-xs text-white transition-colors hover:bg-red-600"
+          className="whitespace-nowrap rounded-lg bg-primary px-3 py-1 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
         >
           Installer
         </button>
         <button
           onClick={() => setDismissed(true)}
-          className="px-3 py-1 text-xs text-slate-500 transition-colors hover:text-slate-300"
+          className="px-3 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
         >
           Plus tard
         </button>

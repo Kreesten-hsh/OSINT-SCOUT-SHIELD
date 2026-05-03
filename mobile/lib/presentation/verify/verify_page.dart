@@ -1,9 +1,12 @@
+import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../application/providers.dart';
@@ -105,6 +108,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with WidgetsBindingObse
     final bool protectionActive = settings.hasActiveMonitoring &&
         (nativeStatus?.notificationAccessGranted ?? false) &&
         (nativeStatus?.postNotificationsGranted ?? true);
+    final int pendingQueueCount = nativeStatus?.pendingQueueCount ?? 0;
 
     final List<HistoryEntry> sortedItems = (historyAsync.valueOrNull ?? const <HistoryEntry>[])
         .toList(growable: false)
@@ -147,286 +151,382 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with WidgetsBindingObse
               active: protectionActive,
               label: protectionActive ? 'Actif' : 'Pause',
             ),
-          ),
+          ).animate().fadeIn(duration: 220.ms).slideY(begin: -0.04, end: 0),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 132),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  AppPanel(
-                    padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
-                    radius: 30,
-                    glowColor: protectionActive ? colors.primary : colors.brand,
-                    backgroundOpacity: 0.98,
-                    child: Column(
-                      children: <Widget>[
-                        _ShieldOrb(active: protectionActive),
-                        const SizedBox(height: 16),
-                        Text(
-                          '$alertsToday',
-                          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                                fontSize: 54,
-                                letterSpacing: -1.6,
-                                color: colors.onSurface,
-                              ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          alertsToday > 1 ? 'alertes aujourd hui' : 'alerte aujourd hui',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          settings.hasActiveMonitoring
-                              ? protectionActive
-                                  ? 'Votre protection est active'
-                                  : 'Autorise le service Android pour demarrer la veille'
-                              : 'Active au moins un canal pour lancer la surveillance',
-                          style: Theme.of(context).textTheme.bodySmall,
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 22),
-                  Row(
+            child: Stack(
+              children: <Widget>[
+                IgnorePointer(
+                  child: Stack(
                     children: <Widget>[
-                      Expanded(
-                        child: _MetricCard(
-                          label: 'Analyses',
-                          value: '$analyzedCount',
-                          caption: 'messages',
-                          icon: Symbols.analytics_rounded,
+                      Positioned(
+                        top: 0,
+                        left: -80,
+                        child: Container(
+                          width: 220,
+                          height: 220,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: <Color>[
+                                colors.primary.withValues(alpha: 0.12),
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _MetricCard(
-                          label: 'Menaces',
-                          value: '$threatCount',
-                          caption: 'eleve',
-                          icon: Symbols.warning_rounded,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _MetricCard(
-                          label: 'Dernier',
-                          value: _ago(lastScan),
-                          caption: 'scan',
-                          icon: Symbols.schedule_rounded,
+                      Positioned(
+                        top: 90,
+                        right: -70,
+                        child: Container(
+                          width: 220,
+                          height: 220,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: <Color>[
+                                colors.brand.withValues(alpha: 0.14),
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  if (nativeStatus != null && !nativeStatus.notificationAccessGranted) ...<Widget>[
+                ),
+                ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 132),
+                  children: <Widget>[
+                    AppPanel(
+                      padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
+                      radius: 30,
+                      glowColor: protectionActive ? colors.primary : colors.brand,
+                      backgroundOpacity: 0.98,
+                      child: Column(
+                        children: <Widget>[
+                          _ShieldOrb(active: protectionActive),
+                          const SizedBox(height: 16),
+                          Text(
+                            '$alertsToday',
+                            style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                                  fontSize: 54,
+                                  letterSpacing: -1.6,
+                                  color: colors.onSurface,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            alertsToday > 1 ? 'alertes aujourd hui' : 'alerte aujourd hui',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            settings.hasActiveMonitoring
+                                ? protectionActive
+                                    ? 'Votre protection est active'
+                                    : 'Autorise le service Android pour demarrer la veille'
+                                : 'Active au moins un canal pour lancer la surveillance',
+                            style: Theme.of(context).textTheme.bodySmall,
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ).animate().fadeIn(duration: 260.ms).slideY(begin: 0.05, end: 0),
+                    const SizedBox(height: 22),
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: _MetricCard(
+                            label: 'Analyses',
+                            value: '$analyzedCount',
+                            caption: 'messages',
+                            icon: Symbols.analytics_rounded,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _MetricCard(
+                            label: 'Menaces',
+                            value: '$threatCount',
+                            caption: 'eleve',
+                            icon: Symbols.warning_rounded,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _MetricCard(
+                            label: 'Dernier',
+                            value: _ago(lastScan),
+                            caption: 'scan',
+                            icon: Symbols.schedule_rounded,
+                          ),
+                        ),
+                      ],
+                    ).animate().fadeIn(delay: 50.ms, duration: 260.ms).slideY(begin: 0.05, end: 0),
+                    if (pendingQueueCount > 0) ...<Widget>[
+                      const SizedBox(height: 18),
+                      AppPanel(
+                        padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                        radius: 20,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Icon(Symbols.sync_rounded, color: colors.warning, size: 18),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  Text(
+                                    pendingQueueCount > 1
+                                        ? '$pendingQueueCount analyses en attente'
+                                        : '1 analyse en attente',
+                                    style: Theme.of(context).textTheme.labelLarge,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'BCS relancera automatiquement ces messages des que la connexion revient.',
+                                    style: Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ).animate().fadeIn(delay: 70.ms, duration: 260.ms).slideY(begin: 0.06, end: 0),
+                    ],
+                    if (nativeStatus != null && !nativeStatus.notificationAccessGranted) ...<Widget>[
+                      const SizedBox(height: 18),
+                      AppPanel(
+                        padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                        radius: 20,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Row(
+                              children: <Widget>[
+                                Icon(Symbols.notifications_off_rounded, color: colors.warning, size: 18),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'Le service de lecture des notifications n est pas encore autorise.',
+                                    style: Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: () async {
+                                  await ref.read(nativeShieldBridgeProvider).openNotificationAccessSettings();
+                                  ref.invalidate(nativeShieldStatusProvider);
+                                },
+                                icon: const Icon(Symbols.settings_rounded, size: 18),
+                                label: const Text('Activer l acces notifications'),
+                              ),
+                            ),
+                            if ((nativeStatus.postNotificationsGranted) == false) ...<Widget>[
+                              const SizedBox(height: 10),
+                              SizedBox(
+                                width: double.infinity,
+                                child: FilledButton.icon(
+                                  onPressed: () async {
+                                    await ref
+                                        .read(nativeShieldBridgeProvider)
+                                        .requestPostNotificationsPermission();
+                                    ref.invalidate(nativeShieldStatusProvider);
+                                  },
+                                  icon: const Icon(Symbols.notifications_rounded, size: 18),
+                                  label: const Text('Autoriser les alertes'),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ).animate().fadeIn(delay: 80.ms, duration: 260.ms).slideY(begin: 0.06, end: 0),
+                    ],
                     const SizedBox(height: 18),
                     AppPanel(
-                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-                      radius: 20,
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                      radius: 22,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Row(
                             children: <Widget>[
-                              Icon(Symbols.notifications_off_rounded, color: colors.warning, size: 18),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  'Le service de lecture des notifications n est pas encore autorise.',
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
+                              Text('Apps surveillees', style: Theme.of(context).textTheme.labelLarge),
+                              const Spacer(),
+                              Text(
+                                '${settings.activeChannelCount}/3',
+                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                      color: colors.primary,
+                                    ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: () async {
-                                await ref.read(nativeShieldBridgeProvider).openNotificationAccessSettings();
-                                ref.invalidate(nativeShieldStatusProvider);
-                              },
-                              icon: const Icon(Symbols.settings_rounded, size: 18),
-                              label: const Text('Activer l acces notifications'),
-                            ),
-                          ),
-                          if ((nativeStatus.postNotificationsGranted) == false) ...<Widget>[
-                            const SizedBox(height: 10),
-                            SizedBox(
-                              width: double.infinity,
-                              child: FilledButton.icon(
-                                onPressed: () async {
-                                  await ref
-                                      .read(nativeShieldBridgeProvider)
-                                      .requestPostNotificationsPermission();
-                                  ref.invalidate(nativeShieldStatusProvider);
-                                },
-                                icon: const Icon(Symbols.notifications_rounded, size: 18),
-                                label: const Text('Autoriser les alertes'),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 18),
-                  AppPanel(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                    radius: 22,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Row(
-                          children: <Widget>[
-                            Text('Apps surveillees', style: Theme.of(context).textTheme.labelLarge),
-                            const Spacer(),
-                            Text(
-                              '${settings.activeChannelCount}/3',
-                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: colors.primary,
-                                  ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: <Widget>[
-                            _WatchChip(
-                              label: 'SMS',
-                              active: settings.monitorSms,
-                              assetName: 'assets/brand/logo_sms.svg',
-                            ),
-                            _WatchChip(
-                              label: 'WhatsApp',
-                              active: settings.monitorWhatsapp,
-                              assetName: 'assets/brand/logo_whatsapp.svg',
-                            ),
-                            _WatchChip(
-                              label: 'Messenger',
-                              active: settings.monitorMessenger,
-                              assetName: 'assets/brand/logo_messenger.svg',
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  AppPanel(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                    radius: 22,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: colors.brand.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Icon(
-                            Symbols.open_in_new_rounded,
-                            color: colors.brand,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
                             children: <Widget>[
-                              Text('Portail citoyen', style: Theme.of(context).textTheme.labelLarge),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Pour verifier un message manuellement, joindre des preuves ou signaler un cas precis.',
-                                style: Theme.of(context).textTheme.bodySmall,
+                              _WatchChip(
+                                label: 'SMS',
+                                active: settings.monitorSms,
+                                assetName: 'assets/brand/logo_sms.svg',
+                              ),
+                              _WatchChip(
+                                label: 'WhatsApp',
+                                active: settings.monitorWhatsapp,
+                                assetName: 'assets/brand/logo_whatsapp.svg',
+                              ),
+                              _WatchChip(
+                                label: 'Messenger',
+                                active: settings.monitorMessenger,
+                                assetName: 'assets/brand/logo_messenger.svg',
                               ),
                             ],
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        FilledButton.icon(
-                          onPressed: () => _openCitizenPortal(context),
-                          icon: const Icon(Symbols.open_in_new_rounded, size: 18),
-                          label: const Text('Ouvrir'),
+                        ],
+                      ),
+                    ).animate().fadeIn(delay: 100.ms, duration: 260.ms).slideY(begin: 0.06, end: 0),
+                    const SizedBox(height: 18),
+                    AppPanel(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                      radius: 22,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Row(
+                            children: <Widget>[
+                              Container(
+                                width: 42,
+                                height: 42,
+                                decoration: BoxDecoration(
+                                  color: colors.brand.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Icon(
+                                  Symbols.open_in_new_rounded,
+                                  color: colors.brand,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    Text('Portail citoyen', style: Theme.of(context).textTheme.labelLarge),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Pour verifier un message manuellement, joindre des preuves ou signaler un cas precis.',
+                                      style: Theme.of(context).textTheme.bodySmall,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton.icon(
+                              onPressed: () => _openCitizenPortal(context),
+                              icon: const Icon(Symbols.open_in_new_rounded, size: 18),
+                              label: const Text('Ouvrir le portail BCS'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ).animate().fadeIn(delay: 120.ms, duration: 260.ms).slideY(begin: 0.06, end: 0),
+                    const SizedBox(height: 18),
+                    Row(
+                      children: <Widget>[
+                        Text('Derniere alerte', style: Theme.of(context).textTheme.labelLarge),
+                        const Spacer(),
+                        if (latestThreat != null)
+                          Text(
+                            DateFormat('HH:mm').format(latestThreat.createdAt),
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    PageTransitionSwitcher(
+                      duration: 280.ms,
+                      reverse: latestThreat == null,
+                      transitionBuilder: (
+                        Widget child,
+                        Animation<double> primaryAnimation,
+                        Animation<double> secondaryAnimation,
+                      ) {
+                        return FadeThroughTransition(
+                          animation: primaryAnimation,
+                          secondaryAnimation: secondaryAnimation,
+                          child: child,
+                        );
+                      },
+                      child: latestThreat == null
+                          ? AppPanel(
+                              key: const ValueKey<String>('no-threat'),
+                              padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+                              radius: 20,
+                              child: Text(
+                                settings.hasActiveMonitoring
+                                    ? 'Aucune menace recente. La sentinelle reste en veille.'
+                                    : 'Aucune menace recente. Active les canaux pour demarrer la veille.',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            )
+                          : _RecentAlertCard(
+                              key: ValueKey<String>(latestThreat.createdAt.toIso8601String()),
+                              item: latestThreat,
+                              accent: _riskColor(colors, latestThreat.riskLevel),
+                            ),
+                    ),
+                    const SizedBox(height: 18),
+                    Row(
+                      children: <Widget>[
+                        Text('Recents', style: Theme.of(context).textTheme.labelLarge),
+                        const Spacer(),
+                        Text(
+                          'journal',
+                          style: Theme.of(context).textTheme.labelSmall,
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 18),
-                  Row(
-                    children: <Widget>[
-                      Text('Derniere alerte', style: Theme.of(context).textTheme.labelLarge),
-                      const Spacer(),
-                      if (latestThreat != null)
-                        Text(
-                          DateFormat('HH:mm').format(latestThreat.createdAt),
-                          style: Theme.of(context).textTheme.bodySmall,
+                    const SizedBox(height: 8),
+                    if (historyAsync.isLoading)
+                      const _RecentListSkeleton()
+                    else if (recentItems.isEmpty)
+                      AppPanel(
+                        padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+                        radius: 20,
+                        child: Text(
+                          'Le journal commencera a se remplir des les premiers messages analyses.',
+                          style: Theme.of(context).textTheme.bodyMedium,
                         ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  if (latestThreat == null)
-                    AppPanel(
-                      padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
-                      radius: 20,
-                      child: Text(
-                        settings.hasActiveMonitoring
-                            ? 'Aucune menace recente. La sentinelle reste en veille.'
-                            : 'Aucune menace recente. Active les canaux pour demarrer la veille.',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    )
-                  else
-                    _RecentAlertCard(
-                      item: latestThreat,
-                      accent: _riskColor(colors, latestThreat.riskLevel),
-                    ),
-                  const SizedBox(height: 18),
-                  Row(
-                    children: <Widget>[
-                      Text('Recents', style: Theme.of(context).textTheme.labelLarge),
-                      const Spacer(),
-                      Text(
-                        'journal',
-                        style: Theme.of(context).textTheme.labelSmall,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  if (historyAsync.isLoading)
-                    const _RecentListSkeleton()
-                  else if (recentItems.isEmpty)
-                    AppPanel(
-                      padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
-                      radius: 20,
-                      child: Text(
-                        'Le journal commencera a se remplir des les premiers messages analyses.',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    )
-                  else
-                    Column(
-                      children: recentItems
-                          .map(
-                            (HistoryEntry item) => Padding(
-                              padding: EdgeInsets.only(bottom: item == recentItems.last ? 0 : 10),
-                              child: _RecentAlertCard(
-                                item: item,
-                                accent: _riskColor(colors, item.riskLevel),
+                      )
+                    else
+                      Column(
+                        children: recentItems
+                            .map(
+                              (HistoryEntry item) => Padding(
+                                padding: EdgeInsets.only(bottom: item == recentItems.last ? 0 : 10),
+                                child: _RecentAlertCard(
+                                  item: item,
+                                  accent: _riskColor(colors, item.riskLevel),
+                                ),
                               ),
-                            ),
-                          )
-                          .toList(growable: false),
-                    ),
-                ],
-              ),
+                            )
+                            .toList(growable: false),
+                      ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
@@ -491,7 +591,7 @@ class _ShieldOrb extends StatelessWidget {
   Widget build(BuildContext context) {
     final BeninShieldColors colors = context.shieldColors;
     final Color tone = active ? colors.primary : colors.warning;
-    return Center(
+    final Widget orb = Center(
       child: Container(
         width: 142,
         height: 142,
@@ -531,6 +631,17 @@ class _ShieldOrb extends StatelessWidget {
         ),
       ),
     );
+    if (!active) {
+      return orb;
+    }
+    return orb
+        .animate(onPlay: (AnimationController controller) => controller.repeat(reverse: true))
+        .scale(
+          begin: const Offset(0.985, 0.985),
+          end: const Offset(1.015, 1.015),
+          duration: 1600.ms,
+          curve: Curves.easeInOut,
+        );
   }
 }
 
@@ -625,6 +736,7 @@ class _WatchChip extends StatelessWidget {
 
 class _RecentAlertCard extends StatelessWidget {
   const _RecentAlertCard({
+    super.key,
     required this.item,
     required this.accent,
   });
@@ -712,17 +824,21 @@ class _RecentListSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final BeninShieldColors colors = context.shieldColors;
-    return Column(
-      children: List<Widget>.generate(
-        3,
-        (int index) => Padding(
-          padding: EdgeInsets.only(bottom: index == 2 ? 0 : 10),
-          child: Container(
-            height: 72,
-            decoration: BoxDecoration(
-              color: colors.surfaceLow,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: colors.outlineSoft),
+    return Shimmer.fromColors(
+      baseColor: colors.surfaceLow,
+      highlightColor: colors.surfaceHighest,
+      child: Column(
+        children: List<Widget>.generate(
+          3,
+          (int index) => Padding(
+            padding: EdgeInsets.only(bottom: index == 2 ? 0 : 10),
+            child: Container(
+              height: 72,
+              decoration: BoxDecoration(
+                color: colors.surfaceLow,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: colors.outlineSoft),
+              ),
             ),
           ),
         ),

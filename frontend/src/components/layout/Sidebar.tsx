@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
-import { Building2, FileCog, FileText, Gauge, LogOut, RadioTower, Settings, ShieldCheck, ShieldEllipsis, X } from 'lucide-react';
+import { Building2, FileCog, FileText, Gauge, LogOut, RadioTower, Settings, ShieldEllipsis, X } from 'lucide-react';
 
+import { BrandLockup } from '@/components/brand/BrandLockup';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -40,17 +41,7 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
         )}
       >
         <div className="flex h-16 items-center justify-between border-b border-border/70 px-5">
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl border border-primary/30 bg-primary/15 p-2 text-primary">
-              <ShieldCheck className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="font-display text-sm font-semibold uppercase tracking-wide text-primary/90">
-                BENIN CYBER SHIELD
-              </p>
-              <p className="text-xs text-muted-foreground">Console administrateur</p>
-            </div>
-          </div>
+          <BrandLockup compact subtitle="Console administrateur" />
           <button
             type="button"
             onClick={onClose}

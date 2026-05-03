@@ -3,7 +3,6 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
@@ -11,14 +10,16 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: [
         'favicon.ico',
+        'apple-touch-icon.png',
         'icons/icon-192.png',
         'icons/icon-512.png',
+        'icons/icon-192-maskable.png',
+        'icons/icon-512-maskable.png',
       ],
       manifest: {
         name: 'BENIN CYBER SHIELD',
-        short_name: 'BCS Shield',
-        description:
-          'Plateforme nationale de détection des arnaques mobiles au Bénin',
+        short_name: 'BCS',
+        description: 'Plateforme nationale de détection des arnaques mobiles au Bénin',
         theme_color: '#0f172a',
         background_color: '#0f172a',
         display: 'standalone',
@@ -30,13 +31,25 @@ export default defineConfig({
             src: '/icons/icon-192.png',
             sizes: '192x192',
             type: 'image/png',
-            purpose: 'any maskable',
+            purpose: 'any',
           },
           {
             src: '/icons/icon-512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable',
+            purpose: 'any',
+          },
+          {
+            src: '/icons/icon-192-maskable.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+          {
+            src: '/icons/icon-512-maskable.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
           },
         ],
       },

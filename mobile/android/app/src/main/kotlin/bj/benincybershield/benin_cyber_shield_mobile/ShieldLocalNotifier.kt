@@ -2,7 +2,9 @@ package bj.benincybershield.benin_cyber_shield_mobile
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -17,17 +19,32 @@ class ShieldLocalNotifier(private val context: Context) {
         riskLevel: String,
     ) {
         ensureChannel()
+        val launchIntent =
+            context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                putExtra("bcs_open_surface", "history")
+            }
+        val contentIntent =
+            launchIntent?.let { intent ->
+                PendingIntent.getActivity(
+                    context,
+                    abs("history-$sourceApp-$sender".hashCode()),
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                )
+            }
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("Alerte BCS · $sourceApp")
+            .setContentTitle("Alerte BCS - $sourceApp")
             .setContentText("Score $riskScore - ${buildSummary(sender, preview)}")
             .setStyle(
                 NotificationCompat.BigTextStyle().bigText(
-                    "$riskLevel · ${buildSummary(sender, preview)}",
+                    "$riskLevel - ${buildSummary(sender, preview)}",
                 ),
             )
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
+            .setContentIntent(contentIntent)
             .build()
 
         try {
@@ -43,7 +60,7 @@ class ShieldLocalNotifier(private val context: Context) {
     private fun buildSummary(sender: String, preview: String): String {
         return listOf(sender, preview)
             .filter { it.isNotBlank() }
-            .joinToString(" · ")
+            .joinToString(" - ")
             .take(120)
     }
 

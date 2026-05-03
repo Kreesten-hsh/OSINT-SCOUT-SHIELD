@@ -62,13 +62,16 @@ final bootstrapProvider = FutureProvider<BootstrapData>((Ref ref) async {
 
 final nativeShieldStatusProvider = FutureProvider<NativeShieldStatus>((Ref ref) async {
   try {
-    return await ref.watch(nativeShieldBridgeProvider).getShieldStatus();
+    final NativeShieldBridge bridge = ref.watch(nativeShieldBridgeProvider);
+    unawaited(bridge.flushPendingQueue());
+    return await bridge.getShieldStatus();
   } catch (_) {
     return const NativeShieldStatus(
       notificationAccessGranted: false,
       batteryOptimizationIgnored: false,
       postNotificationsGranted: true,
       serviceReady: false,
+      pendingQueueCount: 0,
     );
   }
 });
@@ -257,6 +260,7 @@ final reportControllerProvider =
 final historyProvider = FutureProvider<List<HistoryEntry>>((Ref ref) async {
   try {
     final NativeShieldBridge nativeBridge = ref.watch(nativeShieldBridgeProvider);
+    unawaited(nativeBridge.flushPendingQueue());
     final List<HistoryEntry> nativeItems = await nativeBridge.fetchLocalHistory(limit: 80);
     if (nativeItems.isNotEmpty) {
       return nativeItems;
@@ -318,7 +322,9 @@ class MobileShieldSettingsController extends StateNotifier<MobileShieldSettings>
                 citizenPortalUrl: AppConfig.citizenPortalUrl,
               );
       state = synced;
+      unawaited(_ref.read(nativeShieldBridgeProvider).flushPendingQueue());
       _ref.invalidate(nativeShieldStatusProvider);
+      _ref.invalidate(historyProvider);
     } catch (_) {
       return;
     }

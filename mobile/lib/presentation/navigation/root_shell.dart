@@ -48,24 +48,23 @@ class RootShell extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(42),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+              filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: <Color>[
-                      Colors.white.withValues(alpha: 0.12),
-                      Colors.white.withValues(alpha: 0.05),
-                      Colors.transparent,
+                      Colors.white.withValues(alpha: 0.09),
+                      Colors.white.withValues(alpha: 0.03),
                     ],
-                    begin: Alignment.topCenter,
+                    begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(42),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
                   boxShadow: <BoxShadow>[
                     BoxShadow(
-                      color: colors.background.withValues(alpha: 0.42),
+                      color: colors.background.withValues(alpha: 0.48),
                       blurRadius: 36,
                       offset: const Offset(0, 16),
                     ),
@@ -83,7 +82,7 @@ class RootShell extends StatelessWidget {
                           gradient: LinearGradient(
                             colors: <Color>[
                               Colors.transparent,
-                              Colors.white.withValues(alpha: 0.32),
+                              Colors.white.withValues(alpha: 0.34),
                               Colors.transparent,
                             ],
                           ),

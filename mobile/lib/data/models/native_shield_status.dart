@@ -4,12 +4,14 @@ class NativeShieldStatus {
     required this.batteryOptimizationIgnored,
     required this.postNotificationsGranted,
     required this.serviceReady,
+    required this.pendingQueueCount,
   });
 
   final bool notificationAccessGranted;
   final bool batteryOptimizationIgnored;
   final bool postNotificationsGranted;
   final bool serviceReady;
+  final int pendingQueueCount;
 
   factory NativeShieldStatus.fromJson(Map<Object?, Object?> json) {
     return NativeShieldStatus(
@@ -17,6 +19,7 @@ class NativeShieldStatus {
       batteryOptimizationIgnored: json['battery_optimization_ignored'] == true,
       postNotificationsGranted: json['post_notifications_granted'] == true,
       serviceReady: json['service_ready'] == true,
+      pendingQueueCount: (json['pending_queue_count'] as num?)?.toInt() ?? 0,
     );
   }
 }

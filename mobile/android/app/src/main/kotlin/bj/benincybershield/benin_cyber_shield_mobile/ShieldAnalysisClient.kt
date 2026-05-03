@@ -29,8 +29,8 @@ class ShieldAnalysisClient {
         val endpoint = "${apiBaseUrl.trimEnd('/')}/analysis/verify"
         val connection = (URL(endpoint).openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
-            connectTimeout = 15000
-            readTimeout = 20000
+            connectTimeout = 5000
+            readTimeout = 8000
             doInput = true
             doOutput = true
             setRequestProperty("Accept", "application/json")

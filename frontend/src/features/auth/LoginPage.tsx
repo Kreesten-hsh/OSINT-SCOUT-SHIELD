@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { AlertCircle, Loader2, LockKeyhole, Mail, ShieldCheck } from 'lucide-react';
 
 import { apiClient } from '@/api/client';
+import { BrandLockup } from '@/components/brand/BrandLockup';
 import { useAuthStore } from '@/store/auth-store';
 import type { LoginResponse } from '@/types';
 
@@ -43,11 +44,14 @@ export default function LoginPage() {
 
             <div className="panel relative z-10 w-full max-w-md p-7 sm:p-8">
                 <div className="mb-7 text-center">
-                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/30 bg-primary/15 text-primary">
-                        <ShieldCheck className="h-7 w-7" />
-                    </div>
-                    <h1 className="font-display text-2xl font-bold tracking-tight">BENIN CYBER SHIELD</h1>
-                    <p className="mt-1 text-sm text-muted-foreground">Connexion admin ou PME</p>
+                    <BrandLockup
+                        centered
+                        subtitle="Connexion admin ou PME"
+                        className="mx-auto mb-4 w-fit"
+                        markClassName="h-16 w-16 p-2"
+                        titleClassName="text-base"
+                        subtitleClassName="text-sm"
+                    />
                 </div>
 
                 {error && (
