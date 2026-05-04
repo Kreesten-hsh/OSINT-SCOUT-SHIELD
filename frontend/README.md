@@ -1,6 +1,13 @@
 # Frontend - BENIN CYBER SHIELD
 
-Ce dossier contient l'application React/TypeScript.
+Application React/TypeScript/Vite du produit BENIN CYBER SHIELD.
+
+## Surfaces couvertes
+
+- portail citoyen : `/verify`
+- console administrateur : `/admin/*`
+- espace PME : `/pme/*`
+- carte live nationale : `/live`
 
 ## Commandes utiles
 
@@ -10,14 +17,17 @@ npm run dev
 npm run build
 ```
 
-## Espaces frontend
+## Structure utile
 
-- Public: `/verify`
-- SOC: `/dashboard` et pages associees
-- PME: `/business/*`
+- `src/features/verify` : parcours citoyen
+- `src/features/admin` : dashboard, PME, transmissions, exports
+- `src/features/business` : espace PME
+- `src/features/live` : carte nationale
+- `src/components/layout` : sidebars, topbars, branding
+- `src/types` : contrats types frontend
 
 ## Notes
 
-- Le design system est base sur Tailwind + composants UI internes.
-- Les appels API passent par `src/api/client.ts`.
-- Les types partages sont dans `src/types/index.ts`.
+- les niveaux de risque visibles sont `FAIBLE`, `MOYEN`, `FORT`
+- le frontend appelle l'API via `src/api/client.ts`
+- les routes historiques `/business/*` existent encore comme redirections vers `/pme/*`

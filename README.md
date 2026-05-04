@@ -1,252 +1,203 @@
 # BENIN CYBER SHIELD
 
-<p align="left">
-  <img src="https://img.shields.io/badge/Version-v2.1_L3-0f172a?style=for-the-badge" alt="version"/>
-  <img src="https://img.shields.io/badge/Status-Functional_Prototype-0ea5e9?style=for-the-badge" alt="status"/>
-  <img src="https://img.shields.io/badge/Architecture-Detect_%7C_Scout_%7C_Shield-1d4ed8?style=for-the-badge" alt="architecture"/>
-  <img src="https://img.shields.io/badge/Roles-CITIZEN_%7C_SME_%7C_SOC-334155?style=for-the-badge" alt="roles"/>
-</p>
+Plateforme de detection et d'analyse de cyberfraude mobile couvrant quatre surfaces reelles :
 
-Plateforme intelligente de detection, investigation OSINT et reponse simulee contre les cyber-arnaques mobiles.
+- portail citoyen web pour verifier et signaler un message suspect
+- console administrateur pour la supervision nationale
+- espace PME pour suivre les cas d'usurpation lies a une entreprise
+- application mobile Android Flutter de surveillance passive des notifications
 
-Ce repository contient un prototype **L3 operationnel** qui demontre un flux complet:
+## Etat actuel
 
-`Verification citoyenne -> Incident -> Investigation -> Decision SOC -> Action SHIELD simulee -> Rapport PDF/JSON`
+Le depot est un prototype de demonstration operationnel centre sur le flux suivant :
 
----
+`notification ou message suspect -> analyse -> signalement formel -> supervision admin / PME -> dossier probatoire -> transmission simulee`
 
-## 1) C'est quoi ce projet ?
+Les niveaux de risque affiches dans le produit sont :
 
-**BENIN CYBER SHIELD** est une solution logicielle orientee cyberdefense civile qui vise a:
+- `FAIBLE`
+- `MOYEN`
+- `FORT`
 
-- aider les citoyens a verifier un message suspect avant de se faire arnaquer
-- outiller les analystes SOC pour qualifier et traiter les incidents
-- fournir aux PME un espace dedie avec leurs donnees filtrees
-- produire des preuves exploitables (captures, hash, rapports)
+## Architecture
 
-Le projet suit la logique produit:
+- `backend/` : API FastAPI, logique metier, RBAC, generation de dossiers, seed de demonstration
+- `frontend/` : application React/Vite pour les espaces citoyen, admin et PME
+- `mobile/` : application Flutter Android avec listener natif de notifications, historique local et alertes locales
+- `scrapers/` : worker Playwright branche sur Redis
+- `evidences_store/` : artefacts probatoires generes localement
 
-- **Detect**: detecter et scorer le risque
-- **Scout**: collecter/croiser les preuves
-- **Shield**: orchestrer une reponse operateur simulee
+## Services Docker
 
----
+`docker-compose.yml` demarre :
 
-## 2) Probleme cible et solution proposee
+- `api`
+- `db`
+- `redis`
+- `scraper`
+- `frontend`
 
-### Probleme
+## Parcours web livres
 
-Les arnaques mobiles (phishing, faux agents, demandes OTP, urgence artificielle) provoquent des pertes rapides et une reponse tardive.
+### Citoyen
 
-### Solution
+- `/verify`
+- verification d'un message suspect sans authentification
+- affichage du score, du niveau de risque, des segments suspects, des recommandations et de l'alerte fon si applicable
+- possibilite de creer un signalement formel avec reference publique
 
-BENIN CYBER SHIELD propose une architecture modulaire qui transforme un simple signal utilisateur en dossier d'incident exploitable:
+### Administrateur
 
-1. verification immediate du signal
-2. creation incident structuree
-3. collecte OSINT asynchrone
-4. decision SOC tracee
-5. action SHIELD simulee
-6. generation rapport forensique
+- `/admin/dashboard`
+- `/admin/pme`
+- `/admin/signalements`
+- `/admin/dossiers`
+- `/admin/transmissions`
+- `/admin/exports`
+- `/admin/settings`
+- `/live`
 
----
+Fonctions cles :
 
-## 3) Valeur par acteur
+- supervision nationale par departement
+- gestion des PME
+- consultation des signalements citoyens
+- consultation et telechargement des dossiers probatoires
+- suivi des transmissions externes simulees
 
-| Acteur | Valeur cle |
-|---|---|
-| Citoyen | Verification preventive + signalement simplifie |
-| PME | Vues personnelles (`scope=me`) sur alertes/sources/rapports |
-| Analyste SOC | Pilotage incident, decision, orchestration SHIELD |
-| Autorite (demo) | Rapport PDF/JSON avec hash d'integrite |
+### PME
 
----
+- `/pme/dashboard`
+- `/pme/alertes`
+- `/pme/signalements`
+- `/pme/dossiers`
+- `/pme/profil`
+- `/pme/register`
 
-## 4) Modules fonctionnels
+Fonctions cles :
 
-### Detect
+- consultation des incidents d'usurpation lies a la PME
+- suivi des signalements associes
+- acces aux dossiers probatoires
+- mise a jour du profil PME
 
-- `POST /api/v1/signals/verify`
-- scoring explicable (OTP, urgence, usurpation, etc.)
-- compteur de recurrence sur numero deja signale
+La PME de demonstration utilisee dans les seeds actuels est `Kreesten Technologies SARL`.
 
-### Scout
+## Application mobile Android
 
-- queue Redis (`osint_to_scan`, `osint_results`)
-- worker Playwright pour collecte
-- stockage preuves dans `evidences_store`
+L'application mobile n'est pas un clone du portail web.
 
-### Shield (simulation operateur)
+Elle fonctionne comme un bouclier passif :
 
-- `PATCH /api/v1/incidents/{id}/decision`
+- surveillance des notifications Android
+- ciblage des applications selectionnees par l'utilisateur
+- analyse quasi temps reel des messages recus
+- historique local des alertes
+- file locale de reprise si l'API est temporairement indisponible
+- notification locale BCS lorsque le niveau atteint le seuil configure
+
+Ecrans principaux :
+
+- `Accueil`
+- `Historique`
+- `Parametres`
+
+## Endpoints cles
+
+### Public
+
+- `POST /api/v1/analysis/verify`
+- `POST /api/v1/incidents/report`
+- `POST /api/v1/incidents/report-with-media`
+- `GET /api/v1/map/overview`
+- `GET /health`
+
+### Mobile
+
+- `GET /api/v1/mobile/bootstrap`
+- `GET /api/v1/mobile/history`
+
+### Authentifies
+
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/change-password`
+- `GET /api/v1/admin/dashboard`
+- `GET /api/v1/admin/pme`
+- `GET /api/v1/pme/dashboard`
+- `GET /api/v1/reports`
 - `POST /api/v1/shield/actions/dispatch`
-- `POST /api/v1/operators/callbacks/action-status`
 
-### Reporting
+## Donnees de demonstration
 
-- `POST /api/v1/reports/generate/{alert_uuid}`
-- telechargement PDF et JSON
-- hash SHA-256 conserve
+Le script :
 
----
-
-## 5) Architecture as-built
-
-```text
-Canaux utilisateur (verify public + espaces SOC/PME)
-                         |
-                         v
-                FastAPI (/api/v1)
-                         |
-        +----------------+----------------+
-        |                                 |
-        v                                 v
-   PostgreSQL                        Redis queues
-(alerts, sources, reports, users)   (osint_to_scan/results)
-        |                                 |
-        +----------------+----------------+
-                         |
-                         v
-                   Worker Playwright
-                         |
-                         v
-               evidences_store (files)
+```bash
+docker compose exec -T api python scripts/seed_demo_data.py
 ```
 
----
+injecte des donnees de soutenance :
 
-## 6) Espaces front et acces
+- signalements citoyens multi-departements
+- confirmations SOC
+- transmissions simulees
+- incidents d'usurpation PME
 
-| Espace | Auth | Routes principales |
-|---|---|---|
-| Citoyen | Public | `/verify` |
-| SOC | `ANALYST` / `ADMIN` | `/dashboard`, `/alerts`, `/incidents-signales`, `/reports`, `/monitoring`, `/ingestion`, `/settings` |
-| PME | `SME` | `/business/verify`, `/business/monitoring`, `/business/alerts`, `/business/reports` |
+## Demarrage local
 
-Regles de redirection:
-
-- non connecte -> `/verify`
-- SME connecte -> `/business/verify`
-- ANALYST/ADMIN connecte -> `/dashboard`
-
----
-
-## 7) Etat d'avancement v2.1
-
-### Deja livre
-
-- separation stricte `verify` vs `report`
-- RBAC backend cible + guards frontend par role
-- ownership `owner_user_id` + filtres `scope=me`
-- dashboard analytique (graphiques Recharts)
-- incidents citoyens (liste/detail/stats)
-- suppressions en cascade (incident/alerte + preuves + rapports)
-- UX citoyenne sans jargon technique
-
-### Non livre (volontaire)
-
-- bot WhatsApp production
-- integration operateur telecom reelle
-- federation nationale multi-operateurs
-
----
-
-## 8) Stack technique
-
-| Couche | Technologies |
-|---|---|
-| Backend | FastAPI, SQLAlchemy Async, Alembic, Pydantic |
-| Frontend | React 19, TypeScript, Vite, TanStack Query, Recharts |
-| Data | PostgreSQL 15 |
-| Messaging | Redis 7 |
-| OSINT Worker | Playwright |
-| Infra | Docker Compose, Render Blueprint |
-
----
-
-## 9) Quickstart local
-
-### 9.1 Preparer l'environnement
+### 1. Preparer l'environnement
 
 ```bash
 cp .env.example .env
 ```
 
-### 9.2 Lancer la stack
+### 2. Lancer la stack
 
 ```bash
 docker compose up -d --build
 ```
 
-### 9.3 Verifier la sante
+### 3. Verifier la sante
 
 ```bash
 docker compose ps
 curl http://localhost:8000/health
-curl http://localhost:8000/metrics
 ```
 
-### 9.4 URLs utiles
+### 4. URLs utiles
 
-- Frontend: `http://localhost:5173`
-- Verify citoyen: `http://localhost:5173/verify`
-- Login: `http://localhost:5173/login`
-- API docs: `http://localhost:8000/docs`
+- frontend : `http://localhost:5173`
+- citoyen : `http://localhost:5173/verify`
+- admin : `http://localhost:5173/admin/dashboard`
+- PME : `http://localhost:5173/pme/dashboard`
+- API docs : `http://localhost:8000/docs`
 
----
+## Variables utiles
 
-## 10) API highlights
+- `AUTH_ADMIN_EMAIL`
+- `AUTH_ADMIN_PASSWORD`
+- `AUTH_SME_EMAIL`
+- `AUTH_SME_PASSWORD`
+- `VITE_API_URL`
+- `REDIS_URL`
+- `DATABASE_URL`
 
-```text
-POST /api/v1/auth/login
-POST /api/v1/auth/change-password
-POST /api/v1/signals/verify
-POST /api/v1/incidents/report
-POST /api/v1/incidents/report-with-media
-GET  /api/v1/incidents/citizen
-GET  /api/v1/incidents/citizen/{id}
-PATCH /api/v1/incidents/{id}/decision
-POST /api/v1/shield/actions/dispatch
-POST /api/v1/operators/callbacks/action-status
-GET  /api/v1/reports
-POST /api/v1/reports/generate/{alert_uuid}
-GET  /api/v1/dashboard/stats
-GET  /health
-GET  /metrics
-```
+## Nettoyage local
 
----
+Le depot produit localement des artefacts regenerables :
 
-## 11) Deploiement
+- caches Python
+- caches Node et Flutter
+- artefacts temporaires de build
+- bundles probatoires generes dans `evidences_store`
 
-Le blueprint Render est deja versionne dans `render.yaml`:
+Ils peuvent etre supprimes sans impact sur le code source.
 
-- API (docker)
-- worker scraper (docker)
-- frontend static
-- PostgreSQL + Redis manages
+## References internes
 
-Procedure detaillee: voir `DEPLOYMENT.md`.
-
----
-
-## 12) Documentation projet
-
-- `docs/PRD_BENIN_CYBER_SHIELD_v1.md`
-- `docs/BENIN_CYBER_SHIELD_PLAN_INTEGRATION.md`
 - `GEMINI_CONTEXT.md`
-- `DEPLOYMENT.md`
+- `frontend/README.md`
+- `mobile/README.md`
 
----
+## Statut
 
-## 13) Vision roadmap
-
-- Stabilisation finale soutenance (qualite + robustesse)
-- Extension canal WhatsApp (phase dediee budget minimal)
-- Extension IOC/STIX selon fenetre planning
-
----
-
-## 14) Licence et usage
-
-Prototype academique L3. Usage pedagogique et demonstration.
+Prototype academique avance, oriente soutenance, avec web admin/PME/citoyen et application mobile Android connectes au meme backend.

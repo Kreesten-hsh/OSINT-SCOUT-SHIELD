@@ -18,6 +18,8 @@ ADMIN_EMAIL = os.getenv("ADMIN_EMAIL") or os.getenv("AUTH_ADMIN_EMAIL") or ""
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD") or os.getenv("AUTH_ADMIN_PASSWORD") or ""
 SME_EMAIL = os.getenv("SME_EMAIL") or os.getenv("AUTH_SME_EMAIL") or ""
 SME_PASSWORD = os.getenv("SME_PASSWORD") or os.getenv("AUTH_SME_PASSWORD") or ""
+SME_OFFICIAL_NAME = (os.getenv("SME_OFFICIAL_NAME") or "Kreesten Technologies SARL").strip() or "Kreesten Technologies SARL"
+PLACEHOLDER_SME_NAMES = {"sme", "sme demo", "pme benin", "pme demo benin"}
 
 MESSAGES_MTN_FRAUD = [
     "URGENT MTN: Transfert errone de 45.000 FCFA detecte. "
@@ -219,16 +221,21 @@ def _build_pme_messages(official_name: str) -> list[str]:
 def _seed_demo_pme_profile(client: httpx.Client) -> tuple[dict[str, str], str]:
     if not SME_EMAIL or not SME_PASSWORD:
         print("WARN: SME credentials missing, PME demo data skipped.")
-        return {}, "PME Benin"
+        return {}, SME_OFFICIAL_NAME
 
     headers = _login_with_credentials(client, SME_EMAIL, SME_PASSWORD, label="sme")
     response = client.get("/api/v1/pme/profile", headers=headers, timeout=10.0)
     if response.status_code != 200:
         print(f"WARN: unable to read PME profile ({response.status_code}): {response.text[:160]}")
-        return headers, "PME Benin"
+        return headers, SME_OFFICIAL_NAME
 
     profile = response.json().get("data") or {}
-    official_name = str(profile.get("official_name") or "PME Benin").strip() or "PME Benin"
+    current_official_name = str(profile.get("official_name") or "").strip()
+    official_name = (
+        SME_OFFICIAL_NAME
+        if not current_official_name or current_official_name.lower() in PLACEHOLDER_SME_NAMES
+        else current_official_name
+    )
     legit_numbers = list(dict.fromkeys([*(profile.get("legit_numbers") or []), "0161122334", "0199001122"]))
     keywords = list(
         dict.fromkeys(

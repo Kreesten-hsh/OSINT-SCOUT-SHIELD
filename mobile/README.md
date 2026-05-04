@@ -1,16 +1,39 @@
-# benin_cyber_shield_mobile
+# Mobile - BENIN CYBER SHIELD
 
-A new Flutter project.
+Application Flutter Android connectee au backend BENIN CYBER SHIELD.
 
-## Getting Started
+## Role dans le produit
 
-This project is a starting point for a Flutter application.
+L'application mobile agit comme un bouclier passif :
 
-A few resources to get you started if this is your first Flutter project:
+- lecture des notifications surveillees
+- analyse via l'API
+- historique local
+- alertes locales BCS
+- reprise des analyses en attente
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Ecrans
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- `Accueil`
+- `Historique`
+- `Parametres`
+
+## Lancement local
+
+```bash
+flutter run --dart-define=BCS_API_BASE_URL=http://<IP_DU_PC>:8000/api/v1
+```
+
+Le telephone et le PC doivent etre sur le meme reseau pour les tests reels.
+
+## Dependances fonctionnelles
+
+- autorisation d'acces aux notifications
+- backend API joignable
+- applications surveillees activees dans les parametres de l'app
+
+## Notes
+
+- l'historique affiche dans l'app provient du stockage local et du backend mobile
+- l'ouverture d'une alerte BCS redirige vers l'onglet Historique
+- le niveau de risque affiche est `FAIBLE`, `MOYEN` ou `FORT`

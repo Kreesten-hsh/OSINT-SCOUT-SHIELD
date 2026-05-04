@@ -35,29 +35,28 @@ class ShieldLocalNotifier(private val context: Context) {
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                 )
             }
+
         val categoryLine = primaryCategory?.takeIf { it.isNotBlank() }
-        val recommendationLine = recommendation?.takeIf { it.isNotBlank() }?.take(110)
+        val summaryLine = buildSummary(sender, preview)
+        val compactPreview = buildCompactPreview(summaryLine, categoryLine)
+        val bigText =
+            listOfNotNull(
+                categoryLine,
+                summaryLine.take(180).takeIf { it.isNotBlank() },
+                recommendation?.takeIf { it.isNotBlank() }?.let { "Touchez pour voir l'analyse complete." },
+            ).joinToString("\n")
+
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("BCS · $sourceApp")
-            .setSubText("Score $riskScore/100 · $riskLevel")
-            .setContentText(
-                listOfNotNull(categoryLine, buildSummary(sender, preview))
-                    .joinToString(" · ")
-                    .take(160),
-            )
-            .setStyle(
-                NotificationCompat.BigTextStyle().bigText(
-                    listOfNotNull(
-                        categoryLine?.let { "Categorie : $it" },
-                        "Message : ${buildSummary(sender, preview)}",
-                        recommendationLine?.let { "Conseil : $it" },
-                    ).joinToString("\n"),
-                ),
-            )
-            .setColorized(true)
-            .setColor(0xFF2FE38A.toInt())
+            .setContentTitle(buildTitle(sourceApp, riskLevel))
+            .setSubText("BCS $riskScore/100")
+            .setContentText(compactPreview)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(bigText))
+            .setColor(resolveAccentColor(riskLevel))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+            .setOnlyAlertOnce(true)
             .setAutoCancel(true)
             .setContentIntent(contentIntent)
             .build()
@@ -76,7 +75,33 @@ class ShieldLocalNotifier(private val context: Context) {
         return listOf(sender, preview)
             .filter { it.isNotBlank() }
             .joinToString(" - ")
-            .take(120)
+            .replace(Regex("\\s+"), " ")
+            .trim()
+    }
+
+    private fun buildCompactPreview(summary: String, category: String?): String {
+        val compactSummary = summary.take(96)
+        val compactCategory = category?.takeIf { it.isNotBlank() }?.take(44)
+        return listOfNotNull(compactCategory, compactSummary)
+            .joinToString(" - ")
+            .take(132)
+    }
+
+    private fun buildTitle(sourceApp: String, riskLevel: String): String {
+        val sourceLabel = sourceApp.ifBlank { "message" }
+        return when (riskLevel.uppercase()) {
+            "HIGH", "FORT" -> "Alerte forte sur $sourceLabel"
+            "MEDIUM", "MOYEN" -> "A verifier sur $sourceLabel"
+            else -> "Message suspect sur $sourceLabel"
+        }
+    }
+
+    private fun resolveAccentColor(riskLevel: String): Int {
+        return when (riskLevel.uppercase()) {
+            "HIGH", "FORT" -> 0xFFE85D75.toInt()
+            "MEDIUM", "MOYEN" -> 0xFFFFB84D.toInt()
+            else -> 0xFF2FE38A.toInt()
+        }
     }
 
     private fun ensureChannel() {
@@ -90,7 +115,7 @@ class ShieldLocalNotifier(private val context: Context) {
         }
         val channel = NotificationChannel(
             CHANNEL_ID,
-            "BCS Threat Alerts",
+            "Alertes BCS",
             NotificationManager.IMPORTANCE_HIGH,
         ).apply {
             description = "Alertes locales de messages suspects detectes par BENIN CYBER SHIELD."

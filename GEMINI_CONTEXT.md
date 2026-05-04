@@ -1,115 +1,204 @@
 # GEMINI_CONTEXT - BENIN CYBER SHIELD
 
-Derniere mise a jour: 2026-02-23
-Statut global: Refonte v2.1 active, prototype L3 operationnel (roles + canaux + rapports + SHIELD simule)
+Derniere mise a jour : 2026-05-04
+Statut global : prototype de soutenance operationnel, web + mobile Android alignes
 
-Ce fichier est la source de verite operationnelle pour les agents IA qui travaillent sur ce repo.
+Ce fichier est la source de verite locale pour travailler sur ce depot sans repartir d'un etat obsolete.
 
-## 1) Mission produit
+## 1. Mission produit
 
-BENIN CYBER SHIELD (OSINT-SCOUT & SHIELD) est un prototype L3 qui couvre tout le flux:
+BENIN CYBER SHIELD est une plateforme de detection et d'analyse de cyberfraude mobile avec quatre surfaces actives :
 
-1. verification citoyenne
-2. creation d'incident
-3. collecte OSINT et preuves
-4. decision SOC
-5. action operateur simulee
-6. generation rapport PDF/JSON
+- portail citoyen web
+- console administrateur
+- espace PME
+- application mobile Android Flutter
 
-Objectif soutenance: demonstrer un flux bout-en-bout fiable, lisible et reproductible.
+Objectif produit actuel :
 
-## 2) Scope reel actuel
+`detecter rapidement un message suspect, permettre son signalement, produire un dossier exploitable, et exposer les cas a l'admin et aux PME concernees`
 
-### Canaux utilisateurs actifs
-- Interface web citoyenne (`/verify`)
-- Experience PWA (meme interface detectee en mode standalone)
+## 2. Etat reel du produit
 
-### Espaces applicatifs
-- Public (sans login): `/verify`
-- SOC Analyst/Admin: `/dashboard` + modules SOC
-- PME (role SME): `/business/verify`, `/business/monitoring`, `/business/alerts`, `/business/reports`
+### Web citoyen
 
-### Hors scope actuel
-- Integration operateur telecom reelle
-- Bot WhatsApp production
-- Federation nationale multi-operateurs
+- route principale : `/verify`
+- verification sans authentification
+- score sur 100
+- niveau de risque : `FAIBLE`, `MOYEN`, `FORT`
+- surlignage des segments suspects
+- recommandations et alerte fon selon le cas
+- signalement formel optionnel avec reference publique
 
-## 3) Architecture technique de reference
+### Web administrateur
 
-- Backend: FastAPI + SQLAlchemy async + Alembic
-- Frontend: React 19 + TypeScript + TanStack Query + Recharts
-- DB: PostgreSQL 15
-- Queue: Redis
-- Scraper worker: Playwright
-- Fichiers probatoires: `evidences_store`
-- Observabilite: `/health`, `/metrics`, Sentry optionnel
+Routes structurantes :
 
-## 4) Contrats API structurants
+- `/admin/dashboard`
+- `/admin/pme`
+- `/admin/signalements`
+- `/admin/dossiers`
+- `/admin/transmissions`
+- `/admin/exports`
+- `/admin/settings`
+- `/live`
 
-Endpoints coeur a considerer stables:
+Fonctions structurantes :
 
-- `POST /api/v1/auth/login` (retourne `user.role`)
-- `POST /api/v1/auth/change-password`
-- `POST /api/v1/signals/verify`
+- supervision nationale
+- suivi des signalements citoyens
+- gestion des PME
+- acces aux dossiers probatoires
+- suivi des transmissions externes simulees
+
+### Web PME
+
+Routes structurantes :
+
+- `/pme/dashboard`
+- `/pme/alertes`
+- `/pme/signalements`
+- `/pme/dossiers`
+- `/pme/profil`
+- `/pme/register`
+
+La PME de demonstration actuellement seedee est `Kreesten Technologies SARL`.
+
+### Mobile Android
+
+Le mobile n'est pas une simple vue du portail citoyen.
+
+Fonctions reelles :
+
+- ecoute native des notifications Android
+- selection des applications surveillees
+- analyse quasi temps reel via le backend
+- historique local
+- file locale en cas d'indisponibilite reseau ou API
+- notification locale BCS
+- ouverture contextuelle vers l'historique
+
+Ecrans structurants :
+
+- `Accueil`
+- `Historique`
+- `Parametres`
+
+## 3. Stack technique de reference
+
+- backend : FastAPI, SQLAlchemy async, Alembic, Pydantic
+- frontend : React 19, TypeScript, Vite, TanStack Query, Recharts
+- mobile : Flutter + Kotlin Android natif
+- base de donnees : PostgreSQL 15
+- queue : Redis
+- worker de collecte : Playwright
+- stockage local d'artefacts : `evidences_store`
+
+## 4. Services locaux
+
+Le `docker-compose.yml` expose :
+
+- `api`
+- `db`
+- `redis`
+- `scraper`
+- `frontend`
+
+Ports utiles :
+
+- frontend : `5173`
+- API : `8000`
+- PostgreSQL : `5433`
+- Redis : `6379`
+
+## 5. Endpoints structurants
+
+### Public
+
+- `POST /api/v1/analysis/verify`
 - `POST /api/v1/incidents/report`
 - `POST /api/v1/incidents/report-with-media`
-- `GET /api/v1/incidents/citizen`
-- `GET /api/v1/incidents/citizen/{id}`
-- `PATCH /api/v1/incidents/{id}/decision`
+- `GET /api/v1/map/overview`
+- `GET /health`
+
+### Mobile
+
+- `GET /api/v1/mobile/bootstrap`
+- `GET /api/v1/mobile/history`
+
+### Authentifies
+
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/change-password`
+- `GET /api/v1/admin/dashboard`
+- `GET /api/v1/admin/pme`
+- `GET /api/v1/pme/dashboard`
+- `GET /api/v1/reports`
 - `POST /api/v1/shield/actions/dispatch`
-- `POST /api/v1/operators/callbacks/action-status`
-- `GET /api/v1/sources` (`scope=me`)
-- `GET /api/v1/alerts` (`scope=me`)
-- `GET /api/v1/reports` (`scope=me`)
-- `GET /api/v1/dashboard/stats`
 
-## 5) Regles produit et securite non negociables
+## 6. Conventions metier a respecter
 
-- Zero secret dans Git
-- Migrations Alembic obligatoires pour changements schema
-- Pas de fake data en production demo
-- RBAC obligatoire pour actions critiques
-- SHA-256 conserve sur preuves/rapports
-- Decision legale finale reste humaine
+- niveaux de risque cote produit : `FAIBLE`, `MOYEN`, `FORT`
+- ne pas reintroduire `LOW`, `MEDIUM`, `HIGH` dans les textes visibles utilisateur
+- le citoyen verifie sans compte
+- le signalement formel est separe de la simple verification
+- la decision finale et l'exploitation juridique restent humaines
 
-## 6) RBAC actuel (a respecter)
+## 7. RBAC reel
 
-Blocage `SME` (403) sur:
+- `ADMIN` : console nationale complete
+- `SME` : espace PME uniquement
+- public : `/verify`
 
-- `PATCH /api/v1/incidents/{id}/decision`
-- `POST /api/v1/shield/actions/dispatch`
-- Tous les DELETE critiques (`alerts`, `incidents/citizen`, `sources`)
-- Endpoints SOC sensibles (`dashboard`, `evidence`, `ingestion/manual`)
+Les routes admin ne doivent pas etre exposees au role `SME`.
 
-`ANALYST` et `ADMIN` gardent le comportement historique.
+## 8. Demos et seeds
 
-## 7) Ownership / filtrage donnees
+Le script de seed principal est :
 
-- Colonnes `owner_user_id` sur `monitoring_sources` et `alerts`
-- `scope=me` supporte sur listes (`sources`, `alerts`, `reports`, `incidents/citizen`)
-- Pour role `SME`, le scope personnel est force cote backend
+```bash
+docker compose exec -T api python scripts/seed_demo_data.py
+```
 
-## 8) UX et demonstration
+Il remplit :
 
-- `/verify` sans jargon technique cote citoyen
-- Numero citoyen valide cote front au format beninois `0XXXXXXXXX`
-- Confirmation de signalement via modal
-- Ecran de succes citoyen non technique
-- Dialogues de confirmation centralises via `ConfirmDialog`
+- incidents citoyens multi-departements
+- confirmations SOC
+- transmissions simulees
+- incidents d'usurpation pour la PME de demonstration
 
-## 9) Priorites d'execution (ordre)
+## 9. Nettoyage et artefacts
 
-1. Stabilite fonctionnelle (pas de regression)
-2. Coherence documentaire (README/PRD/Plan/Deployment)
-3. Fiabilite demo soutenance
-4. Extensions de canaux (WhatsApp) et integrations externes
+Artefacts regenerables a considerer comme non source :
 
-## 10) Definition "ready soutenance"
+- `frontend/node_modules`
+- `frontend/dist`
+- `mobile/.dart_tool`
+- `mobile/build`
+- caches Python (`__pycache__`, `.pytest_cache`, `.cache`)
+- dossiers temporaires `tmp`
+- bundles generes dans `evidences_store/forensic_bundles`, `reports`, `screenshots`
 
-Une version est prete si:
+Ne pas confondre ces artefacts avec :
 
-- parcours citoyen -> SOC -> SHIELD -> rapport fonctionne sans patch manuel
-- frontend build OK
-- backend tests OK
-- `/health` indique db=ok et redis=ok
-- docs locales et page Notion sont alignees avec le code reel
+- le code source
+- les assets de marque
+- les preuves metier conservees volontairement dans `citizen_uploads`
+
+## 10. Priorites actuelles
+
+1. stabilite de demonstration
+2. coherence web + mobile
+3. qualite des captures de soutenance
+4. coherence documentaire
+
+## 11. Definition de "pret pour soutenance"
+
+Une version est consideree prete si :
+
+- `/verify` analyse et signale sans erreur
+- admin voit les signalements, dossiers et transmissions
+- PME voit ses alertes, signalements et dossiers
+- mobile intercepte, analyse, historise et alerte
+- le branding BCS est coherent sur web et mobile
+- les documents racine ne mentent pas sur l'etat du produit

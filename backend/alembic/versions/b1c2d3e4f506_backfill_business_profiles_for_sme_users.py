@@ -22,13 +22,15 @@ down_revision: Union[str, None] = "a9b8c7d6e5f4"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
+DEFAULT_SME_OFFICIAL_NAME = "Kreesten Technologies SARL"
+
 
 def _default_business_name(email: str | None) -> str:
     local_part = ((email or "").split("@", 1)[0]).replace(".", " ").replace("_", " ").strip()
     if local_part.lower() == "sme":
-        return "PME Benin"
+        return DEFAULT_SME_OFFICIAL_NAME
     title = " ".join(part.capitalize() for part in local_part.split() if part)
-    return title or "PME Benin"
+    return title or DEFAULT_SME_OFFICIAL_NAME
 
 
 def upgrade() -> None:
