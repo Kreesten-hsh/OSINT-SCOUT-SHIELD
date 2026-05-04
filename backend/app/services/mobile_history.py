@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.risk_levels import normalize_risk_level
 from app.models import CitizenMessage, FormalReport
 from app.schemas.mobile import MobileBootstrapData, MobileHistoryData, MobileHistoryItem
 from app.services.benin_geography import BENIN_DEPARTMENTS
@@ -41,7 +42,7 @@ async def fetch_mobile_history(
             type="REPORT" if message.history_entry_type == "REPORT" else "VERIFY",
             created_at=message.created_at,
             risk_score=int(message.analysis.risk_score if message.analysis else 0),
-            risk_level=str(message.analysis.risk_level if message.analysis else "LOW"),
+            risk_level=normalize_risk_level(str(message.analysis.risk_level if message.analysis else "FAIBLE")),
             primary_category=message.analysis.primary_category if message.analysis else None,
             masked_phone=_history_masked_phone(message),
             public_reference=message.reports[0].public_reference if message.reports else None,

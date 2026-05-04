@@ -173,7 +173,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: <Widget>[
                             Text('CIBLE DÉTECTÉE', style: Theme.of(context).textTheme.labelMedium),
-                            Chip(label: Text(result.riskLevel == 'HIGH' ? 'SUSPECT' : 'À VÉRIFIER')),
+                            Chip(label: Text(result.riskLevel == 'FORT' ? 'SUSPECT' : 'À VÉRIFIER')),
                           ],
                         ),
                         const SizedBox(height: 14),

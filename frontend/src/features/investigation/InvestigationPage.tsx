@@ -192,7 +192,7 @@ export default function InvestigationPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant={riskSeverity(alert.risk_score) === 'CRITICAL' ? 'destructive' : riskSeverity(alert.risk_score) === 'HIGH' ? 'warning' : 'outline'}>
+                    <Badge variant={riskSeverity(alert.risk_score) === 'CRITICAL' ? 'destructive' : riskSeverity(alert.risk_score) === 'FORT' ? 'warning' : 'outline'}>
                         {riskSeverity(alert.risk_score)} / {alert.risk_score}
                     </Badge>
                     <Badge variant={alertStatusVariant(alert.status)}>{alertStatusLabel(alert.status)}</Badge>

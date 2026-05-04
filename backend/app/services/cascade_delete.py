@@ -4,7 +4,7 @@ from pathlib import Path
 
 import redis.asyncio as redis
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -103,8 +103,12 @@ async def delete_alert_cascade(
     if require_citizen_source and not str(alert.source_type or "").startswith("CITIZEN_"):
         raise HTTPException(status_code=404, detail="Citizen incident not found")
 
-    reports_query = select(Report).where(Report.alert_id == alert.id)
-    reports = (await db.execute(reports_query)).scalars().all()
+    report_rows = (
+        await db.execute(
+            select(Report.id, Report.pdf_path).where(Report.alert_id == alert.id),
+        )
+    ).all()
+    report_ids = [int(report_id) for report_id, _pdf_path in report_rows]
 
     evidence_paths: set[str] = {
         str(evidence.file_path).strip()
@@ -112,12 +116,12 @@ async def delete_alert_cascade(
         if evidence.file_path
     }
     report_paths: set[str] = {
-        str(report.pdf_path).strip()
-        for report in reports
-        if report.pdf_path
+        str(pdf_path).strip()
+        for _report_id, pdf_path in report_rows
+        if pdf_path
     }
 
-    deleted_reports_count = len(reports)
+    deleted_reports_count = len(report_ids)
     deleted_evidences_count = len(alert.evidences or [])
     deleted_analysis_results_count = 1 if alert.analysis_results is not None else 0
     memory_domain_summary = await delete_linked_memory_domain_reports(
@@ -125,8 +129,8 @@ async def delete_alert_cascade(
         alert_uuid=alert_uuid,
     )
 
-    for report in reports:
-        await db.delete(report)
+    if report_ids:
+        await db.execute(delete(Report).where(Report.id.in_(report_ids)))
 
     await db.delete(alert)
     await db.commit()

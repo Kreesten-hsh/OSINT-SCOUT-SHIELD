@@ -14,8 +14,8 @@ class ResultPage extends ConsumerWidget {
 
   Color _riskColor(BeninShieldColors colors, String riskLevel) {
     return switch (riskLevel) {
-      'HIGH' => colors.danger,
-      'MEDIUM' => colors.warning,
+      'FORT' => colors.danger,
+      'MOYEN' => colors.warning,
       _ => colors.success,
     };
   }
@@ -32,7 +32,7 @@ class ResultPage extends ConsumerWidget {
   }
 
   Future<void> _share(VerifyDraft draft, VerifyResult result) async {
-    final String label = result.riskLevel == 'HIGH' ? 'DANGER' : 'ALERTE';
+    final String label = result.riskLevel == 'FORT' ? 'DANGER' : 'ALERTE';
     final String text = <String>[
       'BENIN CYBER SHIELD',
       '$label - ${draft.phone}',
@@ -117,7 +117,7 @@ class ResultPage extends ConsumerWidget {
                               ],
                             ),
                             Chip(
-                              label: Text(result.riskLevel == 'HIGH' ? 'ÉLEVÉ' : result.riskLevel),
+                              label: Text(result.riskLevel),
                             ),
                           ],
                         ),
@@ -159,11 +159,11 @@ class ResultPage extends ConsumerWidget {
                         const SizedBox(height: 24),
                         Center(
                           child: Text(
-                            result.riskLevel == 'HIGH'
-                                ? 'Risque de fraude majeur'
-                                : result.riskLevel == 'MEDIUM'
+                            result.riskLevel == 'FORT'
+                                ? 'Risque de fraude fort'
+                                : result.riskLevel == 'MOYEN'
                                     ? 'Risque à confirmer'
-                                    : 'Risque limité',
+                                    : 'Risque faible',
                             style: Theme.of(context).textTheme.headlineMedium,
                             textAlign: TextAlign.center,
                           ),

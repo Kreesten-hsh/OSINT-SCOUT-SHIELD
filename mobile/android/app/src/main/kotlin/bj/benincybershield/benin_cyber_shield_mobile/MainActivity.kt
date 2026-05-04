@@ -73,8 +73,10 @@ class MainActivity : FlutterActivity() {
             }
 
             "flushPendingQueue" -> {
+                val arguments = call.arguments as? Map<*, *>
+                val limit = (arguments?.get("limit") as? Number)?.toInt() ?: 3
                 thread(name = "bcs-flush-pending", isDaemon = true) {
-                    val pending = orchestrator.flushPendingQueue()
+                    val pending = orchestrator.flushPendingQueue(maxItems = limit)
                     runOnUiThread {
                         result.success(pending)
                     }

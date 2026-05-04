@@ -1,0 +1,102 @@
+{
+  "snapshot_version": "2.0",
+  "engine_version": "v2.0.0",
+  "generated_at": "2026-05-04T16:20:05.364091+00:00",
+  "data": {
+    "alert": {
+      "uuid": "1dabc4c8-7b64-423d-a0ee-6a2a9e03a0c5",
+      "url": "citizen://text-signal",
+      "source_type": "CITIZEN_MOBILE_APP",
+      "phone_number": "0169647090",
+      "citizen_channel": "MOBILE_APP",
+      "reported_message": "Alerte MoMo: Votre compte risque d'etre desactive. Confirmez votre identite en envoyant votre code PIN au 97332211. Service Client Moov Money.",
+      "risk_score": 100,
+      "status_at_snapshot": "NEW",
+      "created_at": "2026-05-04T16:20:04.985914+00:00",
+      "updated_at": "2026-05-04T16:20:04.985914+00:00",
+      "analysis_note": "[TRANSITION_REF=BCS-20260504-870C7ADF] Alerte MoMo: Votre compte risque d'etre desactive. Confirmez votre identite en envoyant votre code PIN au 97332211. Service Client Moov Money.",
+      "recurrence_count": 8,
+      "public_reference": "BCS-20260504-870C7ADF"
+    },
+    "evidences": [],
+    "analysis": {
+      "risk_score": 100,
+      "categories": [
+        {
+          "name": "Demande de code confidentiel",
+          "score": 100
+        },
+        {
+          "name": "Usurpation d'operateur",
+          "score": 100
+        },
+        {
+          "name": "Menace de perte",
+          "score": 100
+        },
+        {
+          "name": "MM_FRAUD",
+          "score": 100
+        }
+      ],
+      "entities": [
+        {
+          "type": "MATCHED_RULE",
+          "value": "OTP_REQUEST"
+        },
+        {
+          "type": "MATCHED_RULE",
+          "value": "OPERATOR_IMPERSONATION"
+        },
+        {
+          "type": "MATCHED_RULE",
+          "value": "THREAT_OF_LOSS"
+        },
+        {
+          "type": "MATCHED_RULE",
+          "value": "PHONE_IN_MESSAGE"
+        },
+        {
+          "type": "MATCHED_RULE",
+          "value": "MM_FRAUD"
+        },
+        {
+          "type": "HIGHLIGHT",
+          "value": "Menace de perte",
+          "label": "Menace de perte",
+          "start": 40,
+          "end": 49
+        },
+        {
+          "type": "HIGHLIGHT",
+          "value": "Demande de code confidentiel",
+          "label": "Demande de code confidentiel",
+          "start": 94,
+          "end": 98
+        },
+        {
+          "type": "HIGHLIGHT",
+          "value": "Usurpation d'operateur",
+          "label": "Usurpation d'operateur",
+          "start": 116,
+          "end": 130
+        }
+      ],
+      "factors_detected": [
+        "Le message demande un code OTP, PIN ou un secret de securite.",
+        "Le message se presente comme un service officiel (MTN/Moov/agent).",
+        "Le message menace une perte ou un blocage si vous ne reagissez pas.",
+        "Le message contient un numero de telephone de contact potentiellement frauduleux.",
+        "Ce message reprend des formulations classiques d'arnaque Mobile Money observees au Benin."
+      ],
+      "matched_rules": [
+        "OTP_REQUEST",
+        "OPERATOR_IMPERSONATION",
+        "THREAT_OF_LOSS",
+        "PHONE_IN_MESSAGE",
+        "MM_FRAUD"
+      ],
+      "generated_at": "2026-05-04T16:20:04.985914+00:00"
+    }
+  }
+}

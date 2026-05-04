@@ -11,11 +11,12 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse, Response
-from sqlalchemy import func, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.risk_levels import risk_level_from_score
 from app.core.security import get_current_token_payload, require_role, resolve_scope_owner_user_id
 from app.database import get_db
 from app.models import Alert, Evidence, ForensicBundle, FormalReport, Report
@@ -83,11 +84,7 @@ def _delete_relative_artifact(path_value: str | None, *, legacy_report_file: boo
 
 
 def _risk_level_from_score(score: int) -> str:
-    if score >= 65:
-        return "HIGH"
-    if score >= 35:
-        return "MEDIUM"
-    return "LOW"
+    return risk_level_from_score(score)
 
 
 async def _load_legacy_alert_with_evidences(db: AsyncSession, alert_uuid: uuid.UUID | None) -> Alert | None:
@@ -731,11 +728,16 @@ async def delete_report(
         await db.commit()
         return {"deleted": True, "id": str(report_uuid)}
 
-    report = (await db.execute(select(Report).where(Report.uuid == report_uuid))).scalar_one_or_none()
-    if report is None:
+    report_row = (
+        await db.execute(
+            select(Report.id, Report.pdf_path).where(Report.uuid == report_uuid),
+        )
+    ).first()
+    if report_row is None:
         raise HTTPException(status_code=404, detail="Report not found")
 
-    _delete_relative_artifact(report.pdf_path, legacy_report_file=True)
-    await db.delete(report)
+    report_id, pdf_path = report_row
+    _delete_relative_artifact(pdf_path, legacy_report_file=True)
+    await db.execute(delete(Report).where(Report.id == report_id))
     await db.commit()
     return {"deleted": True, "id": str(report_uuid)}

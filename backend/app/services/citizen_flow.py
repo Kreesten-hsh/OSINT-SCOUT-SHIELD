@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
+from app.core.risk_levels import normalize_risk_level
 from app.models import (
     Alert,
     AnalysisResult,
@@ -159,7 +160,7 @@ async def create_citizen_report(
     categories_detected = detection.get("categories_detected", []) or []
     matched_rules = detection.get("matched_rules", []) or []
     risk_score = int(detection["risk_score"])
-    risk_level = str(detection["risk_level"])
+    risk_level = normalize_risk_level(str(detection["risk_level"]))
     explanation = detection.get("explanation", []) or []
     recommendations = detection.get("recommendations", []) or []
     highlighted_spans = detection.get("highlighted_spans", []) or []
@@ -167,7 +168,7 @@ async def create_citizen_report(
 
     if request.verification:
         risk_score = request.verification.risk_score
-        risk_level = request.verification.risk_level
+        risk_level = normalize_risk_level(request.verification.risk_level)
         matched_rules = request.verification.matched_rules or matched_rules
         categories_detected = request.verification.categories_detected or categories_detected
 

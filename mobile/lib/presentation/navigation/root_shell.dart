@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -32,26 +33,53 @@ class _RootShellState extends ConsumerState<RootShell> with WidgetsBindingObserv
     'history': 1,
     'settings': 2,
   };
+  Timer? _foregroundSyncTimer;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _consumePendingSurface());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _consumePendingSurface();
+      unawaited(_syncForegroundSnapshot(replayPending: true));
+      _startForegroundSync();
+    });
   }
 
   @override
   void dispose() {
+    _foregroundSyncTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state != AppLifecycleState.resumed) {
+    if (state == AppLifecycleState.resumed) {
+      _consumePendingSurface();
+      unawaited(_syncForegroundSnapshot(replayPending: true));
+      _startForegroundSync();
       return;
     }
-    _consumePendingSurface();
+    _foregroundSyncTimer?.cancel();
+  }
+
+  void _startForegroundSync() {
+    _foregroundSyncTimer?.cancel();
+    _foregroundSyncTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      unawaited(_syncForegroundSnapshot());
+    });
+  }
+
+  Future<void> _syncForegroundSnapshot({bool replayPending = false}) async {
+    if (replayPending) {
+      await ref.read(nativeShieldBridgeProvider).flushPendingQueue(limit: 3);
+    }
+    if (!mounted) {
+      return;
+    }
+    ref.invalidate(historyProvider);
+    ref.invalidate(nativeShieldStatusProvider);
   }
 
   Future<void> _consumePendingSurface() async {

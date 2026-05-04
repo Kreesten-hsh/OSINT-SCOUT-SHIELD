@@ -1,3 +1,11 @@
+String _normalizeRiskLevel(String? value) {
+  return switch ((value ?? '').trim().toUpperCase()) {
+    'HIGH' || 'FORT' => 'FORT',
+    'MEDIUM' || 'MOYEN' => 'MOYEN',
+    _ => 'FAIBLE',
+  };
+}
+
 class HighlightedSpan {
   const HighlightedSpan({
     required this.start,
@@ -62,7 +70,7 @@ class VerifyResult {
   factory VerifyResult.fromJson(Map<String, dynamic> json) {
     return VerifyResult(
       riskScore: (json['risk_score'] as num?)?.toInt() ?? 0,
-      riskLevel: json['risk_level']?.toString() ?? 'LOW',
+      riskLevel: _normalizeRiskLevel(json['risk_level']?.toString()),
       explanation: (json['explanation'] as List<dynamic>? ?? const <dynamic>[])
           .map((dynamic item) => item.toString())
           .toList(growable: false),

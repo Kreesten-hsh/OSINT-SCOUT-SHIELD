@@ -201,7 +201,7 @@ export default function AlertsPage({ title = 'Alertes techniques', scope, readOn
                             {data?.map((alert) => (
                                 <tr key={alert.id} className="interactive-row bg-card/70 hover:bg-secondary/20">
                                     <td className="px-4 py-3">
-                                        <Badge variant={riskSeverity(alert.risk_score) === 'CRITICAL' ? 'destructive' : riskSeverity(alert.risk_score) === 'HIGH' ? 'warning' : 'outline'}>
+                                        <Badge variant={riskSeverity(alert.risk_score) === 'CRITICAL' ? 'destructive' : riskSeverity(alert.risk_score) === 'FORT' ? 'warning' : 'outline'}>
                                             {riskSeverity(alert.risk_score)}
                                         </Badge>
                                     </td>

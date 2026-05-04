@@ -153,7 +153,7 @@ async def report_signal_to_incident(
                     "url": _urls[0],
                     "alert_id": str(alert.id),
                     "trigger": "suspicious_url_auto_v3",
-                    "priority": "HIGH",
+                    "priority": "FORT",
                     "source_type": source_type,
                 }
                 await redis_client.lpush(

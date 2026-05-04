@@ -49,7 +49,7 @@ interface CountResponse {
 
 interface DashboardStatsResponse {
   incidents_by_day: Array<{ date: string; count: number }>;
-  incidents_by_risk: { HIGH: number; MEDIUM: number; LOW: number };
+  incidents_by_risk: { FORT: number; MOYEN: number; FAIBLE: number };
   incidents_by_status: {
     NEW: number;
     IN_REVIEW: number;
@@ -60,9 +60,9 @@ interface DashboardStatsResponse {
 }
 
 const RISK_COLORS = {
-  HIGH: '#EF4444',
-  MEDIUM: '#F59E0B',
-  LOW: '#10B981',
+  FORT: '#EF4444',
+  MOYEN: '#F59E0B',
+  FAIBLE: '#10B981',
 };
 
 function ChartSkeleton() {
@@ -209,9 +209,9 @@ export default function DashboardPage() {
 
   const riskData = useMemo(
     () => [
-      { name: 'HIGH', value: dashboardStats?.incidents_by_risk?.HIGH ?? 0, color: RISK_COLORS.HIGH },
-      { name: 'MEDIUM', value: dashboardStats?.incidents_by_risk?.MEDIUM ?? 0, color: RISK_COLORS.MEDIUM },
-      { name: 'LOW', value: dashboardStats?.incidents_by_risk?.LOW ?? 0, color: RISK_COLORS.LOW },
+      { name: 'FORT', value: dashboardStats?.incidents_by_risk?.FORT ?? 0, color: RISK_COLORS.FORT },
+      { name: 'MOYEN', value: dashboardStats?.incidents_by_risk?.MOYEN ?? 0, color: RISK_COLORS.MOYEN },
+      { name: 'FAIBLE', value: dashboardStats?.incidents_by_risk?.FAIBLE ?? 0, color: RISK_COLORS.FAIBLE },
     ],
     [dashboardStats?.incidents_by_risk],
   );

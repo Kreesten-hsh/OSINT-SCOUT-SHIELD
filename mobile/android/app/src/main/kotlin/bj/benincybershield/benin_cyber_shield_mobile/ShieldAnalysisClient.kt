@@ -49,8 +49,8 @@ class ShieldAnalysisClient {
         val endpoint = "${apiBaseUrl.trimEnd('/')}/analysis/verify"
         val connection = (URL(endpoint).openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
-            connectTimeout = 5000
-            readTimeout = 8000
+            connectTimeout = 1500
+            readTimeout = 3500
             doInput = true
             doOutput = true
             setRequestProperty("Accept", "application/json")
@@ -89,7 +89,7 @@ class ShieldAnalysisClient {
             ShieldAnalysisAttempt(
                 result = ShieldAnalysisResult(
                     riskScore = data.optInt("risk_score", 0),
-                    riskLevel = data.optString("risk_level", "LOW"),
+                    riskLevel = data.optString("risk_level", "FAIBLE"),
                     categories = jsonArrayToStrings(data.optJSONArray("categories_detected")),
                     matchedRules = jsonArrayToStrings(data.optJSONArray("matched_rules")),
                     explanation = jsonArrayToStrings(data.optJSONArray("explanation")),

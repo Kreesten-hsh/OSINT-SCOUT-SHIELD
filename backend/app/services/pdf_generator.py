@@ -11,6 +11,8 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
 from reportlab.platypus import Image, Image as RLImage, KeepTogether, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
+from app.core.risk_levels import normalize_risk_level, risk_level_from_score
+
 
 BRAND_NAVY = colors.HexColor("#071827")
 BRAND_INK = colors.HexColor("#102033")
@@ -57,28 +59,26 @@ def _is_image_evidence(evidence: dict) -> bool:
 
 
 def _risk_level_from_score(score: int) -> str:
-    if score >= 65:
-        return "HIGH"
-    if score >= 35:
-        return "MEDIUM"
-    return "LOW"
+    return risk_level_from_score(score)
 
 
 def _risk_color(level: str):
-    if level == "HIGH":
+    normalized = normalize_risk_level(level)
+    if normalized == "FORT":
         return BRAND_RED
-    if level == "MEDIUM":
+    if normalized == "MOYEN":
         return BRAND_GOLD
     return BRAND_GREEN
 
 
 def _risk_label(level: str) -> str:
     labels = {
-        "HIGH": "RISQUE ELEVE",
-        "MEDIUM": "RISQUE MODERE",
-        "LOW": "RISQUE FAIBLE",
+        "FORT": "RISQUE FORT",
+        "MOYEN": "RISQUE MOYEN",
+        "FAIBLE": "RISQUE FAIBLE",
     }
-    return labels.get(level, level)
+    normalized = normalize_risk_level(level)
+    return labels.get(normalized, normalized)
 
 
 def _status_label(status: str) -> str:

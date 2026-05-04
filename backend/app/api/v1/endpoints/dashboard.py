@@ -42,21 +42,21 @@ async def get_dashboard_stats(
             }
         )
 
-    incidents_by_risk = {"HIGH": 0, "MEDIUM": 0, "LOW": 0}
+    incidents_by_risk = {"FORT": 0, "MOYEN": 0, "FAIBLE": 0}
     risk_stmt = (
         select(
-            func.sum(case((Alert.risk_score >= 65, 1), else_=0)).label("high_count"),
-            func.sum(case(((Alert.risk_score >= 35) & (Alert.risk_score < 65), 1), else_=0)).label("medium_count"),
-            func.sum(case((Alert.risk_score < 35, 1), else_=0)).label("low_count"),
+            func.sum(case((Alert.risk_score >= 70, 1), else_=0)).label("high_count"),
+            func.sum(case(((Alert.risk_score >= 40) & (Alert.risk_score < 70), 1), else_=0)).label("medium_count"),
+            func.sum(case((Alert.risk_score < 40, 1), else_=0)).label("low_count"),
         )
         .select_from(Alert)
     )
     risk_row = (await db.execute(risk_stmt)).first()
     if risk_row:
         incidents_by_risk = {
-            "HIGH": int(risk_row.high_count or 0),
-            "MEDIUM": int(risk_row.medium_count or 0),
-            "LOW": int(risk_row.low_count or 0),
+            "FORT": int(risk_row.high_count or 0),
+            "MOYEN": int(risk_row.medium_count or 0),
+            "FAIBLE": int(risk_row.low_count or 0),
         }
 
     status_order = ["NEW", "IN_REVIEW", "CONFIRMED", "DISMISSED", "BLOCKED_SIMULATED"]

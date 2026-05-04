@@ -16,6 +16,8 @@ load_dotenv(PROJECT_ROOT / ".env")
 BASE_URL = os.getenv("API_URL", "http://localhost:8000").rstrip("/")
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL") or os.getenv("AUTH_ADMIN_EMAIL") or ""
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD") or os.getenv("AUTH_ADMIN_PASSWORD") or ""
+SME_EMAIL = os.getenv("SME_EMAIL") or os.getenv("AUTH_SME_EMAIL") or ""
+SME_PASSWORD = os.getenv("SME_PASSWORD") or os.getenv("AUTH_SME_PASSWORD") or ""
 
 MESSAGES_MTN_FRAUD = [
     "URGENT MTN: Transfert errone de 45.000 FCFA detecte. "
@@ -100,6 +102,7 @@ PHONES_BY_REGION = {
 
 CHANNELS = ["WEB_PORTAL", "MOBILE_APP"]
 URL_PATTERN = re.compile(r"https?://[^\s]+", re.IGNORECASE)
+PME_DEPARTMENTS = ["Littoral", "Atlantique", "Oueme", "Borgou", "Mono", "Zou"]
 
 
 def _require_admin_credentials() -> None:
@@ -114,13 +117,13 @@ def _extract_url(message: str) -> str | None:
     return match.group(0) if match else None
 
 
-def _login(client: httpx.Client) -> dict[str, str]:
+def _login_with_credentials(client: httpx.Client, email: str, password: str, *, label: str) -> dict[str, str]:
     response = client.post(
         "/api/v1/auth/login",
-        json={"username": ADMIN_EMAIL, "password": ADMIN_PASSWORD},
+        json={"username": email, "password": password},
     )
     if response.status_code != 200:
-        print(f"ERROR: login failed ({response.status_code}): {response.text}")
+        print(f"ERROR: {label} login failed ({response.status_code}): {response.text}")
         sys.exit(1)
 
     token = response.json().get("access_token")
@@ -128,8 +131,12 @@ def _login(client: httpx.Client) -> dict[str, str]:
         print("ERROR: access_token missing from login response.")
         sys.exit(1)
 
-    print(f"OK: authenticated as {ADMIN_EMAIL}")
+    print(f"OK: authenticated as {email}")
     return {"Authorization": f"Bearer {token}"}
+
+
+def _login(client: httpx.Client) -> dict[str, str]:
+    return _login_with_credentials(client, ADMIN_EMAIL, ADMIN_PASSWORD, label="admin")
 
 
 def _submit_incident(
@@ -137,12 +144,14 @@ def _submit_incident(
     phone: str,
     message: str,
     channel: str,
+    department: str | None = None,
 ) -> str | None:
     payload = {
         "message": message,
         "phone": phone,
         "channel": channel,
         "url": _extract_url(message),
+        "department": department,
     }
     response = client.post("/api/v1/incidents/report", json=payload, timeout=10.0)
     if response.status_code not in (200, 201):
@@ -196,6 +205,60 @@ def _dispatch_shield(
     return response.status_code in (200, 201)
 
 
+def _build_pme_messages(official_name: str) -> list[str]:
+    return [
+        f"{official_name} support : remboursement en attente. Envoyez maintenant votre code OTP pour confirmer votre dossier.",
+        f"Service client {official_name} : votre paiement est bloque. Cliquez sur http://{official_name.lower().replace(' ', '-')}-support-bj.help pour revalider votre compte.",
+        f"{official_name} promo : vous avez gagne un bon d achat. Frais de retrait 15.000 FCFA au 0161122334 avant expiration.",
+        f"{official_name} assistance : votre wallet professionnel sera suspendu ce soir. Confirmez votre PIN sur http://{official_name.lower().replace(' ', '-')}-secure-pay.help.",
+        f"Bonjour, ici {official_name}. Un remboursement urgent est disponible. Repondez avec votre code de validation pour finaliser.",
+        f"{official_name} commercial : dossier client incomplet. Transmettez le code secret recu par SMS pour debloquer l operation.",
+    ]
+
+
+def _seed_demo_pme_profile(client: httpx.Client) -> tuple[dict[str, str], str]:
+    if not SME_EMAIL or not SME_PASSWORD:
+        print("WARN: SME credentials missing, PME demo data skipped.")
+        return {}, "PME Benin"
+
+    headers = _login_with_credentials(client, SME_EMAIL, SME_PASSWORD, label="sme")
+    response = client.get("/api/v1/pme/profile", headers=headers, timeout=10.0)
+    if response.status_code != 200:
+        print(f"WARN: unable to read PME profile ({response.status_code}): {response.text[:160]}")
+        return headers, "PME Benin"
+
+    profile = response.json().get("data") or {}
+    official_name = str(profile.get("official_name") or "PME Benin").strip() or "PME Benin"
+    legit_numbers = list(dict.fromkeys([*(profile.get("legit_numbers") or []), "0161122334", "0199001122"]))
+    keywords = list(
+        dict.fromkeys(
+            [
+                *(profile.get("keywords") or []),
+                official_name,
+                f"support {official_name}",
+                f"service client {official_name}",
+                "remboursement urgent",
+                "paiement bloque",
+            ]
+        )
+    )
+    patch_response = client.patch(
+        "/api/v1/pme/profile",
+        json={
+            "official_name": official_name,
+            "keywords": keywords,
+            "legit_numbers": legit_numbers,
+        },
+        headers=headers,
+        timeout=10.0,
+    )
+    if patch_response.status_code not in (200, 201):
+        print(f"WARN: unable to update PME profile ({patch_response.status_code}): {patch_response.text[:160]}")
+    else:
+        print(f"OK: PME profile prepared for demo -> {official_name}")
+    return headers, official_name
+
+
 def main() -> None:
     print("BENIN CYBER SHIELD - seed demo")
     print(f"API: {BASE_URL}")
@@ -224,7 +287,13 @@ def main() -> None:
                 message = random.choice(messages)
                 phone = random.choice(phones)
                 channel = random.choice(CHANNELS)
-                alert_uuid = _submit_incident(client, phone=phone, message=message, channel=channel)
+                alert_uuid = _submit_incident(
+                    client,
+                    phone=phone,
+                    message=message,
+                    channel=channel,
+                    department=region,
+                )
                 if alert_uuid:
                     created += 1
                     created_records.append((alert_uuid, region))
@@ -249,6 +318,28 @@ def main() -> None:
 
         print(f"OK: {confirmed} incidents confirmed by SOC")
         print(f"OK: {dispatched} incidents dispatched to SHIELD")
+
+        _sme_headers, official_name = _seed_demo_pme_profile(client)
+        pme_created = 0
+        for index, department in enumerate(PME_DEPARTMENTS):
+            message = random.choice(_build_pme_messages(official_name))
+            phone = PHONES_BY_REGION.get(department, ["0161122334"])[0]
+            channel = CHANNELS[index % len(CHANNELS)]
+            alert_uuid = _submit_incident(
+                client,
+                phone=phone,
+                message=message,
+                channel=channel,
+                department=department,
+            )
+            if not alert_uuid:
+                continue
+            pme_created += 1
+            created_records.append((alert_uuid, department))
+            print(f"  OK [PME {department}] {official_name} -> {alert_uuid[:8]}")
+            time.sleep(0.2)
+
+        print(f"OK: {pme_created} incidents d usurpation PME created")
 
         by_region = Counter(region for _, region in created_records)
         print("\nDistribution by department:")

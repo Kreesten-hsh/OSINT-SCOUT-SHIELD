@@ -6,6 +6,7 @@ from collections.abc import Callable
 from functools import lru_cache
 from pathlib import Path
 
+from app.core.risk_levels import risk_level_from_score
 
 logger = logging.getLogger(__name__)
 
@@ -554,14 +555,8 @@ def score_signal(message: str, url: str | None = None, phone: str | None = None)
 
     score = min(score, 100)
 
-    if score >= 65:
-        risk_level = "HIGH"
-    elif score >= 35:
-        risk_level = "MEDIUM"
-    else:
-        risk_level = "LOW"
-
-    should_report = risk_level in ("MEDIUM", "HIGH")
+    risk_level = risk_level_from_score(score)
+    should_report = risk_level in ("MOYEN", "FORT")
 
     if not explanation:
         explanation.append("Aucun indicateur critique detecte.")
@@ -582,5 +577,5 @@ def score_signal(message: str, url: str | None = None, phone: str | None = None)
         "highlighted_spans": _find_spans(raw_text, matched_signal_rules),
         "recommendations": recommendations,
         "citizen_advice": recommendations[:3],
-        "fon_alert": FON_ALERTS.get(risk_level),
+        "fon_alert": FON_ALERTS.get("HIGH" if risk_level == "FORT" else "MEDIUM" if risk_level == "MOYEN" else risk_level),
     }

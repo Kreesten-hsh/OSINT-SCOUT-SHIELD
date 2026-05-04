@@ -12,6 +12,7 @@ from sqlalchemy import desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.risk_levels import risk_level_from_score
 from app.models import (
     BusinessProfile,
     ExternalTransmission,
@@ -66,11 +67,7 @@ def _primary_category(report: FormalReport) -> str | None:
 
 
 def _risk_level(score: int) -> str:
-    if score >= 65:
-        return "HIGH"
-    if score >= 35:
-        return "MEDIUM"
-    return "LOW"
+    return risk_level_from_score(score)
 
 
 def _report_export_record(report: FormalReport) -> dict[str, Any]:

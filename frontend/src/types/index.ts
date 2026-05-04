@@ -82,7 +82,7 @@ export interface Alert {
     analysis_note?: string;
 
     // Derived Frontend fields (optional)
-    severity?: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+    severity?: 'CRITICAL' | 'FORT' | 'MOYEN' | 'FAIBLE';
 
     // Relations
     evidences?: Evidence[];

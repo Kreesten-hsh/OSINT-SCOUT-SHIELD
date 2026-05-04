@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -28,6 +27,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> with WidgetsBindingOb
   String _query = '';
 
   Future<void> _refreshHistory() async {
+    await ref.read(nativeShieldBridgeProvider).flushPendingQueue(limit: 3);
     ref.invalidate(historyProvider);
     await ref.read(historyProvider.future);
   }
@@ -54,17 +54,17 @@ class _HistoryPageState extends ConsumerState<HistoryPage> with WidgetsBindingOb
 
   int _severityWeight(String riskLevel) {
     return switch (riskLevel) {
-      'HIGH' => 3,
-      'MEDIUM' => 2,
-      'LOW' => 1,
+      'FORT' => 3,
+      'MOYEN' => 2,
+      'FAIBLE' => 1,
       _ => 0,
     };
   }
 
   Color _riskColor(BeninShieldColors colors, String riskLevel) {
     return switch (riskLevel) {
-      'HIGH' => colors.danger,
-      'MEDIUM' => colors.warning,
+      'FORT' => colors.danger,
+      'MOYEN' => colors.warning,
       _ => colors.info,
     };
   }
@@ -72,18 +72,18 @@ class _HistoryPageState extends ConsumerState<HistoryPage> with WidgetsBindingOb
   String _displayFilterLabel(_HistoryFilter filter) {
     return switch (filter) {
       _HistoryFilter.all => 'Tout',
-      _HistoryFilter.high => 'Eleve',
-      _HistoryFilter.medium => 'Moyen',
-      _HistoryFilter.low => 'Faible',
+      _HistoryFilter.high => 'FORT',
+      _HistoryFilter.medium => 'MOYEN',
+      _HistoryFilter.low => 'FAIBLE',
     };
   }
 
   bool _matchesFilter(HistoryEntry item) {
     return switch (_filter) {
       _HistoryFilter.all => true,
-      _HistoryFilter.high => item.riskLevel == 'HIGH',
-      _HistoryFilter.medium => item.riskLevel == 'MEDIUM',
-      _HistoryFilter.low => item.riskLevel == 'LOW',
+      _HistoryFilter.high => item.riskLevel == 'FORT',
+      _HistoryFilter.medium => item.riskLevel == 'MOYEN',
+      _HistoryFilter.low => item.riskLevel == 'FAIBLE',
     };
   }
 
@@ -100,9 +100,19 @@ class _HistoryPageState extends ConsumerState<HistoryPage> with WidgetsBindingOb
     return haystack.contains(_query.trim().toLowerCase());
   }
 
-  Future<void> _openPortal() async {
+  Future<void> _openPortal(HistoryEntry item) async {
+    final String prefilledMessage = ((item.messageBody ?? item.messagePreview) ?? '').trim();
+    final Uri baseUri = Uri.parse(AppConfig.citizenPortalUrl);
+    final Map<String, String> queryParameters = <String, String>{
+      ...baseUri.queryParameters,
+    };
+    if (prefilledMessage.isNotEmpty) {
+      queryParameters['message'] = prefilledMessage;
+    }
     await launchUrl(
-      Uri.parse(AppConfig.citizenPortalUrl),
+      baseUri.replace(
+        queryParameters: queryParameters.isEmpty ? null : queryParameters,
+      ),
       mode: LaunchMode.externalApplication,
     );
   }
@@ -379,31 +389,9 @@ class _HistoryPageState extends ConsumerState<HistoryPage> with WidgetsBindingOb
                         SizedBox(
                           width: double.infinity,
                           child: FilledButton.icon(
-                            onPressed: _openPortal,
+                            onPressed: () => _openPortal(item),
                             icon: const Icon(Symbols.open_in_new_rounded, size: 18),
-                            label: const Text('Ouvrir le portail BCS'),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: () async {
-                              final String copiedValue =
-                                  (item.messageBody ?? '').trim().isNotEmpty
-                                      ? item.messageBody!
-                                      : item.maskedPhone;
-                              await Clipboard.setData(ClipboardData(text: copiedValue));
-                              if (!context.mounted) {
-                                return;
-                              }
-                              Navigator.of(context).pop();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Contenu copie.')),
-                              );
-                            },
-                            icon: const Icon(Symbols.content_copy_rounded, size: 18),
-                            label: const Text('Copier le message'),
+                            label: const Text('Ouvrir le portail avec ce message'),
                           ),
                         ),
                       ],

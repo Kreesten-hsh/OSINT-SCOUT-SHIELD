@@ -22,6 +22,7 @@ class SettingsPage extends ConsumerStatefulWidget {
 
 class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBindingObserver {
   Future<void> _refreshSettings() async {
+    await ref.read(nativeShieldBridgeProvider).flushPendingQueue(limit: 3);
     ref.invalidate(historyProvider);
     await ref.read(historyProvider.future);
     ref.invalidate(nativeShieldStatusProvider);

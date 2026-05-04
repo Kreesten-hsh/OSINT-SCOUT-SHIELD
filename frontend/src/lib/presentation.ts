@@ -58,11 +58,18 @@ export function alertStatusVariant(status: AlertStatus): 'default' | 'outline' |
     return 'default';
 }
 
-export function riskSeverity(score: number): 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' {
+export function normalizeRiskLevel(value: string | null | undefined): 'FORT' | 'MOYEN' | 'FAIBLE' {
+    const normalized = (value || '').trim().toUpperCase();
+    if (normalized === 'HIGH' || normalized === 'FORT') return 'FORT';
+    if (normalized === 'MEDIUM' || normalized === 'MOYEN') return 'MOYEN';
+    return 'FAIBLE';
+}
+
+export function riskSeverity(score: number): 'CRITICAL' | 'FORT' | 'MOYEN' | 'FAIBLE' {
     if (score >= 90) return 'CRITICAL';
-    if (score >= 70) return 'HIGH';
-    if (score >= 40) return 'MEDIUM';
-    return 'LOW';
+    if (score >= 70) return 'FORT';
+    if (score >= 40) return 'MOYEN';
+    return 'FAIBLE';
 }
 
 export function riskTone(score: number): 'text-red-400' | 'text-amber-300' | 'text-emerald-300' {

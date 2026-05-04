@@ -6,9 +6,10 @@ import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
 import HighlightedMessage from '@/features/verify/HighlightedMessage';
 import { BENIN_DEPARTMENTS } from '@/lib/benin';
+import { normalizeRiskLevel } from '@/lib/presentation';
 
 type SignalChannel = 'MOBILE_APP' | 'WEB_PORTAL';
-type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
+type RiskLevel = 'FAIBLE' | 'MOYEN' | 'FORT';
 
 interface VerifySignalData {
   risk_score: number;
@@ -109,7 +110,7 @@ export default function VerifySignalPanel() {
   const [incident, setIncident] = useState<IncidentReportData | null>(null);
 
   const buildWhatsAppMessage = (riskLevel: string, targetPhone: string, reportId: string): string => {
-    const emoji = riskLevel === 'HIGH' ? '🔴 DANGER' : '🟡 Suspect';
+    const emoji = riskLevel === 'FORT' ? '🔴 DANGER' : '🟡 Suspect';
     const msg = [
       '⚠️ Alerte BENIN CYBER SHIELD',
       '',
@@ -127,6 +128,28 @@ export default function VerifySignalPanel() {
   const isPhoneValid = isValidBeninPhone(normalizedPhone);
   const phoneError = phoneTouched && !isPhoneValid ? BENIN_PHONE_ERROR : null;
   const canSubmit = message.trim().length >= 5 && isPhoneValid;
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const prefilledMessage = searchParams.get('message')?.trim() ?? '';
+    const prefilledPhone = searchParams.get('phone')?.trim() ?? '';
+    const prefilledDepartment = searchParams.get('department')?.trim() ?? '';
+    const prefilledUrl = searchParams.get('url')?.trim() ?? '';
+
+    if (prefilledMessage) {
+      setMessage((current) => (current.trim().length > 0 ? current : prefilledMessage));
+    }
+    if (prefilledPhone) {
+      setPhone((current) => (current.trim().length > 0 ? current : prefilledPhone));
+      setPhoneTouched(true);
+    }
+    if (prefilledDepartment) {
+      setDepartment((current) => (current.trim().length > 0 ? current : prefilledDepartment));
+    }
+    if (prefilledUrl) {
+      setUrl((current) => (current.trim().length > 0 ? current : prefilledUrl));
+    }
+  }, []);
 
   useEffect(() => {
     if (!isVerifying) {
@@ -205,7 +228,7 @@ export default function VerifySignalPanel() {
         'verification',
         JSON.stringify({
           risk_score: result.risk_score,
-          risk_level: result.risk_level,
+          risk_level: normalizeRiskLevel(result.risk_level),
           should_report: result.should_report,
           matched_rules: result.matched_rules,
           categories_detected: result.categories_detected ?? [],
@@ -237,7 +260,7 @@ export default function VerifySignalPanel() {
     }
   };
 
-  const levelColor = result?.risk_level === 'HIGH' ? 'text-red-400' : result?.risk_level === 'MEDIUM' ? 'text-amber-300' : 'text-emerald-300';
+  const levelColor = result?.risk_level === 'FORT' ? 'text-red-400' : result?.risk_level === 'MOYEN' ? 'text-amber-300' : 'text-emerald-300';
   const reportButtonDisabled = !result || isReporting || isVerifying || !!incident;
 
   return (
@@ -367,7 +390,7 @@ export default function VerifySignalPanel() {
             </div>
           )}
 
-          {(result.risk_level === 'HIGH' || result.risk_level === 'MEDIUM') && (
+          {(result.risk_level === 'FORT' || result.risk_level === 'MOYEN') && (
             <a
               href={`https://wa.me/?text=${buildWhatsAppMessage(
                 result.risk_level,

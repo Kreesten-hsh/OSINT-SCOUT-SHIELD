@@ -259,8 +259,6 @@ final reportControllerProvider =
 final historyProvider = FutureProvider<List<HistoryEntry>>((Ref ref) async {
   try {
     final NativeShieldBridge nativeBridge = ref.watch(nativeShieldBridgeProvider);
-    await nativeBridge.flushPendingQueue();
-    ref.invalidate(nativeShieldStatusProvider);
     final List<HistoryEntry> nativeItems = await nativeBridge.fetchLocalHistory(limit: 80);
     if (nativeItems.isNotEmpty) {
       return nativeItems;
@@ -322,7 +320,6 @@ class MobileShieldSettingsController extends StateNotifier<MobileShieldSettings>
                 citizenPortalUrl: AppConfig.citizenPortalUrl,
               );
       state = synced;
-      unawaited(_ref.read(nativeShieldBridgeProvider).flushPendingQueue());
       _ref.invalidate(nativeShieldStatusProvider);
       _ref.invalidate(historyProvider);
     } catch (_) {

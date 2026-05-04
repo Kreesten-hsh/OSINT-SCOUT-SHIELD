@@ -1,10 +1,12 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field, UUID4
+from pydantic import BaseModel, Field, UUID4, field_validator
+
+from app.core.risk_levels import normalize_risk_level
 
 
 SignalChannel = Literal["MOBILE_APP", "WEB_PORTAL"]
-RiskLevel = Literal["LOW", "MEDIUM", "HIGH"]
+RiskLevel = Literal["FAIBLE", "MOYEN", "FORT"]
 DepartmentSource = Literal["USER_SELECTED", "PHONE_DERIVED", "UNKNOWN"]
 
 
@@ -44,6 +46,11 @@ class VerifySignalData(BaseModel):
     verification_message_uuid: UUID4 | None = None
     verification_analysis_uuid: UUID4 | None = None
 
+    @field_validator("risk_level", mode="before")
+    @classmethod
+    def _normalize_risk_level(cls, value: str) -> str:
+        return normalize_risk_level(value)
+
 
 class VerificationSnapshot(BaseModel):
     risk_score: int = Field(ge=0, le=100)
@@ -51,6 +58,11 @@ class VerificationSnapshot(BaseModel):
     should_report: bool
     matched_rules: list[str] = Field(default_factory=list)
     categories_detected: list[str] = Field(default_factory=list)
+
+    @field_validator("risk_level", mode="before")
+    @classmethod
+    def _normalize_risk_level(cls, value: str) -> str:
+        return normalize_risk_level(value)
 
 
 class IncidentReportRequest(BaseModel):

@@ -27,6 +27,7 @@ class VerifyPage extends ConsumerStatefulWidget {
 
 class _VerifyPageState extends ConsumerState<VerifyPage> with WidgetsBindingObserver {
   Future<void> _refreshDashboard() async {
+    await ref.read(nativeShieldBridgeProvider).flushPendingQueue(limit: 3);
     ref.invalidate(historyProvider);
     await ref.read(historyProvider.future);
     ref.invalidate(nativeShieldStatusProvider);
@@ -73,9 +74,9 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with WidgetsBindingObse
 
   int _severityWeight(String riskLevel) {
     return switch (riskLevel) {
-      'HIGH' => 3,
-      'MEDIUM' => 2,
-      'LOW' => 1,
+      'FORT' => 3,
+      'MOYEN' => 2,
+      'FAIBLE' => 1,
       _ => 0,
     };
   }
@@ -99,8 +100,8 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with WidgetsBindingObse
 
   Color _riskColor(BeninShieldColors colors, String riskLevel) {
     return switch (riskLevel) {
-      'HIGH' => colors.danger,
-      'MEDIUM' => colors.warning,
+      'FORT' => colors.danger,
+      'MOYEN' => colors.warning,
       _ => colors.info,
     };
   }
@@ -134,15 +135,15 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with WidgetsBindingObse
               item.createdAt.year == now.year &&
               item.createdAt.month == now.month &&
               item.createdAt.day == now.day &&
-              item.riskLevel != 'LOW',
+              item.riskLevel != 'FAIBLE',
         )
         .length;
     final int analyzedCount = sortedItems.length;
-    final int threatCount = sortedItems.where((HistoryEntry item) => item.riskLevel == 'HIGH').length;
+    final int threatCount = sortedItems.where((HistoryEntry item) => item.riskLevel == 'FORT').length;
     final DateTime? lastScan = sortedItems.isEmpty ? null : sortedItems.first.createdAt;
     HistoryEntry? latestThreat;
     for (final HistoryEntry item in sortedItems) {
-      if (item.riskLevel == 'LOW') {
+      if (item.riskLevel == 'FAIBLE') {
         continue;
       }
       latestThreat = item;

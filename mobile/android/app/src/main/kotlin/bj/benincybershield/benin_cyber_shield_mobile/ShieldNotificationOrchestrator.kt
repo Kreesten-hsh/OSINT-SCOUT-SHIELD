@@ -26,7 +26,7 @@ class ShieldNotificationOrchestrator(context: Context) {
         }
 
         thread(name = "bcs-live-notification", isDaemon = true) {
-            val outcome = analyzeAndPersist(
+            analyzeAndPersist(
                 config = config,
                 sender = sender,
                 message = message,
@@ -34,9 +34,6 @@ class ShieldNotificationOrchestrator(context: Context) {
                 createdAt = isoTimestamp(),
                 enqueueOnFailure = true,
             )
-            if (outcome == AnalysisPersistenceOutcome.PROCESSED) {
-                flushPendingQueue()
-            }
         }
         return true
     }
@@ -185,8 +182,8 @@ class ShieldNotificationOrchestrator(context: Context) {
             return false
         }
         return when (analysis.riskLevel.uppercase()) {
-            "HIGH" -> true
-            "MEDIUM" -> config.alertMedium
+            "HIGH", "FORT" -> true
+            "MEDIUM", "MOYEN" -> config.alertMedium
             else -> false
         }
     }

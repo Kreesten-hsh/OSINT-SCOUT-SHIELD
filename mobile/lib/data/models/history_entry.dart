@@ -1,3 +1,11 @@
+String _normalizeRiskLevel(String? value) {
+  return switch ((value ?? '').trim().toUpperCase()) {
+    'HIGH' || 'FORT' => 'FORT',
+    'MEDIUM' || 'MOYEN' => 'MOYEN',
+    _ => 'FAIBLE',
+  };
+}
+
 enum HistoryEntryType { verify, report }
 
 class HistoryHighlightedSpan {
@@ -78,7 +86,7 @@ class HistoryEntry {
       type: json['type'] == 'REPORT' ? HistoryEntryType.report : HistoryEntryType.verify,
       createdAt: DateTime.parse(json['created_at'].toString()),
       riskScore: (json['risk_score'] as num?)?.toInt() ?? 0,
-      riskLevel: json['risk_level']?.toString() ?? 'LOW',
+      riskLevel: _normalizeRiskLevel(json['risk_level']?.toString()),
       maskedPhone: json['masked_phone']?.toString() ?? '-',
       primaryCategory: json['primary_category']?.toString(),
       messagePreview: json['message_preview']?.toString(),
