@@ -121,7 +121,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
                         _StatusInlineRow(
                           icon: Symbols.battery_saver_rounded,
                           title: 'Batterie',
-                          value: nativeStatus?.batteryOptimizationIgnored == true ? 'Protègee' : 'A verifier',
+                          value: nativeStatus?.batteryOptimizationIgnored == true ? 'Protegee' : 'A verifier',
                           color: nativeStatus?.batteryOptimizationIgnored == true
                               ? colors.primary
                               : colors.warning,

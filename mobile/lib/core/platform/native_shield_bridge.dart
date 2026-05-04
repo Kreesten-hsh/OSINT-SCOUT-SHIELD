@@ -72,6 +72,10 @@ class NativeShieldBridge {
         .toList(growable: false);
   }
 
+  Future<String?> consumePendingOpenSurface() {
+    return _channel.invokeMethod<String>('consumePendingOpenSurface');
+  }
+
   Future<int> flushPendingQueue() async {
     final int? pending = await _channel.invokeMethod<int>('flushPendingQueue');
     return pending ?? 0;

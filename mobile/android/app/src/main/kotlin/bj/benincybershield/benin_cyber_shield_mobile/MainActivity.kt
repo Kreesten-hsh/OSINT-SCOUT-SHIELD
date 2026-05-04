@@ -19,12 +19,14 @@ class MainActivity : FlutterActivity() {
     private lateinit var historyStore: ShieldHistoryStore
     private lateinit var orchestrator: ShieldNotificationOrchestrator
     private var pendingNotificationPermissionResult: MethodChannel.Result? = null
+    private var pendingOpenSurface: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         configStore = ShieldConfigStore(this)
         historyStore = ShieldHistoryStore(this)
         orchestrator = ShieldNotificationOrchestrator(this)
+        cacheOpenSurface(intent)
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -64,6 +66,12 @@ class MainActivity : FlutterActivity() {
                 result.success(historyStore.listRecords(limit))
             }
 
+            "consumePendingOpenSurface" -> {
+                val surface = pendingOpenSurface
+                pendingOpenSurface = null
+                result.success(surface)
+            }
+
             "flushPendingQueue" -> {
                 thread(name = "bcs-flush-pending", isDaemon = true) {
                     val pending = orchestrator.flushPendingQueue()
@@ -95,6 +103,20 @@ class MainActivity : FlutterActivity() {
 
             else -> result.notImplemented()
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        cacheOpenSurface(intent)
+    }
+
+    private fun cacheOpenSurface(intent: Intent?) {
+        val surface = intent?.getStringExtra("bcs_open_surface")?.trim()
+        if (surface.isNullOrEmpty()) {
+            return
+        }
+        pendingOpenSurface = surface
     }
 
     private fun requestPostNotificationsPermission(result: MethodChannel.Result) {

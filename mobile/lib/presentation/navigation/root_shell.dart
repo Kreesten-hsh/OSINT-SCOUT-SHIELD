@@ -1,12 +1,14 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../application/providers.dart';
 import '../../core/theme/app_theme.dart';
 
-class RootShell extends StatelessWidget {
+class RootShell extends ConsumerStatefulWidget {
   const RootShell({
     super.key,
     required this.navigationShell,
@@ -19,6 +21,54 @@ class RootShell extends StatelessWidget {
     (Symbols.history_rounded, 'Historique'),
     (Symbols.tune_rounded, 'Parametres'),
   ];
+
+  @override
+  ConsumerState<RootShell> createState() => _RootShellState();
+}
+
+class _RootShellState extends ConsumerState<RootShell> with WidgetsBindingObserver {
+  static const Map<String, int> _surfaceIndexMap = <String, int>{
+    'home': 0,
+    'history': 1,
+    'settings': 2,
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _consumePendingSurface());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) {
+      return;
+    }
+    _consumePendingSurface();
+  }
+
+  Future<void> _consumePendingSurface() async {
+    final String? pendingSurface =
+        await ref.read(nativeShieldBridgeProvider).consumePendingOpenSurface();
+    if (!mounted || pendingSurface == null) {
+      return;
+    }
+    final int? branchIndex = _surfaceIndexMap[pendingSurface];
+    if (branchIndex == null) {
+      return;
+    }
+    widget.navigationShell.goBranch(
+      branchIndex,
+      initialLocation: branchIndex == widget.navigationShell.currentIndex,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +88,7 @@ class RootShell extends StatelessWidget {
         ),
         child: SafeArea(
           bottom: false,
-          child: navigationShell,
+          child: widget.navigationShell,
         ),
       ),
       bottomNavigationBar: SafeArea(
@@ -92,16 +142,16 @@ class RootShell extends StatelessWidget {
                     Row(
                       children: List<Widget>.generate(_destinations.length, (int index) {
                         final (IconData, String) item = _destinations[index];
-                        final bool selected = navigationShell.currentIndex == index;
+                        final bool selected = widget.navigationShell.currentIndex == index;
                         return Expanded(
                           child: _GlassNavItem(
                             icon: item.$1,
                             label: item.$2,
                             selected: selected,
                             onTap: () {
-                              navigationShell.goBranch(
+                              widget.navigationShell.goBranch(
                                 index,
-                                initialLocation: index == navigationShell.currentIndex,
+                                initialLocation: index == widget.navigationShell.currentIndex,
                               );
                             },
                           ),
