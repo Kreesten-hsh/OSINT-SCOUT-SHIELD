@@ -45,6 +45,32 @@ const VERIFY_ROTATION_MESSAGES = ['Analyse en cours...', 'Verification du numero
 const BENIN_PHONE_PATTERN = /^0\d{9}$/;
 const BENIN_PHONE_ERROR = 'Numero invalide - entrez 10 chiffres (ex: 0169647090)';
 
+function getVerifyErrorMessage(err: unknown): string {
+  if (!axios.isAxiosError(err)) {
+    return 'Erreur de verification';
+  }
+
+  const responseData = err.response?.data as { message?: string; detail?: string; error?: string } | undefined;
+  const backendMessage = responseData?.message || responseData?.detail || responseData?.error;
+  if (backendMessage?.trim()) {
+    return backendMessage;
+  }
+
+  if (!err.response) {
+    return 'API de verification inaccessible. Verifiez que le backend repond sur http://localhost:8000.';
+  }
+
+  if (err.response.status >= 500) {
+    return 'Erreur interne du backend pendant la verification.';
+  }
+
+  if (err.response.status === 422) {
+    return 'Donnees de verification invalides. Verifiez le numero et le formulaire.';
+  }
+
+  return 'Erreur de verification';
+}
+
 function isValidBeninPhone(phone: string): boolean {
   return BENIN_PHONE_PATTERN.test(phone);
 }
@@ -147,11 +173,7 @@ export default function VerifySignalPanel() {
       const response = await apiClient.post<APIResponse<VerifySignalData>>('/analysis/verify', payload);
       setResult(response.data.data ?? null);
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || err.response?.data?.detail || 'Erreur de verification');
-      } else {
-        setError('Erreur de verification');
-      }
+      setError(getVerifyErrorMessage(err));
     } finally {
       const elapsed = Date.now() - requestStartedAt;
       if (elapsed < 1500) {
@@ -204,10 +226,11 @@ export default function VerifySignalPanel() {
       setShowReportConfirmation(false);
       setShowReportSuccess(true);
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || err.response?.data?.detail || 'Erreur de signalement');
+      if (!axios.isAxiosError(err) || !err.response) {
+        setError('API de signalement inaccessible. Verifiez que le backend repond sur http://localhost:8000.');
       } else {
-        setError('Erreur de signalement');
+        const responseData = err.response.data as { message?: string; detail?: string; error?: string } | undefined;
+        setError(responseData?.message || responseData?.detail || responseData?.error || 'Erreur de signalement');
       }
     } finally {
       setIsReporting(false);

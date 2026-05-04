@@ -34,6 +34,13 @@ MAX_SCREENSHOT_BYTES = 5 * 1024 * 1024
 SUPPORTED_IMAGE_CONTENT_TYPES = {"image/png", "image/jpeg", "image/jpg", "image/webp"}
 
 
+def _normalize_signal_channel(value: str | None) -> str:
+    normalized = (value or "").strip().upper()
+    if normalized == "MOBILE_APP":
+        return "MOBILE_APP"
+    return "WEB_PORTAL"
+
+
 async def report_signal_to_incident(
     request: IncidentReportRequest,
     db: AsyncSession,
@@ -402,7 +409,110 @@ async def get_citizen_incident_detail(
     )
     report = (await db.execute(stmt)).scalars().first()
     if not report:
-        raise HTTPException(status_code=404, detail="Citizen incident not found")
+        legacy_alert_stmt = (
+            select(Alert)
+            .options(selectinload(Alert.evidences))
+            .where(Alert.uuid == incident_id)
+        )
+        legacy_alert = (await db.execute(legacy_alert_stmt)).scalars().first()
+        if not legacy_alert:
+            raise HTTPException(status_code=404, detail="Citizen incident not found")
+
+        legacy_phone = (legacy_alert.phone_number or "").strip() or "-"
+        attachments = [
+            CitizenIncidentAttachment(
+                evidence_id=evidence.id,
+                file_path=evidence.file_path or "-",
+                file_hash=evidence.file_hash or "unknown",
+                captured_at=evidence.captured_at,
+                type=(evidence.type or "SCREENSHOT"),
+                preview_endpoint=f"/evidence/view/{evidence.id}",
+            )
+            for evidence in sorted(
+                legacy_alert.evidences or [],
+                key=lambda item: item.captured_at or datetime.min.replace(tzinfo=timezone.utc),
+                reverse=True,
+            )
+        ]
+
+        reports_for_phone = 0
+        open_reports_for_phone = 0
+        confirmed_reports_for_phone = 0
+        blocked_reports_for_phone = 0
+        related_incidents: list[RelatedCitizenIncident] = []
+
+        try:
+            normalized_phone = normalize_phone(legacy_phone)
+            if legacy_phone != "-" and PHONE_PATTERN.match(normalized_phone):
+                suspect_number = await db.scalar(
+                    select(SuspectNumber).where(SuspectNumber.phone_hash == derive_phone_hash(normalized_phone))
+                )
+                if suspect_number is not None:
+                    reports_for_phone = int(
+                        (
+                            await db.execute(
+                                select(func.count(FormalReport.id)).where(
+                                    FormalReport.suspect_number_id == suspect_number.id,
+                                )
+                            )
+                        ).scalar_one()
+                        or 0
+                    )
+                    open_reports_for_phone = int(
+                        (
+                            await db.execute(
+                                select(func.count(FormalReport.id)).where(
+                                    FormalReport.suspect_number_id == suspect_number.id,
+                                    FormalReport.status.in_(("NEW", "IN_REVIEW")),
+                                )
+                            )
+                        ).scalar_one()
+                        or 0
+                    )
+                    confirmed_reports_for_phone = int(
+                        (
+                            await db.execute(
+                                select(func.count(FormalReport.id)).where(
+                                    FormalReport.suspect_number_id == suspect_number.id,
+                                    FormalReport.status == "CONFIRMED",
+                                )
+                            )
+                        ).scalar_one()
+                        or 0
+                    )
+                    blocked_reports_for_phone = int(
+                        (
+                            await db.execute(
+                                select(func.count(FormalReport.id)).where(
+                                    FormalReport.suspect_number_id == suspect_number.id,
+                                    FormalReport.status == "BLOCKED_SIMULATED",
+                                )
+                            )
+                        ).scalar_one()
+                        or 0
+                    )
+        except Exception:
+            logger.warning("Unable to compute legacy incident stats", extra={"alert_uuid": str(legacy_alert.uuid)})
+
+        return CitizenIncidentDetailData(
+            alert_uuid=legacy_alert.uuid,
+            phone_number=legacy_phone,
+            channel=_normalize_signal_channel(legacy_alert.citizen_channel),
+            message=legacy_alert.reported_message or "",
+            url=(legacy_alert.url or "citizen://text-signal"),
+            risk_score=int(legacy_alert.risk_score or 0),
+            status=legacy_alert.status,
+            analysis_note=legacy_alert.analysis_note,
+            created_at=legacy_alert.created_at,
+            attachments=attachments,
+            stats=CitizenIncidentStats(
+                reports_for_phone=reports_for_phone,
+                open_reports_for_phone=open_reports_for_phone,
+                confirmed_reports_for_phone=confirmed_reports_for_phone,
+                blocked_reports_for_phone=blocked_reports_for_phone,
+            ),
+            related_incidents=related_incidents,
+        )
 
     legacy_alert = None
     evidences = []
@@ -512,7 +622,7 @@ async def get_citizen_incident_detail(
     return CitizenIncidentDetailData(
         alert_uuid=(report.legacy_alert_uuid or report.uuid),
         phone_number=phone or "-",
-        channel=(report.message.channel if report.message else "WEB_PORTAL"),
+        channel=_normalize_signal_channel(report.message.channel if report.message else "WEB_PORTAL"),
         message=report.message.content if report.message else "",
         url=(report.message.submitted_url if report.message and report.message.submitted_url else "citizen://text-signal"),
         risk_score=int(report.analysis.risk_score if report.analysis else 0),

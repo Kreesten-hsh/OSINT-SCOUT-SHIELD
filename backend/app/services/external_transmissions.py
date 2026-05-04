@@ -202,7 +202,14 @@ async def schedule_external_transmissions_for_report(
         return []
 
     bundle = await _ensure_forensic_bundle(db, report)
-    existing_targets = {transmission.target_type for transmission in (bundle.transmissions or [])}
+    existing_targets_stmt = select(ExternalTransmission.target_type).where(
+        ExternalTransmission.bundle_id == bundle.id,
+    )
+    existing_targets = {
+        str(target_type)
+        for target_type in (await db.execute(existing_targets_stmt)).scalars().all()
+        if target_type
+    }
     created: list[ExternalTransmission] = []
     for target_type in ("ANSSI_OCRC", "OPERATORS"):
         if target_type in existing_targets:

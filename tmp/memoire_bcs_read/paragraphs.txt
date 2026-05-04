@@ -1,0 +1,745 @@
+REPUBLIQUE DU BENIN
+**********
+MINISTERE DE L’ENSEIGNEMENT SUPERIEUR ET DE LA
+RECHERCHE SCIENTIFIQUE (MESRS)
+**********
+DIRECTION GENERALE DE L’ENSEIGNEMENT SUPERIEUR (DGES)
+**********
+HAUTEECOLEDECOMMERCEETDE MANAGEMENT(HECM)
+**********
+MEMOIRE DE FIN DE FORMATION POUR L’OBTENTION DU
+DIPLOME DE LICENCE PROFESSIONNELLE
+
+Filière : Système Informatique et Logiciel
+
+Option : Sciences et Techniques
+
+THEME :
+
+CONCEPTION ET IMPLEMENTATION D’UNE PLATEFORME DE DETECTION ET D’ANALYSE DE CYBER FRAUDE MOBILECONCEPTION ET IMPLEMENTATION D’UNE PLATEFORME DE DETECTION ET D’ANALYSE DE CYBER FRAUDE MOBILE
+
+
+
+
+
+
+
+
+
+Réalisé par :
+
+AGBOTON Kreesten&   TOGBONON Emmanuel
+
+Maître de stage :M. MAMA OlaMaître de stage :M. MAMA Ola
+Maître de mémoire :M. Modeste SOSSOUIngénieur en InformatiqueMaître de mémoire :M. Modeste SOSSOUIngénieur en Informatique
+
+
+Année académique :2025-2026Année académique :2025-2026
+
+DEDICACE 1
+
+Je dédie ce travail à :
+Ma mère HOUNGBO Inès
+Mon oncle AGBOTON Jules
+
+AGBOTON Kreesten Eddy Djidjoho Amour
+DEDICACE 2
+
+Je dédie ce travail à :
+Ma mère KAKPO Sabine
+Mon Père TOGBONON Michel
+
+TOGBONON Emmanuel
+
+REMERCIEMENTS
+Nous tenons à remercier :
+
+
+Le seigneur Dieu tout puissant ; 
+Monsieur AKE Natondé, Promoteur de la Haute Ecole de Commerce et de Mangement (HECM) pour avoir créé ce cadre afin de nous permettre d’y acquérir le savoir ; 
+Monsieur SOSSOU Modeste, notre Maître de mémoire pour son aide, ses conseils durant la réalisation de ce travail ; 
+Monsieur Mr MAMA Ola, notre maître de stage, pour son suivi ;
+Monsieur ABDOUL Fadel pour son encadrement tout au long de notre stage ;
+Dr. BOKOSSA Alexandrine, Directrice des Etudes de HECM Atropkocodji pour son sacrifice ; 
+Tous les membres du jury qui ont évalué notre travail; 
+Tout le corps professionnel de HECM Atropkocodji pour la qualité de son enseignement, ce qui nous a donné les aptitudes pour réaliser ce projet ; 
+Nos frères, nos sœurs, nos oncles et nos tantes pour leurs soutiens moral et financier.
+Tous ceux qui d’une manière ou d’une autre ont participés à la réalisation de cette étude.
+
+Tous ceux qui d’une manière ou d’une autre ont participé à la réalistion de cette étude
+LISTE DES SIGLES ET ACRONYMES
+
+HECM : Haute École de Commerce et de Management
+ANSSI : Agence Nationale de la Sécurité des Systèmes d’Information
+OCRC : Office Central de Répression de la Cybercriminalité 
+bjCSIRT : Benin Computer Security Incident Response Team 
+PME : Petites et Moyennes Entreprises 
+SMS : Short Message Service
+MTN : Mobile Telephone Networks
+API : Application Programming Interface
+UC : Use Case (Cas d'utilisation)
+NLP : Natural Language Processing (Traitement Automatique du Langage Naturel) 
+ML : Machine Learning (Apprentissage automatique) 
+BERT : Bidirectional Encoder Representations from Transformers 
+SHA-256 : Secure Hash Algorithm 256 bits 
+JWT : JSON Web Token
+URL : Uniform Resource Locator
+PIN :Personal Identification Number
+PWA : Progressive Web App 
+SQL : Structured Query Language
+ORM : Object-Relational Mapping
+CSV : Comma-Separated Values 
+OSINT : Open Source Intelligence
+JSON :JavaScript Object Notatio
+IP :Internet Protocol
+STIX : Structured Threat Information Expression 
+OAuth : Open Authorization 
+UML : Unified Modeling Language
+MERISE : Méthode d'Étude et de Réalisation Informatique pour les Systèmes d'Entreprise
+REST :Representational State Transfer
+QR :Quick Response
+FCFA : Franc de la Communauté Financière Africaine 
+PIB : Produit Intérieur Brut 
+GSMA : Global System for Mobile Communications Association
+LISTE DES FIGURES
+LISTE DES TABLEAUX
+RESUME
+Au Bénin, les arnaques par SMS Mobile Money touchent des milliers de personnes chaque année. Un citoyen qui reçoit un message suspect n'a aucun outil pour le vérifier rapidement. Une PME dont le nom est usurpé ne l'apprend que d'un client mécontent. L'OCRC, lui, reçoit des plaintes sans preuves, parce qu'elles ont déjà disparu.
+Ce mémoire décrit la conception et le développement de BENIN CYBER SHIELD, une plateforme qui couvre ce vide. Son moteur NLP, basé sur des règles pondérées adaptées au français béninois, analyse un message en moins de 3 secondes et produit un score de risque avec les éléments suspects mis en évidence. Un système d'alertes automatiques notifie les PME enregistrées dès qu'une usurpation est détectée. Chaque signalement génère un dossier forensique certifié SHA-256, transmis automatiquement à l'ANSSI et à l'OCRC dès qu'un seuil est atteint. La plateforme a été développée avec FastAPI, React, Flutter et PostgreSQL, dans une architecture API-first conteneurisée via Docker Compose.
+Mots-clés : Cyberfraude mobile, Traitement automatique du langage naturel, Forensique numérique
+
+ABSTRACT
+In Benin, Mobile Money SMS scams affect thousands of people every year. A citizen who receives a suspicious message has no quick way to check it. A business whose name is being impersonated only finds out when a customer complains. The OCRC receives reports without evidence, because it has already vanished by the time the investigation begins.
+This thesis describes the design and development of BENIN CYBER SHIELD, a platform built to fill that gap. Its NLP engine, based on weighted rules adapted to Beninese French, analyzes a message in under 3 seconds and returns a risk score with flagged elements highlighted. An automatic alert system notifies registered businesses the moment an impersonation is detected. Every report generates a SHA-256 certified forensic file, automatically transmitted to the ANSSI and OCRC once a reporting threshold is reached. The platform was built with FastAPI, React, Flutter and PostgreSQL, in an API-first architecture containerized with Docker Compose.
+Keywords: Mobile cyber fraud, Natural language processing, Digital forensics
+SOMMAIRE
+INTRODUCTION………………………………………………………………..2
+CHAPITRE  I : Présentation de la structure et rapport de stage……………2
+Section 1 : Présentation de la structure d’accueil…………………….2
+Section 2 : Déroulement du stage……………………………………...2
+CHAPITRE II : Cadre théorique et méthodologique………………………….2
+Section 1 : Cadre théorique……………………………………………..2
+Section 2 : Cadre méthodoligique………………………………………2
+CHAPITRE III : Réalisation de l’application……………………………………2
+Section 1 : Présentation des outils de developpement………………2
+Section 2 : Présentaion des résulats…………………………………..2
+CONCLUSION…………………………………………………………………...2
+La Haute Ecole de Commerce et de Management (HECM) n’entend donner aucune approbation ni improbation aux opinions émises dans le mémoire. Ces opinions doivent être considérées comme propres à leurs auteurs.La Haute Ecole de Commerce et de Management (HECM) n’entend donner aucune approbation ni improbation aux opinions émises dans le mémoire. Ces opinions doivent être considérées comme propres à leurs auteurs.
+
+INTRODUCTIONINTRODUCTION
+L'informatique a profondément changé la façon dont les sociétés s'organisent. Elle intervient dans des domaines aussi variés que la santé, le commerce, l'éducation, la sécurité et les finances. En Afrique de l'Ouest, son adoption s'est accélérée avec l'essor du Mobile Money, qui a modifié les habitudes de paiement de millions de personnes.
+Au Bénin, cette évolution s'accompagne d'un problème concret : les arnaques par SMS Mobile Money. Un habitant de Cotonou reçoit un message qui se fait passer pour un agent MTN ou Moov, lui demandant de renvoyer un code sous trente minutes. Il n'a aucun moyen rapide de vérifier si ce message est légitime. Les PME découvrent qu'elles sont usurpées quand leurs clients appellent pour se plaindre — trop tard pour préserver les preuves. Les autorités ne reçoivent pas de signalements structurés leur permettant d'agir. La question se pose alors : comment permettre à chacun de ces acteurs de réagir à temps, sans dépendre des deux autres ?
+Formés pendant trois années à la Haute École de Commerce et de Management (HECM) dans la filière Système Informatique et Logiciel, nous avons effectué un stage pratique à TPapy Consulting Educational Center à Porto-Novo. Nous avons choisi d'orienter notre étude sur le thème : « Conception et implémentation d'une plateforme de détection et d'analyse de cyberfraude mobile », avec pour objectif de couvrir le flux complet du signalement citoyen à la transmission des preuves aux autorités.
+Ce mémoire est organisé en trois chapitres. Le premier présente TPapy Consulting Educational Center et décrit le déroulement de notre stage. Le deuxième expose le cadre théorique et méthodologique : analyse de l'existant, problématique, objectifs et modélisation UML du système. Le troisième présente les outils retenus, l'architecture et l'application réalisée.
+
+
+
+
+
+
+
+
+
+CHAPITRE II : CADRE THÉORIQUE ET MÉTHODOLOGIQUECHAPITRE II : CADRE THÉORIQUE ET MÉTHODOLOGIQUE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Section 1 : Cadre théorique
+Présentation du thème
+1.1 Explication du thème
+Ce mémoire porte sur la conception et le développement d'une plateforme de détection et d'analyse de cyberfraude mobile. Avant d'examiner le contexte et les solutions existantes, trois notions méritent d'être clarifiées.
+
+1.1.1 La cyberfraude mobile
+La cyberfraude mobile regroupe les pratiques frauduleuses qui exploitent les services de communication mobile SMS, Mobile Money, messageries instantanées pour soutirer de l'argent ou des informations personnelles. Au Bénin comme dans le reste de l'Afrique de l'Ouest, elle prend le plus souvent la forme de fausses notifications d'opérateurs (MTN, Moov), de demandes de remboursement de transferts prétendument erronés, de faux gains de loterie ou d'usurpation d'identité d'entreprises connues.
+Ces formes d'arnaques partagent une même mécanique : elles exploitent la confiance que les citoyens accordent aux numéros officiels d'opérateurs qu'ils connaissent. C'est précisément cette confiance que BENIN CYBER SHIELD cherche à outiller en donnant au citoyen les moyens de distinguer un message légitime d'un message frauduleux avant d'agir.
+
+1.1.2 La détection automatisée de fraude par NLP
+Le NLP (traitement automatique du langage naturel) est la branche de l'informatique qui permet à un programme d'analyser et d'interpréter du texte. Appliqué à la détection de fraude, il sert à identifier dans un message les marqueurs caractéristiques d'une arnaque : urgence fabriquée, demande de code confidentiel, somme d'argent inhabituelle, ou vocabulaire copié d'un opérateur légitime.
+Deux approches principales existent. La première, par règles expertes pondérées, consiste à définir des listes de mots et de formulations frauduleuses associées à des scores de risque, construites à partir de l'expertise humaine. La seconde, par apprentissage automatique, entraîne un modèle statistique sur un volume important de messages préalablement annotés, c'est-à-dire étiquetés manuellement comme fraude ou message légitime.
+Ces deux approches ont des exigences très différentes. L'apprentissage automatique produit de meilleures performances sur des variantes inédites, mais seulement à condition de disposer d'un corpus annoté de qualité. Ce corpus n'existe pas au Bénin. Aucune base de SMS frauduleux en français béninois n'est documentée à ce jour. Entraîner un modèle sur des données anglaises ou françaises standard produirait un outil peu fiable face aux formulations réellement utilisées dans les arnaques béninoises : « renvoyez le code MTN », « agent Moov Bénin », « transfert erroné de FCFA ».
+BENIN CYBER SHIELD retient l'approche par règles pondérées pour trois raisons concrètes : elle ne nécessite aucune donnée d'entraînement, chaque décision est explicable .Le citoyen voit exactement pourquoi un mot est signalé, et elle s'adapte immédiatement à de nouvelles formes d'arnaques par simple modification d'un fichier de configuration. Face à l'absence de corpus local et à l'exigence d'un outil compréhensible par le grand public, c'est l'approche la plus adaptée au contexte béninois.
+
+1.1.3 La forensique numérique et la chaîne de custody
+La forensique numérique désigne les techniques permettant de collecter, préserver et analyser des preuves numériques de façon à ce qu'elles soient recevables devant un tribunal. La notion centrale est la chaîne de custody : la capacité à démontrer, à tout moment, que les preuves n'ont pas été altérées depuis leur collecte.
+Au Bénin, cette contrainte est particulièrement concrète. L'OCRC, chargé de la répression de la cybercriminalité, reçoit des plaintes pour arnaques Mobile Money, mais se heurte souvent à un obstacle pratique : les preuves ont disparu au moment où l'enquête commence. Un SMS frauduleux est effacé, une page web est supprimée, un numéro est désactivé. Sans capture horodatée et certifiée, la plainte reste sans suite.
+Dans ce projet, l'intégrité des preuves repose sur SHA-256, une fonction de hachage cryptographique qui produit une empreinte unique pour chaque document. Si le contenu est modifié d'un seul caractère, l'empreinte change, toute falsification devient immédiatement détectable. Chaque dossier forensique produit par BENIN CYBER SHIELD porte cette empreinte, ce qui lui donne une valeur probatoire exploitable directement dans une procédure devant l'OCRC.
+Ces trois notions structurent ce travail : la cyberfraude définit le problème, le NLP en automatise la détection, et la forensique garantit que les preuves restent recevables devant un tribunal.
+1.2 Problématique
+1.2.1 Un contexte de croissance rapide du risque
+Le Mobile Money est devenu le principal moyen de paiement populaire en Afrique de l'Ouest. En 2022, la GSMA recensait 290 millions de comptes rien qu'en Afrique de l'Ouest, soit 27 % de plus qu'un an auparavant [1]. En 2024, le volume des transactions africaines a dépassé 1 100 milliards de dollars, représentant 65 % du total mondial [2]. Au Bénin, ce service contribue à plus de 5 % du PIB national [5].
+Cette croissance attire les fraudeurs. Selon la GSMA [3], 84 % des professionnels du secteur observent une hausse des attaques et 94 % s'inquiètent des menaces internes et externes. La moitié des opérateurs doutent de l'efficacité de leurs propres outils anti-fraude.
+
+1.2.2 Ce que l'existant ne résout pas et pourquoi cela pose problème au Bénin
+Les lacunes des solutions existantes analysées en détail dans la section suivante ont des conséquences directes au Bénin :
+
+Premier problème — le citoyen est sans recours immédiat. Faute d'outil accessible en français béninois ou en fon, un habitant de Cotonou, Parakou ou Natitingou qui reçoit un message du type « Agent MTN : transfert erroné de 45 000 FCFA, renvoyez le code sous 30 minutes » ne peut pas vérifier ce message en quelques secondes. bjCSIRT s'adresse aux institutions de l'État, pas aux particuliers. Les canaux des opérateurs mobiles ne sont ni accessibles en temps réel ni conçus pour guider une décision immédiate.
+Deuxième problème — les PME sont victimes silencieuses. Dans un système cloisonné par opérateur et par pays, une PME béninoise n'est jamais prévenue quand son nom est usurpé dans un message frauduleux. Elle l'apprend d'un client mécontent — quand il est trop tard pour agir.
+Troisième problème — les autorités travaillent à l'aveugle. Sans agrégation des signalements ni production automatique de preuves, l'ANSSI Bénin et l'OCRC n'ont pas de vue en temps réel sur les campagnes actives. Les preuves numériques — captures de sites, SMS, numéros de téléphone — disparaissent avant que quiconque puisse les utiliser.
+Quatrième problème — les preuves disparaissent avant toute action judiciaire. L'OCRC reçoit des plaintes pour arnaques Mobile Money mais se heurte à un obstacle constant : le SMS frauduleux est effacé, la page web supprimée, le numéro désactivé. Sans preuve horodatée et certifiée, la plainte reste sans suite.
+
+1.2.3 Tableau de synthèse — des lacunes aux problèmes
+Le tableau ci-dessous met en correspondance les lacunes de l'existant, leur impact au Bénin et la réponse apportée par BENIN CYBER SHIELD.
+
+Tableau 1 : Des lacunes de l'existant aux problèmes béninois résolus
+
+1.2.4 Question de recherche
+Aucun outil accessible ne couvre la cyberfraude Mobile Money au Bénin, les preuves numériques disparaissent avant toute action judiciaire, et les PME ignorent qu'elles sont usurpées.
+Les limites de l'existant, conjuguées à l'absence de solution adaptée au contexte béninois, rendent nécessaire une réponse construite. La question suivante résume cette nécessité :
+Comment concevoir une plateforme qui transforme chaque signalement citoyen en donnée exploitable — permettant à tout Béninois de vérifier un message suspect en moins de 3 secondes, aux PME d'être alertées dès que leur identité est usurpée, et aux autorités de recevoir des dossiers certifiés prêts pour une procédure judiciaire ?
+
+1.3 Objectif général
+Concevoir et développer une plateforme fonctionnelle de détection et d'analyse de cyberfraude mobile adaptée au contexte béninois, couvrant l'ensemble du flux du signalement citoyen à la transmission des preuves aux autorités compétentes.
+
+1.4 Objectifs spécifiques
+Ces objectifs répondent aux quatre problèmes identifiés : l'absence d'outil accessible au citoyen, le silence des PME face aux usurpations, et l'incapacité des autorités à agir faute de preuves structurées.
+
+Développer un moteur de détection NLP capable d'analyser et de scorer des messages de fraude Mobile Money en français béninois, avec classification par catégorie d'arnaque et affichage pédagogique des résultats.
+Concevoir une interface citoyenne mobile accessible sans création de compte, permettant la vérification d'un message suspect en moins de 3 secondes sur connexion 3G.
+Mettre en place un système d'alertes automatiques aux PME enregistrées, déclenchées dès qu'un signalement citoyen met en cause leur identité.
+Implémenter un mécanisme de détection de campagnes frauduleuses coordonnées et de transmission automatique des dossiers à l'ANSSI/OCRC et aux opérateurs mobiles (MTN, Moov) via API.
+Produire des dossiers probatoires certifiés SHA-256, structurés et directement transmissibles à l'OCRC pour dépôt de plainte.
+Valider le prototype par une suite de tests automatisés et une démonstration fonctionnelle end-to-end.
+
+Analyse de l’existant
+2.1 Systèmes existants de détection et de signalement de fraude
+Plusieurs outils ont été développés pour détecter ou signaler des messages et comportements frauduleux. Le tableau suivant présente les plus représentatifs, avec leur portée, le canal couvert et leur limite principale.
+
+Tableau 2 : Systèmes existants de détection et de signalement de fraude
+
+
+2.2  Lacunes récurrentes de l'existant
+L'examen de ces outils fait apparaître quatre lacunes récurrentes, qui laissent les utilisateurs africains sans protection adaptée.
+Lacune 1 — Absence de couverture du Mobile Money africain.PhishTank, Signal-Spam et les modèles NLP académiques ont été conçus pour des marchés où le canal frauduleux principal est le web ou l'email. Or, selon la GSMA (2023), les arnaques par SMS Mobile Money représentent la première menace financière mobile en Afrique subsaharienne [3], un angle mort que ces outils ne couvrent pas.
+Lacune 2 — Inaccessibilité au grand public. Maltego et les outils similaires demandent une expertise technique et un abonnement payant. Un citoyen ordinaire qui reçoit un SMS suspect ne peut pas s'en servir.
+Or, en 2024, le taux de pénétration des smartphones au Bénin dépasse 55 %, ce qui signifie qu'une majorité de la population est exposée à ce type d'arnaques sans disposer d'outil accessible.
+Lacune 3 — Systèmes fermés, non interopérables. Safaricom, comme la plupart des opérateurs, gère son dispositif anti-fraude en vase clos. Les données ne circulent pas entre opérateurs, entreprises concernées et autorités. Un signalement fait au Nigeria ne protège pas un Béninois de la même arnaque.
+Lacune 4 — Rupture avec la chaîne judiciaire. Aucun de ces systèmes ne produit automatiquement des preuves certifiables pour un tribunal. Entre le signalement d'une fraude et une éventuelle plainte, les preuves disparaissent sans laisser de trace exploitable. 
+Ces quatre lacunes forment un vide systémique : chaque outil existant couvre un fragment du problème, mais aucun ne couvre le flux complet allant du signalement citoyen à la transmission judiciaire des preuves. Cette insuffisance collective justifie la conception d'une plateforme dédiée au contexte béninois, dont les spécifications sont définies dans la section suivante.
+
+
+
+
+ Spécifications fonctionnelles
+Les besoins fonctionnels de la plateforme BENIN CYBER SHIELD sont définis en fonction des différents acteurs qui interagissent avec le système. Chaque acteur dispose de droits et de fonctionnalités spécifiques, en lien direct avec son rôle.
+L’objectif est simple : permettre au citoyen de vérifier rapidement un message suspect, aux PME d’être alertées en cas d’usurpation, et aux autorités de recevoir des informations exploitables.
+1. Les besoins fonctionnels
+CITOYEN :
+Soumettre un message suspect sans création de compte ;
+Obtenir un score de risque associé au message analysé ;
+Visualiser les mots ou expressions jugés suspects dans le message ;
+Consulter des conseils pratiques adaptés au type de fraude détecté ;
+Partager une alerte via WhatsApp ;
+Signaler formellement un message frauduleux (optionnel) ;
+Recevoir des alertes automatiques via l’application mobile (Android).
+PME (Petite et Moyenne Entreprise) :
+S’inscrire sur la plateforme ;
+S’authentifier ;
+Enregistrer ses informations (nom, numéros officiels, mots-clés) ;
+Recevoir des alertes en cas d’usurpation d’identité ;
+Consulter les signalements liés à son identité ;
+Accéder à un tableau de bord simplifié (statistiques, évolution des cas) ;
+Scanner les emails professionnels (Gmail/Outlook) ;
+Télécharger des dossiers probatoires exploitables ;
+Se déconnecter.
+ADMINISTRATEUR :
+S’authentifier ;
+Gérer les comptes utilisateurs (PME) ;
+Superviser les activités de la plateforme ;
+Consulter le tableau de bord national ;
+Exporter les données (CSV, STIX-lite) ;
+Assurer la maintenance du système ;
+Se déconnecter.
+SYSTÈMES EXTERNES (ANSSI/OCRC, Opérateurs mobiles) :
+Recevoir automatiquement les incidents à partir d’un certain seuil de signalements ;
+Recevoir des données de renseignement (numéros, types de fraude, fréquence) ;
+Exploiter les informations transmises via API.
+
+2. Les fonctionnalités clés
+Vérification d’un message suspect :
+Lorsqu’un citoyen reçoit un message qu’il juge douteux, il peut le soumettre directement sur la plateforme sans créer de compte. Le système analyse le contenu en quelques secondes à l’aide du moteur NLP. Un score de risque est attribué, accompagné d’une catégorisation de la fraude. Les éléments suspects du message sont mis en évidence pour faciliter la compréhension. L’utilisateur reçoit également des recommandations concrètes pour éviter toute perte ou compromission.
+Signalement d’un message frauduleux :
+Après consultation du résultat, l’utilisateur peut décider de signaler officiellement le message. Ce signalement alimente la base de données nationale. Même en l’absence de signalement, certaines informations techniques (comme l’empreinte du numéro) sont conservées afin de détecter d’éventuelles récidives.
+Système d’alerte pour les PME:
+Lorsqu’un message signalé contient des éléments correspondant à une entreprise enregistrée, une alerte est envoyée automatiquement à celle-ci. La PME peut alors consulter les détails de l’incident, suivre l’évolution des cas et, si nécessaire, télécharger un dossier de preuve structuré.
+Détection et transmission automatique
+Le système surveille en continu les signalements. Lorsqu’un seuil est atteint (multiplication des signalements ou détection d’une campagne), les données sont automatiquement transmises aux autorités compétentes ainsi qu’aux opérateurs mobiles.
+Cette transmission se fait de manière structurée afin de faciliter leur exploitation.
+
+Spécifications non fonctionnelles
+Les besoins non fonctionnels définissent les contraintes techniques et qualitatives que la plateforme doit respecter. Ils influencent directement la qualité du service, la sécurité des données et la fiabilité globale du système.
+1. Performance :
+Assurer une analyse complète d'un message standard en moins de 3 secondes, y compris sur connexion 3G ;
+Garantir un temps de réponse court même avec une connexion limitée (3G) ;
+Supporter plusieurs utilisateurs simultanément sans ralentissement notable.
+2. Sécurité :
+Protéger les données des utilisateurs contre tout accès non autorisé ;
+Mettre en place un système d’authentification sécurisé pour les comptes PME et administrateurs ;
+Garantir l’intégrité des preuves numériques grâce à des empreintes SHA-256 ;
+Assurer la confidentialité des informations sensibles.
+3. Accessibilité :
+Proposer une interface simple et compréhensible pour tout type d’utilisateur ;
+Être accessible sur différents supports (ordinateur, smartphone) ;
+Prendre en compte le contexte local, notamment avec des alertes en langue locale (fon).
+4. Fiabilité :
+Assurer un fonctionnement continu avec un minimum d’interruptions;
+Mettre en place des mécanismes de sauvegarde des données ;
+Gérer les échecs de transmission via des files d’attente.
+5. Scalabilité :
+Permettre l’évolution du système en fonction du nombre d’utilisateurs;
+Faciliter l’ajout de nouvelles fonctionnalités sans perturber l’existant;
+Adapter le moteur de détection à de nouvelles formes de fraude.
+6. Maintenabilité :
+Les règles de détection NLP sont stockées dans un fichier de configuration séparé (rules.json), modifiable sans redéploiement de l'application ;
+L'architecture est conteneurisée via Docker Compose, ce qui garantit une reproductibilité totale de l'environnement sur n'importe quelle machine.
+7. Compatibilité :
+Application web : navigateurs Chrome, Firefox et Safari, sur ordinateur et smartphone ;
+Application mobile : Android uniquement. La lecture automatique des notifications d'autres applications est impossible sur iOS en raison des restrictions imposées par Apple ;
+Connexion aux boîtes email professionnelles : Gmail et Microsoft Outlook via OAuth 2.0.
+
+Section 2 : Cadre méthodologique
+
+Après avoir présenté le cadre théorique et analysé la problématique, il convient à présent de définir la méthodologie adoptée pour la conception de la solution proposée.
+1. Méthodologie adoptée
+Concevoir un système informatique sans en modéliser la structure et le comportement, c'est construire sans plan. La modélisation permet de représenter les besoins, d'identifier les acteurs, de décrire les interactions et d'anticiper les problèmes avant d'écrire la moindre ligne de code. Plusieurs méthodes existent ; les deux plus courantes sont UML et MERISE.
+
+1.1 UML (Unified Modeling Language)
+UML est le standard international de modélisation orientée objet. Il propose une famille de diagrammes complémentaires qui couvrent tous les aspects d'un système : les besoins fonctionnels (diagrammes de cas d'utilisation), le comportement dynamique (diagrammes de séquence, d'activités), et la structure statique (diagrammes de classes). Sa force tient à sa lisibilité : un diagramme UML bien fait se comprend aussi bien par un développeur que par un client non technique.
+
+1.2 MERISE
+MERISE est une méthode française, séquentielle, fondée sur la séparation des données et des traitements. Elle est particulièrement adaptée à la modélisation de bases de données relationnelles et à la conception de systèmes d'information classiques. Sa rigueur en fait un outil solide, mais sa lourdeur le rend moins adapté aux projets agiles ou aux systèmes distribués.
+
+1.3 Choix retenu : UML
+Pour BENIN CYBER SHIELD, nous avons retenu UML pour trois raisons. D'abord, le système repose sur une architecture orientée objet FastAPI pour la gestion asynchrone sur connexion 3G, React pour l'interface web, Flutter pour le mobile Androidque UML modélise naturellement. Ces choix techniques découlent directement des contraintes identifiées dans l'analyse de l'existant. Ensuite, les diagrammes de séquence permettent de décrire précisément les flux entre composants distribués citoyen, API, base de données, systèmes externes. Enfin, UML est le standard enseigné et reconnu en contexte académique, ce qui facilite la lecture et l'évaluation du travail présenté.
+Dans ce projet, nous mobilisons trois types de diagrammes UML : le diagramme de cas d'utilisation pour modéliser les besoins fonctionnels, le diagramme de classe et les diagrammes de séquence pour décrire les scénarios d'interaction entre acteurs et composants.2. Modélisation fonctionnelle
+
+Il faut noter que cette étude se fera à travers ces différentes étapes à savoir :
+L’identification des acteurs ;
+L’identification des cas d’utilisation ;
+Le diagramme de cas d’utilisation ;
+
+2.1 Identification des acteurs
+BENIN CYBER SHIELD implique cinq acteurs distincts : trois humains et deux systèmes externes. Le tableau ci-dessous les présente avec leur mode d'accès et leur rôle.
+
+Tableau 3 : Identification des acteurs du système BENIN CYBER SHIELD
+
+
+2.2 Identification des cas d'utilisation
+Le système compte quinze cas d'utilisation, répartis entre les quatre modules fonctionnels : Citoyen, PME, Administration et Transmission externe.
+Tableau 4 : Cas d'utilisation du système BENIN CYBER SHIELD
+
+
+3. Modélisation statique
+La modélisation statique s’occupe de la description des objets. Ce niveau de modélisation ne tient pas compte du facteur temporel dans le comportement du système mais s’attèle à fournir une représentation abstraite des objets du système qui vont interagir ensemble pour réaliser les cas d’utilisation.
+
+3.1 Diagramme de cas d’utilisation
+Définition
+Le diagramme de cas d'utilisation est le point d'entrée de toute modélisation UML. Il répond à une question simple : qui fait quoi avec le système ? Il identifie les acteurs humains ou systèmes externes et les fonctionnalités qu'ils utilisent, sans entrer dans les détails techniques de leur réalisation. C'est le diagramme qui parle le mieux aux parties prenantes non techniques.
+Dans ce diagramme, deux types de relations structurent les liens entre cas d'utilisation. La relation <<include>> indique qu'un cas d'utilisation en appelle systématiquement un autre pour fonctionner. La relation <<extend>> indique qu'un cas d'utilisation peut optionnellement enrichir un autre, selon certaines conditions.
+
+Figure 1 — Diagramme de cas d'utilisation de BENIN CYBER SHIELD
+
+3.2 Diagramme de classes
+Le diagramme de classe est le diagramme le plus important de la modélisation orientée objet avec UML. Il est une représentation de la structure interne du système. Cette vue statique montre les différentes classes du sytème et les relations qui les lient entre elles.
+Voici le diagramme de classe du système en cours de modélisation :
+
+Figure 2 — Diagramme de classes de BENIN CYBER SHIELD
+
+
+Dictionnaire des données
+Un dictionnaire des données est l’ensemble des données de référence indispensables à la mise en place de données relationnel. C’est une collection des données, de leur sémantiques, origines, format, utilisation et de leurs relations avec d’autres données.
+
+Tableau 5 : Dictionnaire des données
+
+
+Règles de gestion
+C’est un élément de description globale de fonctionnement de l’organisation. Elle précise les contraintes qui doivent être respectés par le modèle. Dans le cadre de notre étude, les règles de gestion s’initulent comme suit :
+
+RG1 : Un Citoyen peut soumettre un ou plusieurs messages sans avoir de compte.
+RG2 : Un Message est toujours associé à une et une seule Analyse.
+RG3 : Un Signalement est toujours associé à une Analyse existante.
+RG4 : Un NuméroSuspect peut être associé à plusieurs Signalements.
+RG5 : Une PME peut recevoir zéro ou plusieurs Incidents d'usurpation.
+RG6 : Un Incident est toujours lié à un Signalement et à une PME.
+RG7 : Un DossierForensique est produit à partir d'un ou plusieurs Signalements portant sur le même NuméroSuspect.
+RG8 : Une TransmissionExterne est toujours associée à un DossierForensique.
+RG9 : La transmission à l'ANSSI/OCRC ne se déclenche qu'à partir de 3 signalements distincts sur le même numéro OU 5 signalements similaires en moins de 2 heures.
+RG10 : Une PME est liée à un et un seul compte Utilisateur de rôle SME.
+RG11 : Un Administrateur a accès à l'ensemble des données du système.
+RG12 : Le hash SHA-256 d'un NuméroSuspect est calculé avant tout stockage — le numéro en clair n'est jamais conservé.
+RG13 : Un email scanné via OAuth ne peut pas être stocké — seules les métadonnées de l'alerte générée sont conservées.
+RG14 : En cas d'échec de transmission externe, le système effectue 3 nouvelles tentatives avant de notifier l'administrateur.
+
+
+Schéma logique relationnel
+
+Le schéma logique relationnel traduit le diagramme de classes en tables de base de données. Les identifiants sont soulignés et les clés étrangères sont précédées du signe #.
+
+Message (idMessage, contenu, dateAnalyse, ipHashSoumetteur, #idNumero) ;
+Analyse (idAnalyse, scoreRisque, categorieArnaque, niveauRisque, conseils, #idMessage) ;
+NuméroSuspect(idNumero,phoneHash,compteurSignalements, datePremièreDetection) ;
+Signalement (idSignalement, referenceSignalement, dateSignalement, custodyHash, statut, #idAnalyse, #idNumero) ;
+Utilisateur (idUtilisateur, email, motDePasse, role, dateCreation) ;
+PME (idPME, nomOfficiel, motsCles, numerosLegitimes, dateInscription, #idUtilisateur) ;
+Incident (idIncident, dateDetection, custodyHash, statut, #idSignalement, #idPME) ;
+DossierForensique (idDossier, hashSHA256, dateGeneration, statut, #idNumero) ;
+TransmissionExterne (idTransmission, destinataire, dateTransmission, statut, nombreTentatives, receptionId, #idDossier)
+
+4. Modélisation Dynamique
+
+4.1 Diagrammes de séquence
+Définition
+Le diagramme de séquence décrit le déroulement temporel d'un cas d'utilisation : qui communique avec qui, dans quel ordre, et sous quelles conditions. Il montre les échanges de messages entre les participants : acteurs humains et composants systèmeau fil du temps. Il permet de vérifier, avant de coder, que les échanges entre composants sont cohérents.
+Trois cas d’utilisation ont été sélectionnés pour leur complémentarité : le flux central (UC1), la logique de détection métier (UC3) et la transmission aux autorités (UC14/UC15).
+
+
+Description textuelles des cas d’utilisation
+
+La description textuelle des cas d'utilisation permet de mieux comprendre les opérations entrantes dans les fonctionnalités de notre plateforme web. Dans notre système, Le propriétaire de véhicule peut s'authentifier et gérer la liste de véhicules. Le visiteur peut s'inscrire et consulter la plateforme. Le Client peut s'authentifier, vérifier disponibilité, effectuer une réservation, louer un véhicule, payer en ligne et annuler une réservation. L'administrateur de la plateforme peut s'authentifier, gérer les utilisateurs, gérer les réservations, gérer les paiements, gérer les chauffeurs et gérer les éventuels problèmes de la location.
+
+​Sommaire d'identification :
+
+​On a procédé de façon à présenter généralement les cas d'utilisations du système et leurs acteurs.
+
+Cas d'utilisation de << Soumettre un message suspect >>
+Acteur principal : Citoyen
+Prérequis : Le citoyen dispose d'une connexion internet active.
+Scénario principal :
+Le citoyen accède à la page d'analyse de la plateforme BENIN CYBER SHIELD.
+Le citoyen saisit le message suspect et le numéro de l'expéditeur dans les champs prévus à cet effet.
+Le citoyen clique sur le bouton « Analyser ».
+L'application web transmet le message et le numéro au système.
+Le système identifie les mots dangereux présents dans le message et calcule un score de risque sur 100.
+Le système vérifie si le numéro a déjà été signalé dans la base de données et récupère le compteur de récidive associé.
+Le système enregistre le hash SHA-256 du numéro et le score de manière silencieuse, que le citoyen signale formellement ou non.
+Si le score dépasse le seuil MOYEN, le système prépare une alerte en langue fon.
+Le système affiche le résultat complet : score de risque, mots surlignés par niveau de danger, conseils pratiques, compteur de récidive et alerte fon si applicable.
+Extensions :
+Si le message saisi est vide ou trop court, le système affiche un message d'erreur et invite le citoyen à saisir un message valide avant de relancer l'analyse.
+Si le numéro de l'expéditeur n'est pas au format attendu, le système signale l'erreur et demande une correction.
+Si le citoyen souhaite aller plus loin après consultation du résultat, il peut initier un signalement formel via le cas d'utilisation UC3.
+
+Cas d'utilisation de << Signaler formellement un message >> 
+Acteur principal : Citoyen
+Prérequis : Le citoyen a consulté le résultat d'analyse (UC1 terminé avec succès).
+Scénario principal :
+Le citoyen clique sur le bouton « Signaler formellement » depuis la page de résultat d'analyse.
+L'application web transmet la demande au système.
+Le système génère une référence unique pour ce signalement et l'enregistre avec un horodatage précis.
+Le système recherche dans la base de données si une PME enregistrée correspond aux mots-clés du message signalé.
+Si une PME correspondante est trouvée, le système enregistre l'incident d'usurpation et envoie une alerte à la PME concernée, sur son tableau de bord et par e-mail.
+Si aucune PME correspondante n'est enregistrée, le système place l'incident en attente d'héritage futur.
+Le système retourne au citoyen une confirmation contenant le numéro de référence de son signalement.
+Extensions :
+Si la PME concernée n'est pas encore inscrite sur la plateforme, l'incident reste en attente ; la PME récupère automatiquement cet historique lors de son inscription.
+Si le citoyen a déjà soumis un signalement pour ce même message, le système l'informe que le signalement existe déjà et lui communique la référence correspondante.
+Si la connexion est interrompue pendant le signalement, le système affiche un message d'erreur et invite le citoyen à réessayer.
+Cas d’utilisation de << Transmission automatique aux autorités >>
+Acteur principal : Système de surveillance (déclenchement automatique)
+Prérequis : Un nouveau signalement formel vient d'être enregistré dans la base de données.
+Scénario principal :
+Le système de surveillance vérifie le nombre de personnes distinctes ayant signalé le même numéro depuis l'enregistrement du dernier signalement formel.
+Le système vérifie si plusieurs signalements au contenu similaire ont été enregistrés en moins de deux heures, ce qui caractérise une campagne coordonnée.
+Si le premier seuil est atteint — trois personnes distinctes ayant signalé le même numéro — ou si le second seuil est atteint — cinq signalements similaires en moins de deux heures — le système prépare un dossier complet.
+Le dossier, constitué de tous les incidents liés, des preuves associées et de la chaîne de custody certifiée SHA-256, est transmis à l'API ANSSI/OCRC.
+En parallèle, le système compile les statistiques agrégées des arnaques récentes (numéros suspects, types de fraude, régions touchées, fréquences) et les transmet à l'API de l'opérateur mobile concerné.
+L'opérateur mobile reçoit les données de renseignement et décide des mesures à appliquer de son côté.
+Extensions :
+Si la transmission à l'API ANSSI/OCRC échoue, le dossier est placé en file d'attente avec trois nouvelles tentatives automatiques avant notification à l'administrateur.
+Si l'API de l'opérateur mobile est indisponible, le système conserve les statistiques en attente et réessaie lors du prochain cycle de surveillance.
+Si aucun des deux seuils n'est atteint après le nouveau signalement, aucune transmission n'est effectuée et le système reprend sa veille jusqu'au prochain signalement.
+
+4.1.1 Séquence 1 : UC1 — Soumettre un message suspect
+
+Figure 3 : Diagramme de séquence— Soumettre un message suspect
+
+
+4.1.2 Séquence 2 : UC3 — Signalement formel d’un message (avec détection d’usurpation)
+
+Figure 4 : Diagramme de séquence — Signalement formel d’un message (avec détection d’usurpation)
+
+4.1.3 Séquence 3 : UC14/UC15 — Transmission automatique ANSSI/OCRC et Opérateur Mobile
+
+Figure 5 : Diagramme de séquence — Transmission automatique ANSSI/OCRC et Opérateur Mobile
+
+
+Diagrammes d’activité
+De type comportemental, le diagramme d’activité est une représentation graphique du comportement d’un cas d’utilisation. Il rend compte de l’ensemble des étapes de manière séquentielle. Il est aussi utilisé pour décrire le flux de travail et met l’accent sur les traitements qui sont faits de façon claire et compréhensible.
+
+Cas de soumettre un message suspect
+
+Figure 6 : Diagramme d’activité —  Soumettre un message suspect
+
+
+
+
+
+
+
+
+
+
+
+Cas de signalement formel et détection d'usurpation
+
+Figure 7 : Diagramme d’activité —  Signalement formel d’un message (avec détection d’usurpation)
+
+
+
+
+
+
+
+
+
+
+Cas de transmission automatique ANSSI/OCRC et Opérateur Mobile
+
+Figure 8 : Diagramme d’activité — Transmission automatique ANSSI/OCRC et Opérateur Mobile
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CHAPITRE III : RÉALISATION DE L’APPLICATIONCHAPITRE III : RÉALISATION DE L’APPLICATION
+
+
+
+
+
+
+
+
+
+
+
+
+
+Section 1 : Présentation des outils de développement
+I.Présentation des outils et technologies
+1. Outils de développement
+Tout projet informatique repose sur un ensemble de technologies choisies pour répondre aux contraintes fonctionnelles et techniques identifiées. Pour BENIN CYBER SHIELD, ces choix ont été guidés par trois critères : la performance sur des connexions limitées, la capacité à traiter du texte en français béninois, et la possibilité de certifier des preuves numériques.
+
+1.1 Langages de programmation
+Python 3.11
+Python est le langage principal du backend. Créé en 1991 et maintenu par la Python Software Foundation, il s'est imposé comme la référence en traitement du langage naturel et en développement d'API grâce à un écosystème de bibliothèques mature. Sa lisibilité et sa communauté active en font un choix solide pour un projet à durée limitée comme un mémoire de licence. Dans ce projet, Python prend en charge l'API REST, le moteur NLP, la gestion des signalements et la production des dossiers forensiques.
+
+TypeScript
+TypeScript est une extension de JavaScript développée par Microsoft qui ajoute un typage statique au langage. Il permet de détecter les erreurs avant l'exécution du code, ce qui réduit les bugs dans les interfaces utilisateur complexes. TypeScript est utilisé pour l'ensemble du frontend web — l'interface citoyenne, le tableau de bord PME et la console administrateur.
+
+Dart
+Dart est le langage utilisé par Flutter pour le développement mobile. Conçu par Google, il compile vers du code natif Android, ce qui garantit des performances proches d'une application native. Dans ce projet, Dart est utilisé uniquement pour l'application mobile Android qui lit les notifications entrantes et déclenche une analyse automatique.
+
+1.2 Frameworks et bibliothèques backend
+FastAPI
+FastAPI est un framework Python moderne pour la construction d'API REST. Il repose sur les standards OpenAPI et JSON Schema, et génère automatiquement une documentation interactive accessible via navigateur. Sa gestion native des opérations asynchrones le rend particulièrement adapté aux workloads comme BENIN CYBER SHIELD, où plusieurs analyses peuvent se dérouler simultanément. Comparé à Flask ou Django REST Framework, FastAPI offre des performances nettement supérieures pour un code plus concis.
+
+
+SQLAlchemy Async + Alembic
+SQLAlchemy est la bibliothèque de référence pour l'accès aux bases de données relationnelles en Python. Sa version asynchrone permet d'exécuter les requêtes SQL sans bloquer le serveur pendant les temps d'attente. Alembic, développé par la même équipe, gère les migrations de schéma : chaque modification de la structure de la base de données est versionnée et réversible. Ces deux outils travaillent ensemble pour maintenir la cohérence entre le code Python et la base PostgreSQL.
+
+Pydantic v2
+Pydantic est une bibliothèque de validation de données. Chaque donnée qui entre dans l'API — un message soumis par un citoyen, les informations d'une PME — est vérifiée automatiquement par Pydantic avant tout traitement. Si la donnée est invalide, une erreur claire est retournée. Cela évite de stocker des données corrompues et sécurise l'ensemble du flux d'entrée.
+
+spaCy + rules.json
+spaCy est une bibliothèque NLP (Natural Language Processing) conçue pour la production. Le modèle fr_core_news_sm prend en charge le français et permet de tokeniser les messages — c'est-à-dire de les découper en unités linguistiques analysables. À ce traitement linguistique s'ajoutent des règles pondérées stockées dans un fichier rules.json : chaque mot ou expression associé à une arnaque Mobile Money porte un poids qui contribue au score final. Ce fichier est modifiable sans redéploiement, ce qui permet d'ajouter de nouvelles formes d'arnaques au fil du temps sans intervenir sur le code.
+
+
+
+Playwright async
+Playwright est un outil d'automatisation de navigateur développé par Microsoft. Dans ce projet, il est utilisé pour les captures forensiques : lorsqu'un lien suspect est signalé, Playwright ouvre le lien en arrière-plan, capture une image de la page et enregistre le code source avant que la page ne soit supprimée. Ces captures constituent les preuves numériques qui alimentent les dossiers transmis à l'ANSSI/OCRC.
+
+1.3 Framework frontend
+React 19 + Vite
+React est une bibliothèque JavaScript développée par Meta pour la construction d'interfaces utilisateur. Sa version 19 introduit des améliorations de performances sur le rendu des composants. Vite est l'outil de build qui compile et optimise le code React avant déploiement. Ensemble, ils produisent une application web installable comme PWA (Progressive Web App) — c'est-à-dire accessible sur smartphone sans passer par un store.
+
+TanStack Query
+TanStack Query gère la synchronisation des données entre le frontend et l'API. Sans cet outil, chaque composant React devrait gérer manuellement le chargement, le rechargement et la mise en cache des données. TanStack Query automatise tout ça : quand un citoyen soumet un message, l'interface se met à jour automatiquement sans rechargement de page.
+
+Recharts
+Recharts est une bibliothèque de graphiques construite sur React. Elle génère les visualisations du tableau de bord national (évolution des signalements par région, répartition par catégorie d'arnaque) et du tableau de bord PME (historique des incidents d'usurpation). Tous les graphiques s'adaptent automatiquement à la taille de l'écran.
+
+1.4 Application mobile
+Flutter (Android)
+Flutter est le framework de développement mobile de Google. Il produit des applications Android natives à partir d'un code Dart unique. Pour BENIN CYBER SHIELD, Flutter exploite le service Android NotificationListenerService, qui autorise une application à lire les notifications d'autres applications SMS, WhatsApp, Facebook Messenger. Dès qu'une notification est reçue, son contenu est transmis silencieusement au moteur d'analyse. Si le score dépasse le seuil ÉLEVÉ, une alerte s'affiche immédiatement.
+Cette fonctionnalité est impossible sur iOS : Apple interdit l'accès aux notifications d'autres applications pour toute application tierce. L'application mobile est donc Android uniquement.
+
+1.5 Base de données et infrastructure
+PostgreSQL 15
+PostgreSQL est un système de gestion de bases de données relationnelles open source. Sa robustesse, son respect des standards SQL et sa gestion des transactions en font le choix standard pour les applications critiques. La version 15 apporte des améliorations de performances sur les requêtes analytiques, utiles pour les agrégations du tableau de bord national. Toutes les données de la plateforme — signalements, analyses, incidents PME, dossiers forensiques, transmissions — sont stockées dans PostgreSQL.
+
+
+
+Redis 7
+Redis est une base de données en mémoire utilisée comme file de messages. Dans ce projet, il joue deux rôles. D'abord, il gère les files d'attente de transmission : si l'API ANSSI/OCRC est temporairement indisponible, les dossiers en attente sont conservés dans Redis jusqu'à leur prochaine tentative. Ensuite, il implémente les fenêtres glissantes de détection de campagnes coordonnées : Redis compte en temps réel le nombre de signalements similaires reçus dans les deux dernières heures.
+
+Docker Compose
+Docker Compose orchestre l'ensemble de l'environnement d'exécution. Chaque composant — l'API FastAPI, le serveur PostgreSQL, Redis, et le moteur NLP — tourne dans un conteneur isolé. Un seul fichier docker-compose.yml décrit toutes ces dépendances. Démarrer ou reproduire l'environnement complet sur une nouvelle machine prend moins de deux minutes.
+
+1.6 Environnement de développement
+L'environnement utilisé pour le développement comprend les éléments suivants :
+Visual Studio Code
+Editeur de code principal, avec les extensions Python, ESLint et Docker.
+Git + GitHub 
+Gestion du versionnement et sauvegarde du code source.
+Postman 
+Test manuel des endpoints de l'API FastAPI.
+
+
+Modelio 
+Modélisation UML (diagrammes de cas d'utilisation, de classes et de séquences).
+Docker Desktop
+Supervision des conteneurs en cours d'exécution.
+
+2. Vue d'ensemble de la stack technique
+Le tableau ci-dessous récapitule l'ensemble des technologies retenues, leur couche d'appartenance et leur rôle précis dans le système.
+
+Tableau 6 : Stack technique complète de BENIN CYBER SHIELD
+
+
+ARCHITECTURE DU SYSTÈME
+2.1 Présentation de l'architecture
+BENIN CYBER SHIELD repose sur une architecture en couches de type API-first. Le principe est simple : toute la logique du système passe par une API centrale — les clients (interface web, application mobile) ne font jamais appel à la base de données directement. Ils envoient des requêtes à l'API, qui traite, stocke et retourne les résultats.
+Le système se décompose en quatre couches distinctes :
+La couche client regroupe les deux interfaces utilisateur : l'application web React (PWA), accessible depuis n'importe quel navigateur sans installation, et l'application mobile Flutter sur Android, qui tourne en arrière-plan et analyse les notifications entrantes.
+La couche API est le cœur du système. FastAPI reçoit toutes les requêtes entrantes, les valide via Pydantic, les authentifie par token JWT si nécessaire, puis les distribue aux services appropriés. C'est la seule couche qui communique directement avec la base de données.
+La couche services regroupe les composants spécialisés : le moteur NLP analyse les messages et produit les scores de risque, le service OSINT Playwright capture les pages suspectes en arrière-plan, le service de détection surveille les seuils de signalement via Redis, et le service de transmission envoie les dossiers aux systèmes externes.
+La couche données comprend PostgreSQL pour le stockage persistant de l'ensemble des données de la plateforme, et Redis pour les files d'attente de transmission et les fenêtres glissantes de détection de campagnes coordonnées.
+Au-delà de ces quatre couches, deux systèmes externes reçoivent des données via API sans jamais se connecter directement à la plateforme : l'API ANSSI/OCRC pour les dossiers forensiques critiques, et l'API des opérateurs mobiles pour les données de renseignement.
+[ Insérer ici : Schéma de l'architecture en couches de BENIN CYBER SHIELD ]
+
+2.2 Principe de fonctionnement
+Le fonctionnement du système suit un flux précis selon la nature de l'action déclenchée.
+Analyse d'un message suspect : le citoyen soumet un message depuis l'interface web ou l'application Android. La requête arrive sur l'API FastAPI, qui la transmet au moteur NLP. Le moteur charge les règles depuis rules.json, tokenise le message, calcule le score et retourne le résultat. L'API enregistre le hash SHA-256 du numéro dans PostgreSQL, puis renvoie le résultat au client. Ce flux complet prend moins de 3 secondes.
+Signalement formel : après consultation du résultat, le citoyen peut déclencher un signalement. L'API crée un incident horodaté avec une empreinte SHA-256, puis interroge PostgreSQL pour vérifier si une PME enregistrée correspond au message. Si oui, une alerte lui est envoyée automatiquement. En parallèle, le service de détection vérifie dans Redis si un seuil de campagne coordonnée est atteint.
+Transmission automatique : lorsqu'un seuil est dépassé (3 signalements distincts ou 5 similaires en moins de 2 heures), le service de transmission prépare un dossier forensique complet et l'envoie à l'API ANSSI/OCRC. En cas d'échec, Redis conserve le dossier en file d'attente pour les tentatives suivantes. La transmission des données de renseignement aux opérateurs mobiles suit la même logique, mais ne dépend d'aucun seuil : elle se déclenche à intervalle régulier.
+2.3 Avantages et limites
+2.3.1 Avantages
+La séparation entre les clients et la logique métier a deux conséquences concrètes. D'abord, le frontend web et l'application mobile partagent exactement la même API sans dupliquer aucune règle de traitement. Ensuite, chaque composant peut être mis à jour indépendamment des autres : modifier les règles NLP dans rules.json ne nécessite aucun redéploiement du frontend.
+Le choix d'une architecture asynchrone permet au serveur de traiter plusieurs analyses simultanément sans mettre les requêtes en attente les unes derrière les autres. C'est particulièrement utile lors de pics de signalements — par exemple autour des périodes de salaires, où le volume d'arnaques Mobile Money augmente.
+La conteneurisation via Docker Compose garantit que l'environnement de production est identique à l'environnement de développement, sans configuration manuelle sur chaque machine.
+2.3.2 Limites
+Une architecture en couches distribués est plus complexe à déployer qu'une application monolithique. Faire tourner simultanément FastAPI, PostgreSQL, Redis et le service Playwright demande une machine avec des ressources suffisantes. Dans le cadre de ce projet, l'environnement tourne en local via Docker Compose. Un déploiement national nécessiterait une infrastructure serveur dédiée, hors périmètre de ce mémoire de licence.
+La communication entre composants introduit des points de défaillance supplémentaires : si Redis est indisponible, la détection de campagnes coordonnées est temporairement suspendue. Ces cas sont gérés par des mécanismes de retry et de file d'attente, mais ils restent des risques à surveiller en production.
+
+
+
+
+
+
+
+Section 2 : Présentation des résultats
+Les captures d’écran et explications
+BENIN CYBER SHIELD se décompose en trois modules accessibles selon le profil de l'utilisateur : le module Citoyen (sans authentification), le module PME (authentifié), et la console Administrateur.
+
+1.1 Module Citoyen — Vérification et signalement
+Le module Citoyen est le point d'entrée principal de la plateforme. Il est accessible depuis n'importe quel navigateur sans création de compte, y compris sur smartphone avec une connexion 3G.
+
+Interface de vérification d'un message suspect
+Le citoyen saisit le message reçu et le numéro de l'expéditeur. En moins de 3 secondes, le système retourne un score de risque sur 100 avec les mots dangereux surlignés en trois couleurs selon leur niveau de dangerosité : rouge pour les éléments critiques (demande de code PIN, urgence artificielle), orange pour les alertes (mention d'opérateur mobile), amber pour les éléments suspects (gain inattendu). Des conseils pratiques adaptés à la catégorie d'arnaque détectée sont affichés en dessous.
+
+[ Insérer ici : Capture d'écran — Interface de vérification d'un message suspect ]
+Figure 6 — Interface de vérification d'un message suspect
+
+Affichage du résultat d'analyse
+Si le score est MOYEN ou ÉLEVÉ, une alerte en langue fon s'affiche en complément des conseils en français. Un bouton de partage WhatsApp permet au citoyen d'alerter ses proches en un clic. Le compteur de récidive indique combien de fois ce numéro a déjà été détecté, même s'il n'a jamais été signalé formellement.
+
+[ Insérer ici : Capture d'écran — Résultat d'analyse avec score ÉLEVÉ ]
+Figure 7 — Résultat d'analyse avec score ÉLEVÉ et alerte en langue fon
+
+Signalement formel
+Après consultation du résultat, le citoyen peut choisir de signaler officiellement le message. Ce signalement est optionnel et n'affecte pas la consultation du résultat. Une fois soumis, il génère un numéro de référence unique que le citoyen peut conserver.
+
+[ Insérer ici : Capture d'écran — Formulaire de signalement formel ]
+Figure 8 — Formulaire de signalement formel
+
+1.2 Module PME — Surveillance et dossiers probatoires
+Le module PME est accessible après authentification. Une entreprise s'inscrit une seule fois en renseignant son nom officiel, ses mots-clés d'identification et ses numéros légitimes. À partir de là, le système surveille en continu les signalements citoyens et alerte la PME dès que son identité est mentionnée.
+
+Tableau de bord PME
+Le tableau de bord affiche l'historique des incidents d'usurpation détectés, le nombre de signalements par mois et leur répartition géographique par département. Les graphiques sont générés par Recharts à partir des données en temps réel de la base PostgreSQL.
+
+[ Insérer ici : Capture d'écran — Tableau de bord PME ]
+Figure 9 — Tableau de bord PME avec historique des incidents
+
+Téléchargement du dossier probatoire
+La PME peut générer et télécharger un dossier probatoire au format ZIP pour tout incident détecté. Ce dossier contient le rapport d'analyse, les captures forensiques des pages suspectes réalisées par Playwright, et un manifeste d'intégrité signé par empreinte SHA-256. Il est directement exploitable pour déposer plainte auprès de l'OCRC.
+
+[ Insérer ici : Capture d'écran — Téléchargement du dossier probatoire ]
+Figure 10 — Interface de téléchargement du dossier probatoire certifié SHA-256
+
+1.3 Console Administrateur — Supervision nationale
+La console Administrateur donne accès à une vue agrégée de l'activité de la plateforme sur l'ensemble du territoire béninois.
+
+Tableau de bord national
+L'administrateur consulte les statistiques globales : nombre de signalements par jour, semaine et mois, répartition par catégorie d'arnaque, carte de chaleur des régions les plus touchées. Il peut exporter ces données au format CSV pour une exploitation externe ou au format STIX-lite pour transmission à bjCSIRT.
+
+[ Insérer ici : Capture d'écran — Tableau de bord national ]
+Figure 11 — Tableau de bord national de BENIN CYBER SHIELD
+
+Gestion des comptes utilisateurs
+L'administrateur crée, modifie et désactive les comptes PME. Il peut également consulter les incidents mis en attente pour héritage — c'est-à-dire les signalements qui mentionnent une PME non encore inscrite sur la plateforme. Ces incidents seront automatiquement attribués à la PME correspondante dès son inscription.
+
+[ Insérer ici : Capture d'écran — Interface de gestion des comptes ]
+Figure 12 — Interface de gestion des comptes utilisateurs
+
+1.4 Application mobile Android
+L'application Flutter fonctionne en arrière-plan sur Android. Une fois le service activé, elle lit silencieusement les notifications entrantes de n'importe quelle application — SMS, WhatsApp, Facebook Messenger. Dès qu'une notification est reçue, son contenu est transmis au moteur d'analyse. Si le score dépasse le seuil ÉLEVÉ, une notification système s'affiche immédiatement avec le score et les premiers mots suspects mis en évidence. Le citoyen peut ensuite ouvrir l'application pour consulter le résultat complet ou signaler le message.
+
+[ Insérer ici : Capture d'écran — Application mobile Android — Alerte automatique ]
+Figure 13 — Application mobile Android : alerte automatique sur notification suspecte
+
+II. Mesures de sécurité
+Une plateforme qui certifie des preuves numériques et les transmet à des autorités judiciaires ne peut pas se permettre une faille de sécurité. Une donnée falsifiée ou une transmission interceptée peut invalider une procédure pénale. BENIN CYBER SHIELD répond à cinq objectifs concrets.
+Confidentialité : Aucun message n'est stocké en clair. Seul le hash SHA-256 du numéro de l'expéditeur est conservé — le numéro réel n'est jamais écrit dans la base de données. L'accès aux espaces PME et Administrateur est protégé par authentification JWT avec des rôles distincts (SME, ADMIN). Un compte PME ne voit que ses propres incidents. Les emails professionnels connectés via OAuth ne sont jamais stockés : seules les métadonnées de l'alerte générée sont conservées.
+Intégrité : Toutes les données entrantes sont validées par Pydantic avant tout traitement. Les entrées utilisateurs sont filtrées côté serveur pour prévenir les injections SQL. Chaque dossier forensique reçoit une empreinte SHA-256 calculée sur l'ensemble de son contenu — si un seul octet change, l'empreinte ne correspond plus et la falsification devient détectable.
+Disponibilité : La plateforme tourne 24h/24, 7j/7. Les transmissions vers l'ANSSI/OCRC et les opérateurs mobiles disposent d'une file d'attente Redis avec trois tentatives automatiques en cas d'échec. Docker Compose permet de redémarrer n'importe quel composant sans interrompre les autres.
+Traçabilité : Chaque signalement formel génère une chaîne de custody horodatée : référence unique, date et heure, empreinte SHA-256 du dossier complet. Chaque transmission externe est enregistrée avec son statut, le nombre de tentatives et l'identifiant de réception retourné par le destinataire. Ces journaux permettent de reconstituer l'historique complet d'un incident, du signalement jusqu'à la transmission aux autorités.
+Non-répudiation : Chaque compte authentifié est identifié de façon unique par son token JWT signé. Les actions sensibles — création de dossier, transmission externe, désactivation d'un compte PME — sont enregistrées avec un horodatage précis. Une transmission à l'ANSSI/OCRC ne peut pas être contestée si l'accusé de réception figure dans le journal.
+
+III. Perspectives
+BENIN CYBER SHIELD est un prototype fonctionnel conçu dans le cadre d'un mémoire de licence. Le périmètre a été volontairement restreint aux fonctionnalités essentielles. Voici ce qui viendrait naturellement en suite.
+Évolutions techniques :
+Intégration d'un modèle NLP de type BERT fine-tuné sur un corpus de SMS frauduleux béninois annotés. Le moteur actuel repose sur des règles expertes — explicables et auditables, mais incapables de détecter des variantes d'arnaques que les règles ne couvrent pas encore. Un modèle entraîné sur des données locales comblerait ce manque.
+Développement d'un bot WhatsApp de signalement. Le citoyen transfèrerait le message suspect directement au bot et recevrait le score en quelques secondes, sans ouvrir de navigateur. Zéro installation, zéro compte à créer.
+Score de réputation dynamique par numéro, intégrant la diversité géographique des signaleurs, la récence des signalements, leur taux de validation par l'ANSSI et la gravité des catégories détectées. Il remplacerait le compteur simple actuel.
+Sceau de confiance numérique pour les PME enregistrées : un QR code vérifiable que l'entreprise affiche sur ses communications officielles. Toute personne qui le scanne voit les numéros officiels de la PME et l'absence d'incidents d'usurpation récents.
+Évolutions institutionnelles :
+Déploiement national sur des serveurs hébergés au Bénin, avec une convention formelle avec MTN et Moov pour encadrer la transmission des données de renseignement.
+Extension du module PME aux institutions financières, aux administrations publiques et aux opérateurs Mobile Money, qui sont les entités les plus usurpées dans les arnaques détectées.
+Validation terrain avec des citoyens réels et des analystes de l'ANSSI, pour mesurer l'efficacité du moteur NLP sur des cas concrets et affiner les règles de détection.
+
+
+CONCLUSIONCONCLUSION
+Le stage académique effectué à TPapy Consulting Educational Center nous a mis face à un problème réel que les cours n'avaient pas préparé à résoudre dans ses détails : un citoyen béninois reçoit un SMS suspect, il n'a rien pour vérifier, et personne dans le système actuel ne le protège. Partir de ce constat pour arriver à une application fonctionnelle avec une API, un moteur NLP, une base de données et une application mobile a été l'apprentissage central de ces mois de stage.
+Techniquement, ce projet nous a conduits à travailler avec FastAPI, React, Flutter, PostgreSQL, spaCy et Redis dans une architecture distribuée que nous avons dû concevoir, documenter et faire tourner ensemble. Ce n'est pas le genre d'exercice que l'on fait en classe.
+BENIN CYBER SHIELD répond à la question posée au départ. Un citoyen vérifie un message en moins de trente secondes sans créer de compte. Une PME est alertée automatiquement dès qu'un signalement la concerne. L'ANSSI/OCRC et les opérateurs mobiles reçoivent des dossiers certifiés sans intervention humaine. Les objectifs fixés sont atteints.
+Nous espérons que ce travail servira de base à quiconque voudra aller plus loin sur ce sujet, et qu'il contribuera à mieux protéger les citoyens béninois contre les arnaques Mobile Mon
+ANNEXESANNEXES
+

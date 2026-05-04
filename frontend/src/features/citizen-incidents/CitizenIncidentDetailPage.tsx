@@ -86,7 +86,7 @@ export default function CitizenIncidentDetailPage() {
   const { toast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const { data: incident, isLoading, isError } = useQuery({
+  const { data: incident, isLoading, isError, error } = useQuery({
     queryKey: ['citizen-incident', id],
     queryFn: async () => {
       const response = await apiClient.get<APIResponse<CitizenIncidentDetailData>>(`/incidents/citizen/${id}`);
@@ -162,7 +162,18 @@ export default function CitizenIncidentDetailPage() {
   }
 
   if (isError || !incident) {
-    return <div className="flex min-h-[60vh] items-center justify-center text-destructive">Impossible de charger ce signalement.</div>;
+    const apiError = error as AxiosError<ApiErrorPayload> | Error | null;
+    const detail =
+      (apiError as AxiosError<ApiErrorPayload> | null)?.response?.data?.message ||
+      (apiError as AxiosError<ApiErrorPayload> | null)?.response?.data?.detail ||
+      apiError?.message ||
+      'Impossible de charger ce signalement.';
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-2 text-center">
+        <p className="text-destructive">Impossible de charger ce signalement.</p>
+        <p className="max-w-xl text-sm text-muted-foreground">{detail}</p>
+      </div>
+    );
   }
 
   return (
