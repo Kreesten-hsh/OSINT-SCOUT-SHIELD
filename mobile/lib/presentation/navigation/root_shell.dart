@@ -140,8 +140,8 @@ class _RootShellState extends ConsumerState<RootShell> with WidgetsBindingObserv
                       ),
                     ),
                     Row(
-                      children: List<Widget>.generate(_destinations.length, (int index) {
-                        final (IconData, String) item = _destinations[index];
+                      children: List<Widget>.generate(RootShell._destinations.length, (int index) {
+                        final (IconData, String) item = RootShell._destinations[index];
                         final bool selected = widget.navigationShell.currentIndex == index;
                         return Expanded(
                           child: _GlassNavItem(

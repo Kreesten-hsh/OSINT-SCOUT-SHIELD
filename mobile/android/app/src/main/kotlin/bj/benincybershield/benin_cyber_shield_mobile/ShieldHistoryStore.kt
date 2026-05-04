@@ -11,6 +11,14 @@ data class ShieldHistoryRecord(
     val riskLevel: String,
     val maskedPhone: String,
     val primaryCategory: String?,
+    val messagePreview: String? = null,
+    val messageBody: String? = null,
+    val categoriesDetected: List<String> = emptyList(),
+    val matchedRules: List<String> = emptyList(),
+    val explanation: List<String> = emptyList(),
+    val recommendations: List<String> = emptyList(),
+    val highlightedSpans: List<ShieldHistoryHighlightedSpan> = emptyList(),
+    val fonAlert: String? = null,
     val publicReference: String? = null,
     val status: String? = null,
 ) {
@@ -22,8 +30,34 @@ data class ShieldHistoryRecord(
             put("risk_level", riskLevel)
             put("masked_phone", maskedPhone)
             put("primary_category", primaryCategory)
+            put("message_preview", messagePreview)
+            put("message_body", messageBody)
+            put("categories_detected", JSONArray(categoriesDetected))
+            put("matched_rules", JSONArray(matchedRules))
+            put("explanation", JSONArray(explanation))
+            put("recommendations", JSONArray(recommendations))
+            put("highlighted_spans", JSONArray(highlightedSpans.map(ShieldHistoryHighlightedSpan::toJsonObject)))
+            put("fon_alert", fonAlert)
             put("public_reference", publicReference)
             put("status", status)
+        }
+    }
+}
+
+data class ShieldHistoryHighlightedSpan(
+    val start: Int,
+    val end: Int,
+    val rule: String,
+    val label: String,
+    val color: String,
+) {
+    fun toJsonObject(): JSONObject {
+        return JSONObject().apply {
+            put("start", start)
+            put("end", end)
+            put("rule", rule)
+            put("label", label)
+            put("color", color)
         }
     }
 }
@@ -78,11 +112,23 @@ class ShieldHistoryStore(context: Context) {
             val key = keys.next()
             result[key] = when (val value = opt(key)) {
                 JSONObject.NULL -> null
-                is JSONArray -> List(value.length()) { idx -> value.opt(idx) }
+                is JSONArray -> value.toList()
+                is JSONObject -> value.toMap()
                 else -> value
             }
         }
         return result
+    }
+
+    private fun JSONArray.toList(): List<Any?> {
+        return List(length()) { index ->
+            when (val value = opt(index)) {
+                JSONObject.NULL -> null
+                is JSONArray -> value.toList()
+                is JSONObject -> value.toMap()
+                else -> value
+            }
+        }
     }
 
     companion object {

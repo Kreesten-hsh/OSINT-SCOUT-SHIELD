@@ -27,7 +27,9 @@ class ShieldNotificationListenerService : NotificationListenerService() {
         orchestrator = ShieldNotificationOrchestrator(this)
         connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            connectivityManager?.registerDefaultNetworkCallback(networkCallback)
+            runCatching {
+                connectivityManager?.registerDefaultNetworkCallback(networkCallback)
+            }
         }
     }
 

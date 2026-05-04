@@ -17,6 +17,8 @@ class ShieldLocalNotifier(private val context: Context) {
         preview: String,
         riskScore: Int,
         riskLevel: String,
+        primaryCategory: String?,
+        recommendation: String?,
     ) {
         ensureChannel()
         val launchIntent =
@@ -33,15 +35,28 @@ class ShieldLocalNotifier(private val context: Context) {
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                 )
             }
+        val categoryLine = primaryCategory?.takeIf { it.isNotBlank() }
+        val recommendationLine = recommendation?.takeIf { it.isNotBlank() }?.take(110)
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("Alerte BCS - $sourceApp")
-            .setContentText("Score $riskScore - ${buildSummary(sender, preview)}")
+            .setContentTitle("BCS · $sourceApp")
+            .setSubText("Score $riskScore/100 · $riskLevel")
+            .setContentText(
+                listOfNotNull(categoryLine, buildSummary(sender, preview))
+                    .joinToString(" · ")
+                    .take(160),
+            )
             .setStyle(
                 NotificationCompat.BigTextStyle().bigText(
-                    "$riskLevel - ${buildSummary(sender, preview)}",
+                    listOfNotNull(
+                        categoryLine?.let { "Categorie : $it" },
+                        "Message : ${buildSummary(sender, preview)}",
+                        recommendationLine?.let { "Conseil : $it" },
+                    ).joinToString("\n"),
                 ),
             )
+            .setColorized(true)
+            .setColor(0xFF2FE38A.toInt())
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(contentIntent)

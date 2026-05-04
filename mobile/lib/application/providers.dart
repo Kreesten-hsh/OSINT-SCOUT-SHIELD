@@ -63,7 +63,6 @@ final bootstrapProvider = FutureProvider<BootstrapData>((Ref ref) async {
 final nativeShieldStatusProvider = FutureProvider<NativeShieldStatus>((Ref ref) async {
   try {
     final NativeShieldBridge bridge = ref.watch(nativeShieldBridgeProvider);
-    unawaited(bridge.flushPendingQueue());
     return await bridge.getShieldStatus();
   } catch (_) {
     return const NativeShieldStatus(
@@ -260,7 +259,8 @@ final reportControllerProvider =
 final historyProvider = FutureProvider<List<HistoryEntry>>((Ref ref) async {
   try {
     final NativeShieldBridge nativeBridge = ref.watch(nativeShieldBridgeProvider);
-    unawaited(nativeBridge.flushPendingQueue());
+    await nativeBridge.flushPendingQueue();
+    ref.invalidate(nativeShieldStatusProvider);
     final List<HistoryEntry> nativeItems = await nativeBridge.fetchLocalHistory(limit: 80);
     if (nativeItems.isNotEmpty) {
       return nativeItems;

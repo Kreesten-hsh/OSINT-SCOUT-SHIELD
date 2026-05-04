@@ -1,6 +1,6 @@
 ﻿from pathlib import Path
 import io
-from datetime import datetime
+from datetime import datetime, timezone
 from xml.sax.saxutils import escape
 
 import qrcode
@@ -10,6 +10,17 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
 from reportlab.platypus import Image, Image as RLImage, KeepTogether, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+
+BRAND_NAVY = colors.HexColor("#071827")
+BRAND_INK = colors.HexColor("#102033")
+BRAND_MUTED = colors.HexColor("#5B677A")
+BRAND_LINE = colors.HexColor("#DDE5EF")
+BRAND_SURFACE = colors.HexColor("#F6F8FB")
+BRAND_GREEN = colors.HexColor("#047857")
+BRAND_GOLD = colors.HexColor("#C48A12")
+BRAND_RED = colors.HexColor("#C62828")
+BRAND_BLUE = colors.HexColor("#0F5E8C")
 
 
 def _safe_text(value: object) -> str:
@@ -55,10 +66,19 @@ def _risk_level_from_score(score: int) -> str:
 
 def _risk_color(level: str):
     if level == "HIGH":
-        return colors.HexColor("#DC2626")
+        return BRAND_RED
     if level == "MEDIUM":
-        return colors.HexColor("#D97706")
-    return colors.HexColor("#059669")
+        return BRAND_GOLD
+    return BRAND_GREEN
+
+
+def _risk_label(level: str) -> str:
+    labels = {
+        "HIGH": "RISQUE ELEVE",
+        "MEDIUM": "RISQUE MODERE",
+        "LOW": "RISQUE FAIBLE",
+    }
+    return labels.get(level, level)
 
 
 def _status_label(status: str) -> str:
@@ -81,6 +101,38 @@ def _append_summary_row(rows: list[list[str]], label: str, value: object) -> Non
     rows.append([label, text])
 
 
+def _compact_hash(value: object, head: int = 18, tail: int = 10) -> str:
+    text = str(value or "").strip()
+    if len(text) <= head + tail + 3:
+        return text
+    return f"{text[:head]}...{text[-tail:]}"
+
+
+def _build_badge(label: str, background_color, text_color=colors.white) -> Table:
+    badge_style = ParagraphStyle(
+        "BadgeText",
+        fontName="Helvetica-Bold",
+        fontSize=8.5,
+        leading=10,
+        textColor=text_color,
+        alignment=1,
+    )
+    badge = Table([[Paragraph(escape(label), badge_style)]], hAlign="RIGHT")
+    badge.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, -1), background_color),
+                ("BOX", (0, 0), (-1, -1), 0.6, background_color),
+                ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                ("TOPPADDING", (0, 0), (-1, -1), 4),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ]
+        )
+    )
+    return badge
+
+
 def _render_section_table(rows: list[list[str]], value_style: ParagraphStyle) -> Table:
     paragraph_rows = [
         [
@@ -90,21 +142,42 @@ def _render_section_table(rows: list[list[str]], value_style: ParagraphStyle) ->
         for label, value in rows
     ]
 
-    table = Table(paragraph_rows, colWidths=[5.4 * cm, 10.3 * cm], hAlign="LEFT")
+    table = Table(paragraph_rows, colWidths=[5.0 * cm, 10.7 * cm], hAlign="LEFT")
     table.setStyle(
         TableStyle(
             [
-                ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#EEF2FF")),
-                ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#CBD5E1")),
+                ("BACKGROUND", (0, 0), (0, -1), BRAND_SURFACE),
+                ("LINEBELOW", (0, 0), (-1, -1), 0.35, BRAND_LINE),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("LEFTPADDING", (0, 0), (-1, -1), 6),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 6),
-                ("TOPPADDING", (0, 0), (-1, -1), 5),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                ("LEFTPADDING", (0, 0), (-1, -1), 9),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 9),
+                ("TOPPADDING", (0, 0), (-1, -1), 7),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
             ]
         )
     )
     return table
+
+
+def _render_panel(title: str, body: list, styles) -> Table:
+    panel_rows = [[Paragraph(escape(title), styles["panel_title"])]]
+    panel_rows.extend([[item] for item in body])
+    panel = Table(panel_rows, colWidths=[15.7 * cm], hAlign="LEFT")
+    panel.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, -1), colors.white),
+                ("BOX", (0, 0), (-1, -1), 0.8, BRAND_LINE),
+                ("LINEBELOW", (0, 0), (-1, 0), 0.6, BRAND_LINE),
+                ("LEFTPADDING", (0, 0), (-1, -1), 12),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 12),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ]
+        )
+    )
+    return panel
 
 
 def _format_utc_timestamp(value: object) -> str:
@@ -119,7 +192,7 @@ def _generate_custody_table(
     styles,
     custody_events: list[dict],
 ) -> None:
-    story.append(Paragraph("CHAINE DE CUSTODY - EVENEMENTS HORODATES", styles["section"]))
+    story.append(Paragraph("CHAINE DE CUSTODY", styles["section"]))
     if not custody_events:
         story.append(Paragraph("Evenements non disponibles", styles["body"]))
         return
@@ -136,9 +209,9 @@ def _generate_custody_table(
         "CustodyCell",
         parent=styles["body"],
         fontName="Helvetica",
-        fontSize=7,
-        leading=9,
-        textColor=colors.white,
+        fontSize=7.5,
+        leading=9.5,
+        textColor=BRAND_INK,
     )
     rows = [
         [
@@ -160,8 +233,8 @@ def _generate_custody_table(
 
     table = Table(rows, colWidths=[3.5 * cm, 2.8 * cm, 3.2 * cm, 6.2 * cm], hAlign="LEFT")
     table_styles = [
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1E293B")),
-        ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#334155")),
+        ("BACKGROUND", (0, 0), (-1, 0), BRAND_NAVY),
+        ("GRID", (0, 0), (-1, -1), 0.35, BRAND_LINE),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
         ("LEFTPADDING", (0, 0), (-1, -1), 6),
         ("RIGHTPADDING", (0, 0), (-1, -1), 6),
@@ -169,7 +242,7 @@ def _generate_custody_table(
         ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
     ]
     for row_index in range(1, len(rows)):
-        background = "#1E293B" if row_index % 2 == 1 else "#0F172A"
+        background = "#FFFFFF" if row_index % 2 == 1 else "#F8FAFC"
         table_styles.append(("BACKGROUND", (0, row_index), (-1, row_index), colors.HexColor(background)))
 
     table.setStyle(TableStyle(table_styles))
@@ -186,7 +259,7 @@ def _generate_section_6(
 ) -> None:
     from app.services.detection import RECOMMENDATION_MAPPING
 
-    story.append(Paragraph("SECTION 6 - RECOMMANDATIONS CITOYENNES", styles["section"]))
+    story.append(Paragraph("RECOMMANDATIONS CITOYENNES", styles["section"]))
 
     rendered_items = 0
     for rule in matched_rules[:5]:
@@ -245,35 +318,46 @@ def generate_forensic_pdf(
         bottomMargin=1.8 * cm,
         title="BENIN CYBER SHIELD - Rapport d'investigation numerique",
         author="BENIN CYBER SHIELD",
+        pageCompression=0,
     )
 
     styles = getSampleStyleSheet()
+    style_brand = ParagraphStyle(
+        "BrandCustom",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
+        fontSize=18,
+        leading=21,
+        textColor=colors.white,
+        alignment=0,
+    )
     style_title = ParagraphStyle(
         "TitleCustom",
         parent=styles["Title"],
         fontName="Helvetica-Bold",
-        fontSize=20,
-        leading=24,
-        textColor=colors.HexColor("#0F172A"),
+        fontSize=17,
+        leading=21,
+        textColor=BRAND_INK,
         alignment=0,
+        spaceAfter=4,
     )
     style_subtitle = ParagraphStyle(
         "SubtitleCustom",
         parent=styles["Normal"],
         fontName="Helvetica",
-        fontSize=9.5,
+        fontSize=9,
         leading=12,
-        textColor=colors.HexColor("#475569"),
+        textColor=BRAND_MUTED,
     )
     style_section = ParagraphStyle(
         "SectionCustom",
         parent=styles["Heading2"],
         fontName="Helvetica-Bold",
-        fontSize=12,
-        leading=15,
-        textColor=colors.HexColor("#0F172A"),
-        spaceBefore=10,
-        spaceAfter=6,
+        fontSize=10.5,
+        leading=13,
+        textColor=BRAND_BLUE,
+        spaceBefore=12,
+        spaceAfter=7,
     )
     style_body = ParagraphStyle(
         "BodyCustom",
@@ -281,7 +365,15 @@ def generate_forensic_pdf(
         fontName="Helvetica",
         fontSize=10,
         leading=14,
-        textColor=colors.HexColor("#1E293B"),
+        textColor=BRAND_INK,
+    )
+    style_panel_title = ParagraphStyle(
+        "PanelTitleCustom",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
+        fontSize=9,
+        leading=11,
+        textColor=BRAND_NAVY,
     )
     style_caption = ParagraphStyle(
         "CaptionCustom",
@@ -289,13 +381,14 @@ def generate_forensic_pdf(
         fontName="Helvetica",
         fontSize=7,
         leading=9,
-        textColor=colors.HexColor("#64748B"),
+        textColor=BRAND_MUTED,
         alignment=1,
     )
     pdf_styles = {
         "section": style_section,
         "body": style_body,
         "caption": style_caption,
+        "panel_title": style_panel_title,
     }
 
     data = snapshot_data.get("data") or {}
@@ -331,31 +424,36 @@ def generate_forensic_pdf(
 
     story = []
 
+    risk_badge = _build_badge(_risk_label(risk_level), risk_color)
     header_table = Table(
         [
             [
-                Paragraph("<b>BENIN CYBER SHIELD</b>", style_title),
-                "",
+                Paragraph("BENIN CYBER SHIELD", style_brand),
+                risk_badge,
             ],
-            [Paragraph("Rapport d'investigation numerique", style_subtitle), ""],
-            [Paragraph(f"Ref: {escape(short_ref)}", style_subtitle), ""],
-            [Paragraph(f"Genere le: {escape(generated_at)}", style_subtitle), ""],
+            [
+                Paragraph("DOSSIER PROBATOIRE NUMERIQUE", style_title),
+                Paragraph(f"<b>REF</b><br/>{escape(short_ref)}", style_subtitle),
+            ],
+            [
+                Paragraph("Rapport d'investigation, d'integrite et de transmission", style_subtitle),
+                Paragraph(f"<b>GENERE</b><br/>{escape(generated_at or 'N/A')}", style_subtitle),
+            ],
         ],
-        colWidths=[11.5 * cm, 4.2 * cm],
+        colWidths=[11.4 * cm, 4.3 * cm],
     )
     header_table.setStyle(
         TableStyle(
             [
-                ("BOX", (0, 0), (-1, -1), 1, colors.HexColor("#CBD5E1")),
-                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F8FAFC")),
-                ("SPAN", (0, 0), (1, 0)),
-                ("SPAN", (0, 1), (1, 1)),
-                ("SPAN", (0, 2), (1, 2)),
-                ("SPAN", (0, 3), (1, 3)),
-                ("LEFTPADDING", (0, 0), (-1, -1), 10),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 10),
-                ("TOPPADDING", (0, 0), (-1, -1), 6),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                ("BACKGROUND", (0, 0), (-1, 0), BRAND_NAVY),
+                ("BACKGROUND", (0, 1), (-1, -1), colors.white),
+                ("BOX", (0, 0), (-1, -1), 0.8, BRAND_LINE),
+                ("LINEBELOW", (0, 0), (-1, 0), 0.5, BRAND_NAVY),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 12),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 12),
+                ("TOPPADDING", (0, 0), (-1, -1), 9),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 9),
             ]
         )
     )
@@ -363,9 +461,9 @@ def generate_forensic_pdf(
     story.append(Spacer(1, 0.35 * cm))
 
     # SECTION 1 - Resume executif
-    story.append(Paragraph("SECTION 1 - RESUME EXECUTIF", style_section))
+    story.append(Paragraph("SYNTHESE EXECUTIVE", style_section))
     section_1_rows: list[list[str]] = []
-    _append_summary_row(section_1_rows, "Niveau de risque", risk_level)
+    _append_summary_row(section_1_rows, "Niveau de risque", _risk_label(risk_level))
     _append_summary_row(section_1_rows, "Numero signale", alert.get("phone_number"))
     if category_names:
         _append_summary_row(section_1_rows, "Type de menace", category_names[0])
@@ -376,25 +474,29 @@ def generate_forensic_pdf(
 
     if section_1_rows:
         section_1_table = _render_section_table(section_1_rows, style_body)
-        story.append(section_1_table)
-
-        # Color emphasis for risk line value
-        for index, row in enumerate(section_1_rows):
-            if row[0] == "Niveau de risque":
-                section_1_table.setStyle(TableStyle([("TEXTCOLOR", (1, index), (1, index), risk_color)]))
-                section_1_table.setStyle(TableStyle([("FONTNAME", (1, index), (1, index), "Helvetica-Bold")]))
-                break
+        story.append(_render_panel("Vue probatoire", [section_1_table], pdf_styles))
 
     # SECTION 2 - Message suspect
     message_text = str(alert.get("reported_message") or "").strip()
     if message_text:
-        story.append(Paragraph("SECTION 2 - MESSAGE SUSPECT", style_section))
-        story.append(
-            Paragraph(
-                escape(message_text).replace("\n", "<br/>"),
-                style_body,
+        story.append(Paragraph("MESSAGE SUSPECT", style_section))
+        message_box = Table(
+            [[Paragraph(escape(message_text).replace("\n", "<br/>"), style_body)]],
+            colWidths=[15.7 * cm],
+        )
+        message_box.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#FFF7ED")),
+                    ("BOX", (0, 0), (-1, -1), 0.8, colors.HexColor("#FED7AA")),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 12),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 12),
+                    ("TOPPADDING", (0, 0), (-1, -1), 10),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+                ]
             )
         )
+        story.append(message_box)
 
     # SECTION 3 - Analyse technique
     section_3_rows: list[list[str]] = []
@@ -404,20 +506,20 @@ def generate_forensic_pdf(
     _append_summary_row(section_3_rows, "Horodatage analyse", analysis.get("generated_at") or snapshot_data.get("generated_at"))
 
     if section_3_rows:
-        story.append(Paragraph("SECTION 3 - ANALYSE TECHNIQUE", style_section))
-        story.append(_render_section_table(section_3_rows, style_body))
+        story.append(Paragraph("ANALYSE TECHNIQUE", style_section))
+        story.append(_render_panel("Signaux detectes", [_render_section_table(section_3_rows, style_body)], pdf_styles))
 
     # SECTION 4 - Integrite
     section_4_rows: list[list[str]] = []
-    _append_summary_row(section_4_rows, "Empreinte SHA-256", report_hash)
+    _append_summary_row(section_4_rows, "Empreinte SHA-256", _compact_hash(report_hash, 28, 16))
     _append_summary_row(section_4_rows, "Genere par", f"BENIN CYBER SHIELD v{snapshot_data.get('engine_version') or '1.0'}")
 
     if section_4_rows:
-        story.append(Paragraph("SECTION 4 - INTEGRITE DU DOSSIER", style_section))
-        story.append(_render_section_table(section_4_rows, style_body))
+        story.append(Paragraph("INTEGRITE DU DOSSIER", style_section))
+        story.append(_render_panel("Scellement numerique", [_render_section_table(section_4_rows, style_body)], pdf_styles))
 
     # SECTION 5 - Transmission
-    story.append(Paragraph("SECTION 5 - TRANSMISSION", style_section))
+    story.append(Paragraph("TRANSMISSION", style_section))
     transmission_box = Table(
         [
             [Paragraph("<b>Ce rapport est transmissible a :</b>", style_body)],
@@ -430,12 +532,12 @@ def generate_forensic_pdf(
     transmission_box.setStyle(
         TableStyle(
             [
-                ("BOX", (0, 0), (-1, -1), 1, colors.HexColor("#94A3B8")),
-                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F8FAFC")),
-                ("LEFTPADDING", (0, 0), (-1, -1), 10),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 10),
-                ("TOPPADDING", (0, 0), (-1, -1), 6),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                ("BOX", (0, 0), (-1, -1), 0.8, BRAND_LINE),
+                ("BACKGROUND", (0, 0), (-1, -1), BRAND_SURFACE),
+                ("LEFTPADDING", (0, 0), (-1, -1), 12),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 12),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
             ]
         )
     )
@@ -476,7 +578,7 @@ def generate_forensic_pdf(
         )
     custody_events.append(
         {
-            "timestamp": _format_utc_timestamp(datetime.utcnow().isoformat()),
+            "timestamp": _format_utc_timestamp(datetime.now(timezone.utc).isoformat()),
             "actor": "SYSTEME",
             "action": "GENERATION RAPPORT",
             "details": f"Rapport {report_uuid or short_ref}",
@@ -488,10 +590,14 @@ def generate_forensic_pdf(
 
     def draw_footer(canvas, _doc) -> None:
         canvas.saveState()
+        canvas.setStrokeColor(BRAND_LINE)
+        canvas.setLineWidth(0.4)
+        canvas.line(1.8 * cm, 1.25 * cm, A4[0] - 1.8 * cm, 1.25 * cm)
         canvas.setFont("Helvetica", 8)
-        canvas.setFillColor(colors.HexColor("#64748B"))
-        canvas.drawString(1.8 * cm, 1.0 * cm, f"Hash: {report_hash[:20]}...")
-        canvas.drawRightString(A4[0] - 1.8 * cm, 1.0 * cm, f"Page {canvas.getPageNumber()}")
+        canvas.setFillColor(BRAND_MUTED)
+        canvas.drawString(1.8 * cm, 0.95 * cm, f"Hash dossier: {_compact_hash(report_hash, 18, 8)}")
+        canvas.drawCentredString(A4[0] / 2, 0.95 * cm, "BENIN CYBER SHIELD - dossier probatoire")
+        canvas.drawRightString(A4[0] - 1.8 * cm, 0.95 * cm, f"Page {canvas.getPageNumber()}")
         canvas.restoreState()
 
     doc.build(story, onFirstPage=draw_footer, onLaterPages=draw_footer)

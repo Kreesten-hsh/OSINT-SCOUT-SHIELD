@@ -26,7 +26,7 @@ class ShieldNotificationOrchestrator(context: Context) {
         }
 
         thread(name = "bcs-live-notification", isDaemon = true) {
-            val success = analyzeAndPersist(
+            val outcome = analyzeAndPersist(
                 config = config,
                 sender = sender,
                 message = message,
@@ -34,7 +34,7 @@ class ShieldNotificationOrchestrator(context: Context) {
                 createdAt = isoTimestamp(),
                 enqueueOnFailure = true,
             )
-            if (success) {
+            if (outcome == AnalysisPersistenceOutcome.PROCESSED) {
                 flushPendingQueue()
             }
         }
@@ -53,7 +53,8 @@ class ShieldNotificationOrchestrator(context: Context) {
         try {
             val pendingItems = pendingStore.listPending(limit = maxItems)
             for (item in pendingItems) {
-                val success = analyzeAndPersist(
+                when (
+                    analyzeAndPersist(
                     config = config,
                     sender = item.sender,
                     message = item.message,
@@ -61,10 +62,16 @@ class ShieldNotificationOrchestrator(context: Context) {
                     createdAt = item.createdAt.ifBlank { isoTimestamp() },
                     enqueueOnFailure = false,
                 )
-                if (!success) {
-                    break
+                ) {
+                    AnalysisPersistenceOutcome.PROCESSED,
+                    AnalysisPersistenceOutcome.DROPPED -> {
+                        pendingStore.removeById(item.id)
+                    }
+
+                    AnalysisPersistenceOutcome.RETRYABLE_FAILURE -> {
+                        break
+                    }
                 }
-                pendingStore.removeById(item.id)
             }
             return pendingStore.count()
         } finally {
@@ -96,17 +103,18 @@ class ShieldNotificationOrchestrator(context: Context) {
         sourceApp: String,
         createdAt: String,
         enqueueOnFailure: Boolean,
-    ): Boolean {
+    ): AnalysisPersistenceOutcome {
         val safeSender = if (sender.isBlank()) sourceApp else sender.trim()
-        val analysis = analysisClient.analyzeNotification(
+        val attempt = analysisClient.analyzeNotification(
             apiBaseUrl = config.apiBaseUrl,
             deviceInstallId = config.deviceInstallId,
             message = message,
             sender = safeSender,
             sourceApp = sourceApp,
         )
+        val analysis = attempt.result
         if (analysis == null) {
-            if (enqueueOnFailure) {
+            if (enqueueOnFailure && attempt.shouldRetry) {
                 pendingStore.enqueue(
                     sender = safeSender,
                     message = message,
@@ -114,7 +122,11 @@ class ShieldNotificationOrchestrator(context: Context) {
                     createdAt = createdAt,
                 )
             }
-            return false
+            return if (attempt.shouldRetry) {
+                AnalysisPersistenceOutcome.RETRYABLE_FAILURE
+            } else {
+                AnalysisPersistenceOutcome.DROPPED
+            }
         }
 
         val preview = buildPreview(message, analysis)
@@ -124,7 +136,23 @@ class ShieldNotificationOrchestrator(context: Context) {
                 riskScore = analysis.riskScore,
                 riskLevel = analysis.riskLevel,
                 maskedPhone = maskSender(safeSender),
-                primaryCategory = preview,
+                primaryCategory = analysis.categories.firstOrNull(),
+                messagePreview = preview,
+                messageBody = message.trim(),
+                categoriesDetected = analysis.categories,
+                matchedRules = analysis.matchedRules,
+                explanation = analysis.explanation,
+                recommendations = analysis.recommendations,
+                highlightedSpans = analysis.highlightedSpans.map { span ->
+                    ShieldHistoryHighlightedSpan(
+                        start = span.start,
+                        end = span.end,
+                        rule = span.rule,
+                        label = span.label,
+                        color = span.color,
+                    )
+                },
+                fonAlert = analysis.fonAlert,
                 status = sourceApp,
             ),
         )
@@ -136,9 +164,11 @@ class ShieldNotificationOrchestrator(context: Context) {
                 preview = preview,
                 riskScore = analysis.riskScore,
                 riskLevel = analysis.riskLevel,
+                primaryCategory = analysis.categories.firstOrNull(),
+                recommendation = analysis.recommendations.firstOrNull(),
             )
         }
-        return true
+        return AnalysisPersistenceOutcome.PROCESSED
     }
 
     private fun buildPreview(message: String, analysis: ShieldAnalysisResult): String {
@@ -181,4 +211,10 @@ class ShieldNotificationOrchestrator(context: Context) {
     companion object {
         private val flushInProgress = AtomicBoolean(false)
     }
+}
+
+private enum class AnalysisPersistenceOutcome {
+    PROCESSED,
+    RETRYABLE_FAILURE,
+    DROPPED,
 }

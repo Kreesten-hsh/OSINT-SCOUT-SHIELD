@@ -21,6 +21,13 @@ class SettingsPage extends ConsumerStatefulWidget {
 }
 
 class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBindingObserver {
+  Future<void> _refreshSettings() async {
+    ref.invalidate(historyProvider);
+    await ref.read(historyProvider.future);
+    ref.invalidate(nativeShieldStatusProvider);
+    await ref.read(nativeShieldStatusProvider.future);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -63,11 +70,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
         children: <Widget>[
           const BrandBar(),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 132),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
+            child: RefreshIndicator(
+              onRefresh: _refreshSettings,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 132),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
                   Text('Parametres', style: Theme.of(context).textTheme.headlineLarge)
                       .animate()
                       .fadeIn(duration: 260.ms)
@@ -311,7 +321,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
                       ],
                     ),
                   ).animate().fadeIn(delay: 180.ms, duration: 260.ms).slideY(begin: 0.1, end: 0),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

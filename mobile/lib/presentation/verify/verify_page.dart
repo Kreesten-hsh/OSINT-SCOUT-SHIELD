@@ -26,6 +26,13 @@ class VerifyPage extends ConsumerStatefulWidget {
 }
 
 class _VerifyPageState extends ConsumerState<VerifyPage> with WidgetsBindingObserver {
+  Future<void> _refreshDashboard() async {
+    ref.invalidate(historyProvider);
+    await ref.read(historyProvider.future);
+    ref.invalidate(nativeShieldStatusProvider);
+    await ref.read(nativeShieldStatusProvider.future);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -195,7 +202,10 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with WidgetsBindingObse
                     ],
                   ),
                 ),
-                ListView(
+                RefreshIndicator(
+                  onRefresh: _refreshDashboard,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(20, 4, 20, 132),
                   children: <Widget>[
                     AppPanel(
@@ -525,6 +535,7 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with WidgetsBindingObse
                             .toList(growable: false),
                       ),
                   ],
+                  ),
                 ),
               ],
             ),
@@ -746,6 +757,9 @@ class _RecentAlertCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String preview = item.messagePreview?.trim().isNotEmpty == true
+        ? item.messagePreview!
+        : (item.primaryCategory ?? 'Alerte mobile');
     return AppPanel(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       radius: 18,
@@ -779,7 +793,7 @@ class _RecentAlertCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  item.primaryCategory ?? 'Alerte mobile',
+                  preview,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall,

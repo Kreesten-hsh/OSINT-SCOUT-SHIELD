@@ -27,6 +27,11 @@ class _HistoryPageState extends ConsumerState<HistoryPage> with WidgetsBindingOb
   _HistoryFilter _filter = _HistoryFilter.all;
   String _query = '';
 
+  Future<void> _refreshHistory() async {
+    ref.invalidate(historyProvider);
+    await ref.read(historyProvider.future);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -88,7 +93,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> with WidgetsBindingOb
     }
     final String haystack = <String>[
       item.maskedPhone,
-      item.primaryCategory ?? '',
+      _previewText(item),
       item.publicReference ?? '',
       item.status ?? '',
     ].join(' ').toLowerCase();
@@ -102,111 +107,311 @@ class _HistoryPageState extends ConsumerState<HistoryPage> with WidgetsBindingOb
     );
   }
 
+  Color _highlightColor(BeninShieldColors colors, String colorName) {
+    return switch (colorName.toLowerCase()) {
+      'red' => colors.danger,
+      'amber' => colors.brand,
+      _ => colors.warning,
+    };
+  }
+
+  String _previewText(HistoryEntry item) {
+    final String preview = item.messagePreview?.trim() ?? '';
+    if (preview.isNotEmpty) {
+      return preview;
+    }
+    final String category = item.primaryCategory?.trim() ?? '';
+    if (category.isNotEmpty) {
+      return category;
+    }
+    return 'Signal mobile';
+  }
+
+  Widget _buildHighlightedMessage(BuildContext context, HistoryEntry item) {
+    final BeninShieldColors colors = context.shieldColors;
+    final String message = item.messageBody?.trim() ?? _previewText(item);
+    if (message.isEmpty || item.highlightedSpans.isEmpty) {
+      return SelectableText(
+        message,
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: colors.onSurface,
+              height: 1.45,
+            ),
+      );
+    }
+
+    final List<InlineSpan> spans = <InlineSpan>[];
+    int cursor = 0;
+    final List<HistoryHighlightedSpan> orderedSpans = item.highlightedSpans.toList(growable: false)
+      ..sort((HistoryHighlightedSpan a, HistoryHighlightedSpan b) => a.start.compareTo(b.start));
+
+    for (final HistoryHighlightedSpan span in orderedSpans) {
+      final int safeStart = span.start.clamp(0, message.length).toInt();
+      final int safeEnd = span.end.clamp(safeStart, message.length).toInt();
+      if (safeStart > cursor) {
+        spans.add(
+          TextSpan(
+            text: message.substring(cursor, safeStart),
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: colors.onSurface,
+                  height: 1.45,
+                ),
+          ),
+        );
+      }
+      if (safeEnd > safeStart) {
+        final Color tone = _highlightColor(colors, span.color);
+        spans.add(
+          TextSpan(
+            text: message.substring(safeStart, safeEnd),
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: colors.onSurface,
+                  height: 1.45,
+                  fontWeight: FontWeight.w700,
+                  backgroundColor: tone.withValues(alpha: 0.18),
+                ),
+          ),
+        );
+      }
+      cursor = safeEnd;
+    }
+
+    if (cursor < message.length) {
+      spans.add(
+        TextSpan(
+          text: message.substring(cursor),
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: colors.onSurface,
+                height: 1.45,
+              ),
+        ),
+      );
+    }
+
+    return SelectableText.rich(TextSpan(children: spans));
+  }
+
   Future<void> _showDetails(BuildContext context, HistoryEntry item) async {
     final BeninShieldColors colors = context.shieldColors;
     final Color accent = _riskColor(colors, item.riskLevel);
     await showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       useSafeArea: true,
-      backgroundColor: colors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: accent.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      item.type == HistoryEntryType.report
-                          ? Symbols.flag_rounded
-                          : Symbols.notifications_active_rounded,
-                      color: accent,
-                      size: 20,
-                    ),
+        final double bottomInset = MediaQuery.of(context).viewPadding.bottom;
+        return FractionallySizedBox(
+          heightFactor: 0.84,
+          child: Container(
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+            ),
+            child: Column(
+              children: <Widget>[
+                const SizedBox(height: 10),
+                Container(
+                  width: 48,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colors.outlineSoft,
+                    borderRadius: BorderRadius.circular(999),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      item.maskedPhone,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: accent.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      item.riskLevel,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: accent,
-                            fontWeight: FontWeight.w800,
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.fromLTRB(20, 18, 20, bottomInset + 28),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Row(
+                          children: <Widget>[
+                            Container(
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(
+                                color: accent.withValues(alpha: 0.12),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                item.type == HistoryEntryType.report
+                                    ? Symbols.flag_rounded
+                                    : Symbols.notifications_active_rounded,
+                                color: accent,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  Text(
+                                    item.maskedPhone,
+                                    style: Theme.of(context).textTheme.headlineSmall,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    DateFormat('dd MMM yyyy - HH:mm').format(item.createdAt),
+                                    style: Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: accent.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                item.riskLevel,
+                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                      color: accent,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 18),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: <Widget>[
+                            _DetailPill(label: 'Score ${item.riskScore}/100'),
+                            if (item.status != null) _DetailPill(label: item.status!),
+                            if (item.publicReference != null) _DetailPill(label: item.publicReference!),
+                            for (final String category in item.categoriesDetected.take(3))
+                              _DetailPill(label: category),
+                          ],
+                        ),
+                        if ((item.fonAlert ?? '').trim().isNotEmpty) ...<Widget>[
+                          const SizedBox(height: 18),
+                          AppPanel(
+                            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                            radius: 18,
+                            child: Text(
+                              item.fonAlert!,
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: colors.brand,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
                           ),
+                        ],
+                        const SizedBox(height: 18),
+                        Text('Message analyse', style: Theme.of(context).textTheme.labelLarge),
+                        const SizedBox(height: 10),
+                        AppPanel(
+                          padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+                          radius: 18,
+                          child: _buildHighlightedMessage(context, item),
+                        ),
+                        if (item.highlightedSpans.isNotEmpty) ...<Widget>[
+                          const SizedBox(height: 14),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: item.highlightedSpans
+                                .map(
+                                  (HistoryHighlightedSpan span) => _DetailPill(
+                                    label: span.label,
+                                    tone: _highlightColor(colors, span.color),
+                                  ),
+                                )
+                                .toList(growable: false),
+                          ),
+                        ],
+                        if (item.explanation.isNotEmpty) ...<Widget>[
+                          const SizedBox(height: 22),
+                          Text('Pourquoi BCS a alerte', style: Theme.of(context).textTheme.labelLarge),
+                          const SizedBox(height: 10),
+                          ...item.explanation.map(
+                            (String line) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 6),
+                                    child: Icon(Symbols.circle, size: 7, color: accent),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(line, style: Theme.of(context).textTheme.bodyMedium),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (item.recommendations.isNotEmpty) ...<Widget>[
+                          const SizedBox(height: 16),
+                          Text('Conseils immediats', style: Theme.of(context).textTheme.labelLarge),
+                          const SizedBox(height: 10),
+                          ...item.recommendations.take(3).map(
+                            (String line) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Icon(
+                                      Symbols.check_circle_rounded,
+                                      size: 16,
+                                      color: colors.primary,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(line, style: Theme.of(context).textTheme.bodyMedium),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 22),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            onPressed: _openPortal,
+                            icon: const Icon(Symbols.open_in_new_rounded, size: 18),
+                            label: const Text('Ouvrir le portail BCS'),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              final String copiedValue =
+                                  (item.messageBody ?? '').trim().isNotEmpty
+                                      ? item.messageBody!
+                                      : item.maskedPhone;
+                              await Clipboard.setData(ClipboardData(text: copiedValue));
+                              if (!context.mounted) {
+                                return;
+                              }
+                              Navigator.of(context).pop();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Contenu copie.')),
+                              );
+                            },
+                            icon: const Icon(Symbols.content_copy_rounded, size: 18),
+                            label: const Text('Copier le message'),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              Text(
-                item.primaryCategory ?? 'Aucune categorie specifique',
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                DateFormat('dd MMM yyyy - HH:mm').format(item.createdAt),
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 18),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: <Widget>[
-                  _DetailPill(label: 'Score ${item.riskScore}/100'),
-                  if (item.publicReference != null) _DetailPill(label: item.publicReference!),
-                  if (item.status != null) _DetailPill(label: item.status!),
-                ],
-              ),
-              const SizedBox(height: 22),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: _openPortal,
-                  icon: const Icon(Symbols.open_in_new_rounded, size: 18),
-                  label: const Text('Ouvrir le portail BCS'),
                 ),
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    await Clipboard.setData(ClipboardData(text: item.maskedPhone));
-                    if (!context.mounted) {
-                      return;
-                    }
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Repere copie.')),
-                    );
-                  },
-                  icon: const Icon(Symbols.content_copy_rounded, size: 18),
-                  label: const Text('Copier le repere'),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -281,27 +486,33 @@ class _HistoryPageState extends ConsumerState<HistoryPage> with WidgetsBindingOb
                           });
 
                         if (filtered.isEmpty) {
-                          return AppPanel(
-                            padding: const EdgeInsets.all(18),
-                            radius: 20,
-                            child: Center(
-                              child: Text(
-                                _query.isNotEmpty
-                                    ? 'Aucun resultat pour cette recherche.'
-                                    : 'Aucune entree pour le filtre ${_displayFilterLabel(_filter).toLowerCase()}.',
-                                style: Theme.of(context).textTheme.bodyLarge,
-                                textAlign: TextAlign.center,
-                              ),
+                          return RefreshIndicator(
+                            onRefresh: _refreshHistory,
+                            child: ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              children: <Widget>[
+                                AppPanel(
+                                  padding: const EdgeInsets.all(18),
+                                  radius: 20,
+                                  child: Center(
+                                    child: Text(
+                                      _query.isNotEmpty
+                                          ? 'Aucun resultat pour cette recherche.'
+                                          : 'Aucune entree pour le filtre ${_displayFilterLabel(_filter).toLowerCase()}.',
+                                      style: Theme.of(context).textTheme.bodyLarge,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           );
                         }
 
                         return RefreshIndicator(
-                          onRefresh: () async {
-                            ref.invalidate(historyProvider);
-                            await ref.read(historyProvider.future);
-                          },
+                          onRefresh: _refreshHistory,
                           child: ListView.separated(
+                            physics: const AlwaysScrollableScrollPhysics(),
                             itemCount: filtered.length,
                             separatorBuilder: (_, _) => const SizedBox(height: 10),
                             itemBuilder: (BuildContext context, int index) {
@@ -345,7 +556,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> with WidgetsBindingOb
                                               ),
                                               const SizedBox(height: 2),
                                               Text(
-                                                item.primaryCategory ?? 'Signal mobile',
+                                                _previewText(item),
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
                                                 style: Theme.of(context).textTheme.bodySmall,
@@ -390,31 +601,51 @@ class _HistoryPageState extends ConsumerState<HistoryPage> with WidgetsBindingOb
                           ),
                         );
                       },
-                      loading: () => Shimmer.fromColors(
-                        baseColor: colors.surfaceLow,
-                        highlightColor: colors.surfaceHighest,
-                        child: ListView.separated(
-                          itemCount: 5,
-                          separatorBuilder: (_, _) => const SizedBox(height: 10),
-                          itemBuilder: (_, index) => Container(
-                            height: 68,
-                            decoration: BoxDecoration(
-                              color: colors.surfaceLow,
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(color: colors.outlineSoft),
+                      loading: () => RefreshIndicator(
+                        onRefresh: _refreshHistory,
+                        child: ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: <Widget>[
+                            Shimmer.fromColors(
+                              baseColor: colors.surfaceLow,
+                              highlightColor: colors.surfaceHighest,
+                              child: Column(
+                                children: List<Widget>.generate(
+                                  5,
+                                  (int index) => Padding(
+                                    padding: EdgeInsets.only(bottom: index == 4 ? 0 : 10),
+                                    child: Container(
+                                      height: 68,
+                                      decoration: BoxDecoration(
+                                        color: colors.surfaceLow,
+                                        borderRadius: BorderRadius.circular(18),
+                                        border: Border.all(color: colors.outlineSoft),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                       ),
-                      error: (_, _) => AppPanel(
-                        padding: const EdgeInsets.all(18),
-                        radius: 20,
-                        child: Center(
-                          child: Text(
-                            'Impossible de charger l historique mobile.',
-                            style: Theme.of(context).textTheme.bodyLarge,
-                            textAlign: TextAlign.center,
-                          ),
+                      error: (_, _) => RefreshIndicator(
+                        onRefresh: _refreshHistory,
+                        child: ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: <Widget>[
+                            AppPanel(
+                              padding: const EdgeInsets.all(18),
+                              radius: 20,
+                              child: Center(
+                                child: Text(
+                                  'Impossible de charger l historique mobile.',
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -432,23 +663,28 @@ class _HistoryPageState extends ConsumerState<HistoryPage> with WidgetsBindingOb
 class _DetailPill extends StatelessWidget {
   const _DetailPill({
     required this.label,
+    this.tone,
   });
 
   final String label;
+  final Color? tone;
 
   @override
   Widget build(BuildContext context) {
     final BeninShieldColors colors = context.shieldColors;
+    final Color resolvedTone = tone ?? colors.onSurface;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: colors.surfaceLow,
+        color: tone == null ? colors.surfaceLow : resolvedTone.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: colors.outlineSoft),
+        border: Border.all(
+          color: tone == null ? colors.outlineSoft : resolvedTone.withValues(alpha: 0.24),
+        ),
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: colors.onSurface),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: resolvedTone),
       ),
     );
   }
