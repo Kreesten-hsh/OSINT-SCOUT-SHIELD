@@ -568,6 +568,9 @@ async def _enqueue_forensic_capture(
     source_type: str,
     url: str | None,
 ) -> bool:
+    if not settings.ENABLE_FORENSIC_CAPTURE:
+        return False
+
     if not url or not url.lower().startswith(("http://", "https://")):
         return False
 

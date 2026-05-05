@@ -1,115 +1,40 @@
 services:
   - type: web
-    name: benin-cyber-shield-api
+    name: bcs-api
     runtime: docker
     plan: free
-    region: oregon
-    branch: vision-benin-cyber-shield
-    autoDeploy: true
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     healthCheckPath: /health
+    autoDeploy: true
     envVars:
-      - key: POSTGRES_HOST
-        fromDatabase:
-          name: benin-cyber-shield-db
-          property: host
-      - key: POSTGRES_PORT
-        fromDatabase:
-          name: benin-cyber-shield-db
-          property: port
-      - key: POSTGRES_USER
-        fromDatabase:
-          name: benin-cyber-shield-db
-          property: user
-      - key: POSTGRES_PASSWORD
-        fromDatabase:
-          name: benin-cyber-shield-db
-          property: password
-      - key: POSTGRES_DB
-        fromDatabase:
-          name: benin-cyber-shield-db
-          property: database
+      - key: DATABASE_URL
+        sync: false
       - key: REDIS_URL
-        fromDatabase:
-          name: benin-cyber-shield-redis
-          property: connectionString
+        sync: false
       - key: SECRET_KEY
-        generateValue: true
+        sync: false
+      - key: PHONE_ENCRYPTION_SECRET
+        sync: false
       - key: AUTH_ADMIN_EMAIL
-        value: admin@osint.com
+        sync: false
       - key: AUTH_ADMIN_PASSWORD
         sync: false
-      - key: AUTH_ANALYST_EMAIL
-        value: analyst@osint.com
-      - key: AUTH_ANALYST_PASSWORD
-        sync: false
       - key: AUTH_SME_EMAIL
-        value: sme@osint.com
+        sync: false
       - key: AUTH_SME_PASSWORD
         sync: false
       - key: BACKEND_CORS_ORIGINS
-        value: '["https://benin-cyber-shield-web.onrender.com"]'
-      - key: LOG_JSON
-        value: "True"
-      - key: LOG_LEVEL
-        value: INFO
-      - key: SQL_ECHO
-        value: "False"
-      - key: AUTO_CREATE_TABLES
-        value: "False"
+        sync: false
+      - key: EXTERNAL_TRANSMISSION_SHARED_SECRET
+        sync: false
+      - key: EXTERNAL_ANSSI_RECEIVER_URL
+        sync: false
+      - key: EXTERNAL_OPERATORS_RECEIVER_URL
+        sync: false
+      - key: ENABLE_FORENSIC_CAPTURE
+        value: "false"
       - key: ENABLE_RESULT_CONSUMER
-        value: "True"
-      - key: SHIELD_OPERATOR_SHARED_SECRET
-        sync: false
-      - key: SHIELD_ACTION_TTL_SECONDS
-        value: "86400"
-      - key: SENTRY_DSN
-        sync: false
-
-  - type: worker
-    name: benin-cyber-shield-worker
-    runtime: docker
-    plan: free
-    region: oregon
-    branch: vision-benin-cyber-shield
-    autoDeploy: true
-    dockerfilePath: ./scrapers/Dockerfile
-    dockerContext: ./scrapers
-    envVars:
-      - key: REDIS_URL
-        fromDatabase:
-          name: benin-cyber-shield-redis
-          property: connectionString
-
-  - type: web
-    name: benin-cyber-shield-web
-    runtime: static
-    plan: free
-    region: oregon
-    branch: vision-benin-cyber-shield
-    autoDeploy: true
-    buildCommand: cd frontend && npm ci && npm run build
-    staticPublishPath: frontend/dist
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      - key: VITE_API_URL
-        value: https://benin-cyber-shield-api.onrender.com/api/v1
-      - key: VITE_APP_VERSION
-        value: "2.1.0"
-
-databases:
-  - name: benin-cyber-shield-db
-    databaseName: benin_cyber_shield
-    user: bcs_user
-    plan: free
-    postgresMajorVersion: "15"
-    ipAllowList: []
-
-  - name: benin-cyber-shield-redis
-    plan: free
-    maxmemoryPolicy: allkeys-lru
-    ipAllowList: []
+        value: "true"
+      - key: ENABLE_EXTERNAL_TRANSMISSION_CONSUMER
+        value: "true"

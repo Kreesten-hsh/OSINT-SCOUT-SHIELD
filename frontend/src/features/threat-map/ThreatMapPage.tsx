@@ -39,6 +39,7 @@ function ChartSkeleton() {
 export default function ThreatMapPage() {
   const token = useAuthStore((state) => state.token);
   const [isStixDownloading, setIsStixDownloading] = useState(false);
+  const apiRoot = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace(/\/api\/v1\/?$/, '');
 
   const { data, isLoading } = useQuery({
     queryKey: ['threat-intel', 'dashboard'],
@@ -49,28 +50,39 @@ export default function ThreatMapPage() {
     refetchInterval: 60_000,
   });
 
-  const handleCsvDownload = () => {
-    window.location.href = '/api/v1/dashboard/intel/export?format=csv';
+  const downloadBlob = (blob: Blob, filename: string) => {
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(blobUrl);
+  };
+
+  const handleCsvDownload = async () => {
+    const response = await fetch(`${apiRoot}/api/v1/dashboard/intel/export?format=csv`, {
+      headers: token ? { Authorization: `Bearer ${token.access_token}` } : {},
+    });
+    if (!response.ok) {
+      throw new Error('Unable to download CSV export');
+    }
+    const blob = await response.blob();
+    downloadBlob(blob, 'benin_threat_intel.csv');
   };
 
   const handleStixDownload = async () => {
     setIsStixDownloading(true);
     try {
-      const response = await fetch('/api/v1/dashboard/intel/export?format=stix', {
+      const response = await fetch(`${apiRoot}/api/v1/dashboard/intel/export?format=stix`, {
         headers: token ? { Authorization: `Bearer ${token.access_token}` } : {},
       });
       if (!response.ok) {
         throw new Error('Unable to download STIX export');
       }
       const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = 'benin_threat_intel_stix.json';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(blobUrl);
+      downloadBlob(blob, 'benin_threat_intel_stix.json');
     } finally {
       setIsStixDownloading(false);
     }
@@ -87,7 +99,9 @@ export default function ThreatMapPage() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={handleCsvDownload}
+              onClick={() => {
+                void handleCsvDownload();
+              }}
               className="inline-flex items-center gap-2 rounded-lg border border-primary/35 bg-primary/10 px-3 py-2 text-sm font-medium text-primary transition hover:bg-primary/20"
             >
               <Download className="h-4 w-4" />

@@ -38,6 +38,7 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     SQL_ECHO: bool = False
     AUTO_CREATE_TABLES: bool = False
+    ENABLE_FORENSIC_CAPTURE: bool = True
     ENABLE_RESULT_CONSUMER: bool = True
     ENABLE_EXTERNAL_TRANSMISSION_CONSUMER: bool = True
 
