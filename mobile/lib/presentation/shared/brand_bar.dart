@@ -15,6 +15,7 @@ class BrandBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final BeninShieldColors colors = context.shieldColors;
+    final bool isLight = Theme.of(context).brightness == Brightness.light;
     return Padding(
       padding: EdgeInsets.fromLTRB(20, compact ? 8 : 10, 20, compact ? 10 : 14),
       child: Row(
@@ -22,9 +23,20 @@ class BrandBar extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
             decoration: BoxDecoration(
-              color: colors.surfaceLow.withValues(alpha: 0.78),
+              color: colors.surfaceLow.withValues(alpha: isLight ? 0.98 : 0.78),
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: colors.outlineSoft),
+              border: Border.all(
+                color: isLight ? colors.outline.withValues(alpha: 0.28) : colors.outlineSoft,
+              ),
+              boxShadow: isLight
+                  ? <BoxShadow>[
+                      BoxShadow(
+                        color: colors.outline.withValues(alpha: 0.08),
+                        blurRadius: 14,
+                        offset: const Offset(0, 6),
+                      ),
+                    ]
+                  : const <BoxShadow>[],
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,

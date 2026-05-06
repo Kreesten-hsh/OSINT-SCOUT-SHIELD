@@ -101,6 +101,7 @@ class _RootShellState extends ConsumerState<RootShell> with WidgetsBindingObserv
   @override
   Widget build(BuildContext context) {
     final BeninShieldColors colors = context.shieldColors;
+    final bool isLight = Theme.of(context).brightness == Brightness.light;
     return Scaffold(
       extendBody: true,
       body: DecoratedBox(
@@ -132,19 +133,29 @@ class _RootShellState extends ConsumerState<RootShell> with WidgetsBindingObserv
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: <Color>[
-                      Colors.white.withValues(alpha: 0.09),
-                      Colors.white.withValues(alpha: 0.03),
+                      isLight
+                          ? Colors.white.withValues(alpha: 0.9)
+                          : Colors.white.withValues(alpha: 0.09),
+                      isLight
+                          ? colors.backgroundSoft.withValues(alpha: 0.94)
+                          : Colors.white.withValues(alpha: 0.03),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(42),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+                  border: Border.all(
+                    color: isLight
+                        ? colors.outline.withValues(alpha: 0.34)
+                        : Colors.white.withValues(alpha: 0.16),
+                  ),
                   boxShadow: <BoxShadow>[
                     BoxShadow(
-                      color: colors.background.withValues(alpha: 0.48),
-                      blurRadius: 36,
-                      offset: const Offset(0, 16),
+                      color: isLight
+                          ? colors.outline.withValues(alpha: 0.16)
+                          : colors.background.withValues(alpha: 0.48),
+                      blurRadius: isLight ? 24 : 36,
+                      offset: Offset(0, isLight ? 10 : 16),
                     ),
                   ],
                 ),
@@ -160,7 +171,9 @@ class _RootShellState extends ConsumerState<RootShell> with WidgetsBindingObserv
                           gradient: LinearGradient(
                             colors: <Color>[
                               Colors.transparent,
-                              Colors.white.withValues(alpha: 0.34),
+                              isLight
+                                  ? colors.onSurface.withValues(alpha: 0.12)
+                                  : Colors.white.withValues(alpha: 0.34),
                               Colors.transparent,
                             ],
                           ),
@@ -213,6 +226,10 @@ class _GlassNavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final BeninShieldColors colors = context.shieldColors;
+    final bool isLight = Theme.of(context).brightness == Brightness.light;
+    final Color inactiveTone =
+        isLight ? colors.onSurface.withValues(alpha: 0.68) : colors.muted;
+    final Color activeTone = isLight ? colors.brand : colors.primary;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -226,9 +243,15 @@ class _GlassNavItem extends StatelessWidget {
             gradient: selected
                 ? LinearGradient(
                     colors: <Color>[
-                      Colors.white.withValues(alpha: 0.12),
-                      colors.primary.withValues(alpha: 0.18),
-                      colors.brand.withValues(alpha: 0.08),
+                      isLight
+                          ? Colors.white.withValues(alpha: 0.98)
+                          : Colors.white.withValues(alpha: 0.12),
+                      isLight
+                          ? colors.primary.withValues(alpha: 0.14)
+                          : colors.primary.withValues(alpha: 0.18),
+                      isLight
+                          ? colors.brand.withValues(alpha: 0.08)
+                          : colors.brand.withValues(alpha: 0.08),
                     ],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomRight,
@@ -237,8 +260,21 @@ class _GlassNavItem extends StatelessWidget {
             color: selected ? null : Colors.transparent,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: selected ? Colors.white.withValues(alpha: 0.16) : Colors.transparent,
+              color: selected
+                  ? isLight
+                      ? colors.outline.withValues(alpha: 0.24)
+                      : Colors.white.withValues(alpha: 0.16)
+                  : Colors.transparent,
             ),
+            boxShadow: selected && isLight
+                ? <BoxShadow>[
+                    BoxShadow(
+                      color: colors.outline.withValues(alpha: 0.1),
+                      blurRadius: 14,
+                      offset: const Offset(0, 6),
+                    ),
+                  ]
+                : const <BoxShadow>[],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -246,13 +282,13 @@ class _GlassNavItem extends StatelessWidget {
               Icon(
                 icon,
                 size: 21,
-                color: selected ? colors.primary : colors.muted,
+                color: selected ? activeTone : inactiveTone,
               ),
               const SizedBox(height: 4),
               Text(
                 label,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: selected ? colors.primary : colors.muted,
+                      color: selected ? activeTone : inactiveTone,
                       fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                     ),
               ),

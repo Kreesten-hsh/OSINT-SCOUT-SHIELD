@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/constants/benin_departments.dart';
@@ -27,6 +28,28 @@ final apiClientProvider = Provider<MobileApiClient>((Ref ref) {
 
 final nativeShieldBridgeProvider = Provider<NativeShieldBridge>((Ref ref) {
   return const NativeShieldBridge();
+});
+
+class ThemeModeController extends StateNotifier<ThemeMode> {
+  ThemeModeController(this._store) : super(ThemeMode.dark) {
+    unawaited(_hydrate());
+  }
+
+  final InstallStore _store;
+
+  Future<void> _hydrate() async {
+    final bool isLightModeEnabled = await _store.isLightModeEnabled();
+    state = isLightModeEnabled ? ThemeMode.light : ThemeMode.dark;
+  }
+
+  void setLightMode(bool enabled) {
+    state = enabled ? ThemeMode.light : ThemeMode.dark;
+    unawaited(_store.setLightModeEnabled(enabled));
+  }
+}
+
+final themeModeProvider = StateNotifierProvider<ThemeModeController, ThemeMode>((Ref ref) {
+  return ThemeModeController(ref.watch(installStoreProvider));
 });
 
 final deviceInstallIdProvider = FutureProvider<String>((Ref ref) async {
@@ -303,10 +326,36 @@ class MobileShieldSettingsController extends StateNotifier<MobileShieldSettings>
       final MobileShieldSettings loaded =
           await _ref.read(nativeShieldBridgeProvider).getShieldSettings();
       state = loaded;
+      await _rememberActiveChannels(loaded);
       await _syncToNative();
     } catch (_) {
       state = const MobileShieldSettings();
     }
+  }
+
+  Future<void> _rememberActiveChannels(MobileShieldSettings settings) async {
+    if (!settings.hasActiveMonitoring) {
+      return;
+    }
+    await _ref.read(installStoreProvider).writeLastActiveMonitoringSelection(
+          monitorSms: settings.monitorSms,
+          monitorWhatsapp: settings.monitorWhatsapp,
+          monitorMessenger: settings.monitorMessenger,
+        );
+  }
+
+  Future<void> _applySettings(
+    MobileShieldSettings next, {
+    MobileShieldSettings? rememberSelection,
+  }) async {
+    if (rememberSelection != null) {
+      await _rememberActiveChannels(rememberSelection);
+    }
+    if (next.hasActiveMonitoring) {
+      await _rememberActiveChannels(next);
+    }
+    state = next;
+    await _syncToNative();
   }
 
   Future<void> _syncToNative() async {
@@ -328,18 +377,56 @@ class MobileShieldSettingsController extends StateNotifier<MobileShieldSettings>
   }
 
   void setSms(bool value) {
-    state = state.copyWith(monitorSms: value);
-    unawaited(_syncToNative());
+    final MobileShieldSettings next = state.copyWith(monitorSms: value);
+    final MobileShieldSettings? rememberSelection =
+        state.hasActiveMonitoring && !next.hasActiveMonitoring ? state : null;
+    unawaited(_applySettings(next, rememberSelection: rememberSelection));
   }
 
   void setWhatsapp(bool value) {
-    state = state.copyWith(monitorWhatsapp: value);
-    unawaited(_syncToNative());
+    final MobileShieldSettings next = state.copyWith(monitorWhatsapp: value);
+    final MobileShieldSettings? rememberSelection =
+        state.hasActiveMonitoring && !next.hasActiveMonitoring ? state : null;
+    unawaited(_applySettings(next, rememberSelection: rememberSelection));
   }
 
   void setMessenger(bool value) {
-    state = state.copyWith(monitorMessenger: value);
-    unawaited(_syncToNative());
+    final MobileShieldSettings next = state.copyWith(monitorMessenger: value);
+    final MobileShieldSettings? rememberSelection =
+        state.hasActiveMonitoring && !next.hasActiveMonitoring ? state : null;
+    unawaited(_applySettings(next, rememberSelection: rememberSelection));
+  }
+
+  void setServiceActive(bool value) {
+    unawaited(_setServiceActive(value));
+  }
+
+  Future<void> _setServiceActive(bool value) async {
+    if (value) {
+      if (state.hasActiveMonitoring) {
+        return;
+      }
+      final ({bool sms, bool whatsapp, bool messenger})? restoredSelection =
+          await _ref.read(installStoreProvider).readLastActiveMonitoringSelection();
+      final MobileShieldSettings restored = state.copyWith(
+        monitorSms: restoredSelection?.sms ?? true,
+        monitorWhatsapp: restoredSelection?.whatsapp ?? true,
+        monitorMessenger: restoredSelection?.messenger ?? true,
+      );
+      await _applySettings(restored);
+      return;
+    }
+
+    if (!state.hasActiveMonitoring) {
+      return;
+    }
+
+    final MobileShieldSettings next = state.copyWith(
+      monitorSms: false,
+      monitorWhatsapp: false,
+      monitorMessenger: false,
+    );
+    await _applySettings(next, rememberSelection: state);
   }
 
   void setThreshold(double value) {

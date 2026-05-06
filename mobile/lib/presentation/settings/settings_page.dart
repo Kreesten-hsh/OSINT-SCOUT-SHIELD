@@ -61,10 +61,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
     final BeninShieldColors colors = context.shieldColors;
     final MobileShieldSettings settings = ref.watch(mobileShieldSettingsProvider);
     final AsyncValue<NativeShieldStatus> statusAsync = ref.watch(nativeShieldStatusProvider);
+    final ThemeMode themeMode = ref.watch(themeModeProvider);
     final MobileShieldSettingsController controller =
         ref.read(mobileShieldSettingsProvider.notifier);
+    final ThemeModeController themeController = ref.read(themeModeProvider.notifier);
     final NativeShieldStatus? nativeStatus = statusAsync.valueOrNull;
     final int pendingQueueCount = nativeStatus?.pendingQueueCount ?? 0;
+    final bool isLightModeEnabled = themeMode == ThemeMode.light;
 
     return Scaffold(
       body: Column(
@@ -102,11 +105,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
                         _SettingSwitchRow(
                           icon: Symbols.shield_rounded,
                           title: 'Service actif',
-                          subtitle: 'Surveillance des applications selectionnees',
-                          value: settings.hasActiveMonitoring &&
-                              (nativeStatus?.notificationAccessGranted ?? false),
-                          onChanged: (_) {},
-                          enabled: false,
+                          subtitle: settings.hasActiveMonitoring
+                              ? 'Surveillance des applications selectionnees'
+                              : 'Protection desactivee jusqu a reactivation',
+                          value: settings.hasActiveMonitoring,
+                          onChanged: controller.setServiceActive,
                         ),
                         const SizedBox(height: 10),
                         _StatusInlineRow(
@@ -226,6 +229,23 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
                       ],
                     ),
                   ).animate().fadeIn(delay: 120.ms, duration: 260.ms).slideY(begin: 0.1, end: 0),
+                  const SizedBox(height: 18),
+                  _SectionHeader(
+                    icon: Symbols.contrast_rounded,
+                    label: 'Affichage',
+                  ),
+                  const SizedBox(height: 10),
+                  AppPanel(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                    radius: 22,
+                    child: _SettingSwitchRow(
+                      icon: Symbols.light_mode_rounded,
+                      title: 'Mode clair',
+                      subtitle: 'Palette sobre, nette et plus adaptee aux captures imprimees',
+                      value: isLightModeEnabled,
+                      onChanged: themeController.setLightMode,
+                    ),
+                  ).animate().fadeIn(delay: 135.ms, duration: 260.ms).slideY(begin: 0.1, end: 0),
                   const SizedBox(height: 18),
                   _SectionHeader(
                     icon: Symbols.tune_rounded,
@@ -362,7 +382,6 @@ class _SettingSwitchRow extends StatelessWidget {
     required this.subtitle,
     required this.value,
     required this.onChanged,
-    this.enabled = true,
   });
 
   final IconData icon;
@@ -370,7 +389,6 @@ class _SettingSwitchRow extends StatelessWidget {
   final String subtitle;
   final bool value;
   final ValueChanged<bool> onChanged;
-  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -400,7 +418,7 @@ class _SettingSwitchRow extends StatelessWidget {
         ),
         Switch(
           value: value,
-          onChanged: enabled ? onChanged : null,
+          onChanged: onChanged,
         ),
       ],
     );

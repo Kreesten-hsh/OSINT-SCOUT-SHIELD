@@ -23,26 +23,35 @@ class AppPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final BeninShieldColors colors = context.shieldColors;
+    final bool isLight = Theme.of(context).brightness == Brightness.light;
     return Container(
       padding: padding,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: <Color>[
-            colors.surfaceHighest.withValues(alpha: backgroundOpacity * 0.42),
-            colors.surface.withValues(alpha: backgroundOpacity * 0.9),
+            colors.surfaceHighest.withValues(
+              alpha: backgroundOpacity * (isLight ? 0.62 : 0.42),
+            ),
+            colors.surface.withValues(
+              alpha: backgroundOpacity * (isLight ? 0.98 : 0.9),
+            ),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(
-          color: showInnerBorder ? colors.outlineSoft.withValues(alpha: 0.92) : Colors.transparent,
+          color: showInnerBorder
+              ? colors.outlineSoft.withValues(alpha: isLight ? 1 : 0.92)
+              : Colors.transparent,
         ),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: (glowColor ?? colors.background).withValues(alpha: 0.18),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
+            color: (glowColor ?? (isLight ? colors.outline : colors.background)).withValues(
+              alpha: isLight ? 0.1 : 0.18,
+            ),
+            blurRadius: isLight ? 16 : 18,
+            offset: Offset(0, isLight ? 8 : 10),
           ),
         ],
       ),

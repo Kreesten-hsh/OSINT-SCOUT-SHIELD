@@ -2,7 +2,9 @@ import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-ThemeData buildBeninCyberShieldTheme() {
+ThemeData buildBeninCyberShieldTheme() => buildBeninCyberShieldDarkTheme();
+
+ThemeData buildBeninCyberShieldDarkTheme() {
   const BeninShieldColors palette = BeninShieldColors(
     background: Color(0xFF05070C),
     backgroundSoft: Color(0xFF0D1017),
@@ -24,9 +26,10 @@ ThemeData buildBeninCyberShieldTheme() {
     info: Color(0xFF79A6FF),
   );
 
-  final ThemeData base = FlexThemeData.dark(
-    useMaterial3: true,
-    colors: const FlexSchemeColor(
+  return _buildBeninCyberShieldTheme(
+    palette: palette,
+    brightness: Brightness.dark,
+    flexColors: const FlexSchemeColor(
       primary: Color(0xFF45E08A),
       primaryContainer: Color(0xFF113523),
       secondary: Color(0xFF5B8CFF),
@@ -36,27 +39,106 @@ ThemeData buildBeninCyberShieldTheme() {
       appBarColor: Color(0xFF05070C),
       error: Color(0xFFFF625C),
     ),
-    visualDensity: FlexColorScheme.comfortablePlatformDensity,
-    surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
+    primaryContainer: const Color(0xFF113523),
+    secondaryContainer: const Color(0xFF15233F),
+    tertiaryContainer: const Color(0xFF16263E),
+    onPrimary: const Color(0xFF06110B),
+    onSecondary: const Color(0xFF091222),
+    onError: const Color(0xFF220809),
     blendLevel: 22,
   );
+}
+
+ThemeData buildBeninCyberShieldLightTheme() {
+  const BeninShieldColors palette = BeninShieldColors(
+    background: Color(0xFFF3F1EC),
+    backgroundSoft: Color(0xFFF7F4EE),
+    surfaceLow: Color(0xFFF9F7F2),
+    surface: Color(0xFFFFFFFF),
+    surfaceHigh: Color(0xFFF1EDE5),
+    surfaceHighest: Color(0xFFE7E1D8),
+    outline: Color(0xFFB5AD9F),
+    outlineSoft: Color(0xFFD7D0C3),
+    primary: Color(0xFF2F7D57),
+    primarySoft: Color(0xFFC5DEC7),
+    brand: Color(0xFF355AA8),
+    brandSoft: Color(0xFFC6D2EE),
+    onSurface: Color(0xFF1B2330),
+    muted: Color(0xFF5C6471),
+    success: Color(0xFF2F7D57),
+    warning: Color(0xFFB86C2C),
+    danger: Color(0xFFB14943),
+    info: Color(0xFF4D77B8),
+  );
+
+  return _buildBeninCyberShieldTheme(
+    palette: palette,
+    brightness: Brightness.light,
+    flexColors: const FlexSchemeColor(
+      primary: Color(0xFF2F7D57),
+      primaryContainer: Color(0xFFCFE5D3),
+      secondary: Color(0xFF355AA8),
+      secondaryContainer: Color(0xFFD6DEF2),
+      tertiary: Color(0xFF4D77B8),
+      tertiaryContainer: Color(0xFFD8E1F2),
+      appBarColor: Color(0xFFF7F4EE),
+      error: Color(0xFFB14943),
+    ),
+    primaryContainer: const Color(0xFFCFE5D3),
+    secondaryContainer: const Color(0xFFD6DEF2),
+    tertiaryContainer: const Color(0xFFD8E1F2),
+    onPrimary: Colors.white,
+    onSecondary: Colors.white,
+    onError: Colors.white,
+    blendLevel: 14,
+  );
+}
+
+ThemeData _buildBeninCyberShieldTheme({
+  required BeninShieldColors palette,
+  required Brightness brightness,
+  required FlexSchemeColor flexColors,
+  required Color primaryContainer,
+  required Color secondaryContainer,
+  required Color tertiaryContainer,
+  required Color onPrimary,
+  required Color onSecondary,
+  required Color onError,
+  required int blendLevel,
+}) {
+  final bool isDark = brightness == Brightness.dark;
+  final ThemeData base = isDark
+      ? FlexThemeData.dark(
+          useMaterial3: true,
+          colors: flexColors,
+          visualDensity: FlexColorScheme.comfortablePlatformDensity,
+          surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
+          blendLevel: blendLevel,
+        )
+      : FlexThemeData.light(
+          useMaterial3: true,
+          colors: flexColors,
+          visualDensity: FlexColorScheme.comfortablePlatformDensity,
+          surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
+          blendLevel: blendLevel,
+        );
 
   final ColorScheme colorScheme = base.colorScheme.copyWith(
-    brightness: Brightness.dark,
+    brightness: brightness,
     primary: palette.primary,
-    onPrimary: const Color(0xFF06110B),
-    primaryContainer: const Color(0xFF113523),
+    onPrimary: onPrimary,
+    primaryContainer: primaryContainer,
     secondary: palette.brand,
-    onSecondary: const Color(0xFF091222),
-    secondaryContainer: const Color(0xFF15233F),
+    onSecondary: onSecondary,
+    secondaryContainer: secondaryContainer,
     tertiary: palette.info,
-    tertiaryContainer: const Color(0xFF16263E),
+    tertiaryContainer: tertiaryContainer,
     surface: palette.surface,
     onSurface: palette.onSurface,
     outline: palette.outline,
     outlineVariant: palette.outlineSoft,
     error: palette.danger,
-    onError: const Color(0xFF220809),
+    onError: onError,
   );
 
   final TextTheme baseTextTheme = GoogleFonts.interTextTheme(base.textTheme);
@@ -129,7 +211,7 @@ ThemeData buildBeninCyberShieldTheme() {
     colorScheme: colorScheme,
     scaffoldBackgroundColor: palette.background,
     textTheme: textTheme,
-    splashColor: palette.primary.withValues(alpha: 0.12),
+    splashColor: palette.primary.withValues(alpha: isDark ? 0.12 : 0.08),
     highlightColor: Colors.transparent,
     appBarTheme: AppBarTheme(
       backgroundColor: Colors.transparent,
@@ -157,7 +239,7 @@ ThemeData buildBeninCyberShieldTheme() {
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: palette.surfaceLow.withValues(alpha: 0.94),
+      fillColor: palette.surfaceLow.withValues(alpha: isDark ? 0.94 : 0.98),
       hintStyle: textTheme.bodyMedium?.copyWith(
         color: palette.muted.withValues(alpha: 0.72),
       ),
@@ -303,7 +385,7 @@ ThemeData buildBeninCyberShieldTheme() {
       overlayColor: palette.primary.withValues(alpha: 0.14),
       trackHeight: 4,
     ),
-    extensions: const <ThemeExtension<dynamic>>[palette],
+    extensions: <ThemeExtension<dynamic>>[palette],
   );
 }
 
