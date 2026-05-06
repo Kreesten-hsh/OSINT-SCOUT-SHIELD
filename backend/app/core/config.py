@@ -57,14 +57,23 @@ class Settings(BaseSettings):
     EXTERNAL_MAX_ATTEMPTS: int = 4
     EXTERNAL_RETRY_DELAY_SECONDS: int = 30
 
+    def _normalize_database_url(self, database_url: str) -> str:
+        normalized_url = database_url.strip()
+        if normalized_url.startswith("postgres://"):
+            normalized_url = normalized_url.replace("postgres://", "postgresql://", 1)
+        if normalized_url.startswith("postgresql://"):
+            return normalized_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return normalized_url
+
     @property
     def effective_database_url(self) -> str:
         if self.DATABASE_URL:
-            return self.DATABASE_URL
-        return (
+            return self._normalize_database_url(self.DATABASE_URL)
+        default_url = (
             f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
+        return self._normalize_database_url(default_url)
 
 
 settings = Settings()
