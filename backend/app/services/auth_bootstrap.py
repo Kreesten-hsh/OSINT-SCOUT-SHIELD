@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.security import get_password_hash
+from app.core.security import get_password_hash, verify_password
 from app.models import BusinessProfile, User
 
 DEFAULT_SME_OFFICIAL_NAME = "Kreesten Technologies SARL"
@@ -66,6 +66,18 @@ async def ensure_default_auth_users(db: AsyncSession) -> None:
     for seed in _default_seed_users():
         existing = await db.scalar(select(User).where(User.email == seed.email))
         if existing is not None:
+            user_changed = False
+            if not verify_password(seed.password, existing.password_hash):
+                existing.password_hash = get_password_hash(seed.password)
+                user_changed = True
+            if existing.role != seed.role:
+                existing.role = seed.role
+                user_changed = True
+            if existing.status != "ACTIVE":
+                existing.status = "ACTIVE"
+                user_changed = True
+            if user_changed:
+                db.add(existing)
             seeded_users[seed.email] = existing
             continue
 
