@@ -425,8 +425,8 @@ export default function VerifySignalPanel() {
             </div>
           )}
 
-          <div className="rounded-xl border border-border/70 bg-secondary/25 p-4">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Message analyse</p>
+          <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+            <p className="mb-3 text-xs font-bold uppercase tracking-wide text-foreground">Message analyse</p>
             <HighlightedMessage text={message.trim()} spans={result.highlighted_spans ?? []} />
           </div>
 

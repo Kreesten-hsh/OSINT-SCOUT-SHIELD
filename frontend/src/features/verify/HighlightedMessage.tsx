@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 interface Span {
   start: number;
   end: number;
@@ -22,14 +24,16 @@ const RULE_TOOLTIPS: Record<string, string> = {
 };
 
 const COLOR_CLASSES: Record<string, string> = {
-  red: 'bg-red-900/60 text-red-200 border-b-2 border-red-500 cursor-help rounded px-0.5',
-  orange: 'bg-orange-900/60 text-orange-200 border-b-2 border-orange-500 cursor-help rounded px-0.5',
-  amber: 'bg-amber-900/60 text-amber-200 border-b-2 border-amber-500 cursor-help rounded px-0.5',
+  red: 'rounded border-b-2 border-red-500 bg-red-100 px-1 font-semibold text-red-950 cursor-help dark:bg-red-900/60 dark:text-red-100',
+  orange:
+    'rounded border-b-2 border-orange-500 bg-orange-100 px-1 font-semibold text-orange-950 cursor-help dark:bg-orange-900/60 dark:text-orange-100',
+  amber:
+    'rounded border-b-2 border-amber-500 bg-amber-100 px-1 font-semibold text-amber-950 cursor-help dark:bg-amber-900/60 dark:text-amber-100',
 };
 
 export default function HighlightedMessage({ text, spans }: Props) {
   if (!spans || spans.length === 0) {
-    return <p className="text-slate-200">{text}</p>;
+    return <p className="whitespace-pre-wrap break-words text-sm font-medium leading-7 text-foreground">{text}</p>;
   }
 
   const sortedSpans = [...spans].sort((a, b) => a.start - b.start);
@@ -55,6 +59,5 @@ export default function HighlightedMessage({ text, spans }: Props) {
     segments.push(<span key={`plain-tail-${cursor}`}>{text.slice(cursor)}</span>);
   }
 
-  return <p className="text-slate-200 leading-7">{segments}</p>;
+  return <p className="whitespace-pre-wrap break-words text-sm font-medium leading-7 text-foreground">{segments}</p>;
 }
-import type { ReactNode } from 'react';
