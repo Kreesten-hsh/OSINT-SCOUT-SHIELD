@@ -13,6 +13,47 @@
         --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
         --duration-fast: 140ms;
         --duration-base: 220ms;
+        --background: 216 30% 6%;
+        --foreground: 210 40% 98%;
+        --card: 215 26% 9%;
+        --card-foreground: 210 40% 98%;
+        --popover: 215 26% 9%;
+        --popover-foreground: 210 40% 98%;
+        --primary: 204 90% 50%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 217 33% 17%;
+        --secondary-foreground: 210 40% 98%;
+        --muted: 217 33% 17%;
+        --muted-foreground: 215 20% 65%;
+        --accent: 217 33% 17%;
+        --accent-foreground: 210 40% 98%;
+        --destructive: 0 84% 60%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 217 33% 17%;
+        --input: 217 33% 17%;
+        --ring: 204 90% 50%;
+    }
+
+    :root.light {
+        --background: 42 33% 96%;
+        --foreground: 218 28% 14%;
+        --card: 0 0% 100%;
+        --card-foreground: 218 28% 14%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 218 28% 14%;
+        --primary: 206 78% 42%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 214 34% 91%;
+        --secondary-foreground: 218 28% 18%;
+        --muted: 214 28% 92%;
+        --muted-foreground: 218 13% 43%;
+        --accent: 151 31% 90%;
+        --accent-foreground: 154 37% 24%;
+        --destructive: 4 64% 47%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 218 18% 82%;
+        --input: 218 18% 78%;
+        --ring: 206 78% 42%;
     }
 
     * {
@@ -33,6 +74,13 @@
             radial-gradient(circle at 92% 2%, rgba(16, 185, 129, 0.18), transparent 34%),
             linear-gradient(180deg, #090d13 0%, #0b1018 100%);
         background-attachment: fixed;
+    }
+
+    :root.light body {
+        background-image:
+            radial-gradient(circle at 8% -12%, rgba(13, 147, 242, 0.12), transparent 34%),
+            radial-gradient(circle at 92% 2%, rgba(16, 185, 129, 0.1), transparent 32%),
+            linear-gradient(180deg, #f8f5ee 0%, #eef3f7 100%);
     }
 
     h1,
@@ -81,6 +129,10 @@
         @apply rounded-2xl border border-border/80 bg-card/90 backdrop-blur;
         box-shadow: 0 12px 36px -24px rgba(2, 8, 23, 0.95);
         transition: border-color var(--duration-base) var(--ease-out), box-shadow var(--duration-base) var(--ease-out), transform var(--duration-base) var(--ease-out);
+    }
+
+    :root.light .panel {
+        box-shadow: 0 14px 34px -30px rgba(15, 23, 42, 0.36);
     }
 
     .panel:hover {
@@ -174,6 +226,10 @@
     .soft-grid {
         background-image: linear-gradient(rgba(51, 65, 85, 0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(51, 65, 85, 0.18) 1px, transparent 1px);
         background-size: 22px 22px;
+    }
+
+    :root.light .soft-grid {
+        background-image: linear-gradient(rgba(30, 41, 59, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(30, 41, 59, 0.08) 1px, transparent 1px);
     }
 
     .hero-panel {

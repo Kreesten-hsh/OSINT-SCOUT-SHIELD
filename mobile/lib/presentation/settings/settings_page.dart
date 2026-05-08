@@ -204,6 +204,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
                           child: _AppToggleTile(
                             label: 'SMS',
                             assetName: 'assets/brand/logo_sms.svg',
+                            fallbackIcon: Icons.sms_rounded,
                             active: settings.monitorSms,
                             onTap: () => controller.setSms(!settings.monitorSms),
                           ),
@@ -213,6 +214,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
                           child: _AppToggleTile(
                             label: 'WhatsApp',
                             assetName: 'assets/brand/logo_whatsapp.svg',
+                            fallbackIcon: Icons.chat_bubble_rounded,
                             active: settings.monitorWhatsapp,
                             onTap: () => controller.setWhatsapp(!settings.monitorWhatsapp),
                           ),
@@ -222,6 +224,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with WidgetsBinding
                           child: _AppToggleTile(
                             label: 'Messenger',
                             assetName: 'assets/brand/logo_messenger.svg',
+                            fallbackIcon: Icons.forum_rounded,
                             active: settings.monitorMessenger,
                             onTap: () => controller.setMessenger(!settings.monitorMessenger),
                           ),
@@ -480,12 +483,14 @@ class _AppToggleTile extends StatelessWidget {
   const _AppToggleTile({
     required this.label,
     required this.assetName,
+    required this.fallbackIcon,
     required this.active,
     required this.onTap,
   });
 
   final String label;
   final String assetName;
+  final IconData fallbackIcon;
   final bool active;
   final VoidCallback onTap;
 
@@ -509,10 +514,11 @@ class _AppToggleTile extends StatelessWidget {
           ),
           child: Column(
             children: <Widget>[
-              SvgPicture.asset(
-                assetName,
-                width: 18,
-                height: 18,
+              _SvgAssetIcon(
+                assetName: assetName,
+                fallbackIcon: fallbackIcon,
+                color: tone,
+                size: 18,
               ),
               const SizedBox(height: 8),
               Text(
@@ -528,6 +534,37 @@ class _AppToggleTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SvgAssetIcon extends StatelessWidget {
+  const _SvgAssetIcon({
+    required this.assetName,
+    required this.fallbackIcon,
+    required this.color,
+    required this.size,
+  });
+
+  final String assetName;
+  final IconData fallbackIcon;
+  final Color color;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String>(
+      future: DefaultAssetBundle.of(context).loadString(assetName),
+      builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+        if (!snapshot.hasData || snapshot.data == null || snapshot.data!.isEmpty) {
+          return Icon(fallbackIcon, size: size, color: color);
+        }
+        return SvgPicture.string(
+          snapshot.data!,
+          width: size,
+          height: size,
+        );
+      },
     );
   }
 }

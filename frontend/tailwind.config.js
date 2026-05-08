@@ -17,35 +17,35 @@ export default {
     },
     extend: {
       colors: {
-        background: "#0B0F14", // Deep Void
-        foreground: "#F8FAFC", // Slate 50
-        card: "#11161D",
-        "card-foreground": "#F8FAFC",
-        popover: "#11161D",
-        "popover-foreground": "#F8FAFC",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        card: "hsl(var(--card))",
+        "card-foreground": "hsl(var(--card-foreground))",
+        popover: "hsl(var(--popover))",
+        "popover-foreground": "hsl(var(--popover-foreground))",
         primary: {
-          DEFAULT: "#0D93F2", // Electric Blue
-          foreground: "#FFFFFF",
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
-          DEFAULT: "#1E293B", // Slate
-          foreground: "#F8FAFC",
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
         },
         muted: {
-          DEFAULT: "#1E293B",
-          foreground: "#94A3B8",
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
         },
         accent: {
-          DEFAULT: "#1E293B",
-          foreground: "#F8FAFC",
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
         },
         destructive: {
-          DEFAULT: "#EF4444",
-          foreground: "#FFFFFF",
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
         },
-        border: "#1E293B",
-        input: "#1E293B",
-        ring: "#0D93F2",
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
       },
       borderRadius: {
         lg: "var(--radius)",

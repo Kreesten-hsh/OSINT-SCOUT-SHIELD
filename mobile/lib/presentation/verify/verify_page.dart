@@ -387,16 +387,19 @@ class _VerifyPageState extends ConsumerState<VerifyPage> with WidgetsBindingObse
                                 label: 'SMS',
                                 active: settings.monitorSms,
                                 assetName: 'assets/brand/logo_sms.svg',
+                                fallbackIcon: Icons.sms_rounded,
                               ),
                               _WatchChip(
                                 label: 'WhatsApp',
                                 active: settings.monitorWhatsapp,
                                 assetName: 'assets/brand/logo_whatsapp.svg',
+                                fallbackIcon: Icons.chat_bubble_rounded,
                               ),
                               _WatchChip(
                                 label: 'Messenger',
                                 active: settings.monitorMessenger,
                                 assetName: 'assets/brand/logo_messenger.svg',
+                                fallbackIcon: Icons.forum_rounded,
                               ),
                             ],
                           ),
@@ -708,11 +711,13 @@ class _WatchChip extends StatelessWidget {
     required this.label,
     required this.active,
     required this.assetName,
+    required this.fallbackIcon,
   });
 
   final String label;
   final bool active;
   final String assetName;
+  final IconData fallbackIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -730,10 +735,11 @@ class _WatchChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          SvgPicture.asset(
-            assetName,
-            width: 16,
-            height: 16,
+          _SvgAssetIcon(
+            assetName: assetName,
+            fallbackIcon: fallbackIcon,
+            color: tone,
+            size: 16,
           ),
           const SizedBox(width: 6),
           Text(
@@ -742,6 +748,37 @@ class _WatchChip extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SvgAssetIcon extends StatelessWidget {
+  const _SvgAssetIcon({
+    required this.assetName,
+    required this.fallbackIcon,
+    required this.color,
+    required this.size,
+  });
+
+  final String assetName;
+  final IconData fallbackIcon;
+  final Color color;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String>(
+      future: DefaultAssetBundle.of(context).loadString(assetName),
+      builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+        if (!snapshot.hasData || snapshot.data == null || snapshot.data!.isEmpty) {
+          return Icon(fallbackIcon, size: size, color: color);
+        }
+        return SvgPicture.string(
+          snapshot.data!,
+          width: size,
+          height: size,
+        );
+      },
     );
   }
 }

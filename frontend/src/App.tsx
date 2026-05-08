@@ -4,6 +4,7 @@ import { Component, Suspense, lazy, type ErrorInfo, type ReactNode } from 'react
 import { Loader2 } from 'lucide-react';
 
 import { InstallPWA } from '@/components/InstallPWA';
+import { ThemeController } from '@/components/theme/ThemeController';
 import { Toaster } from '@/components/ui/toaster';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -137,6 +138,7 @@ function App() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
+        <ThemeController />
         <BrowserRouter>
           <Suspense fallback={<RouteFallback />}>
             <Routes>

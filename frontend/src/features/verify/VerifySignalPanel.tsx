@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { AlertTriangle, CheckCircle2, Loader2, ShieldAlert, UploadCloud } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Loader2, ScanLine, ShieldCheck, UploadCloud } from 'lucide-react';
 
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
@@ -42,7 +42,7 @@ interface IncidentReportData {
   public_reference?: string | null;
 }
 
-const VERIFY_ROTATION_MESSAGES = ['Analyse en cours...', 'Verification du numero...', 'Consultation de la base...'];
+const VERIFY_ROTATION_MESSAGES = ['Lecture du message', 'Verification du numero', 'Croisement avec les signaux BCS'];
 const BENIN_PHONE_PATTERN = /^0\d{9}$/;
 const BENIN_PHONE_ERROR = 'Numero invalide - entrez 10 chiffres (ex: 0169647090)';
 
@@ -359,15 +359,29 @@ export default function VerifySignalPanel() {
         </div>
 
         {isVerifying && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/75 backdrop-blur-sm">
-            <div className="flex flex-col items-center gap-3 rounded-2xl border border-primary/30 bg-card/95 px-6 py-5 text-center shadow-2xl">
-              <div className="relative">
-                <ShieldAlert className="h-9 w-9 text-primary animate-pulse" />
-                <Loader2 className="absolute -bottom-1 -right-1 h-4 w-4 animate-spin text-primary" />
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/80 px-4 backdrop-blur-md">
+            <div className="w-full max-w-sm rounded-2xl border border-border bg-card/95 p-5 text-left shadow-xl">
+              <div className="flex items-center gap-3">
+                <span className="grid h-11 w-11 place-items-center rounded-2xl bg-primary/10 text-primary">
+                  <ScanLine className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-foreground" aria-live="polite">
+                    {VERIFY_ROTATION_MESSAGES[loadingMessageIndex]}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Analyse securisee en cours</p>
+                </div>
               </div>
-              <p className="text-sm font-semibold text-foreground" aria-live="polite">
-                {VERIFY_ROTATION_MESSAGES[loadingMessageIndex]}
-              </p>
+              <div className="mt-4 h-2 overflow-hidden rounded-full bg-secondary">
+                <div className="h-full w-2/3 animate-pulse rounded-full bg-primary" />
+              </div>
+              <div className="mt-4 grid grid-cols-3 gap-2 text-[11px] font-semibold text-muted-foreground">
+                <span className="inline-flex items-center gap-1">
+                  <ShieldCheck className="h-3.5 w-3.5 text-primary" /> Score
+                </span>
+                <span>Regles</span>
+                <span>Conseils</span>
+              </div>
             </div>
           </div>
         )}
@@ -411,17 +425,17 @@ export default function VerifySignalPanel() {
             </div>
           )}
 
-          <div className="rounded-xl border border-border/70 bg-slate-900/40 p-4">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Message analyse</p>
+          <div className="rounded-xl border border-border/70 bg-secondary/25 p-4">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Message analyse</p>
             <HighlightedMessage text={message.trim()} spans={result.highlighted_spans ?? []} />
           </div>
 
           {(result.citizen_advice?.length ?? 0) > 0 && (
-            <div className="mt-4 rounded-lg border border-slate-700 bg-slate-800/50 p-3">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Que faire maintenant</p>
+            <div className="mt-4 rounded-lg border border-border/70 bg-secondary/25 p-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Que faire maintenant</p>
               <ul className="space-y-1">
                 {result.citizen_advice?.map((advice, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-slate-200">
+                  <li key={i} className="flex items-start gap-2 text-sm text-foreground">
                     <span className="mt-0.5 flex-shrink-0 text-green-400">✅</span>
                     <span>{advice}</span>
                   </li>

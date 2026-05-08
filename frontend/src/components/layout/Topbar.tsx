@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { BellDot, Menu, ShieldCheck } from 'lucide-react';
 
 import { useAuthStore } from '@/store/auth-store';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
 interface TopbarProps {
   onMenuToggle: () => void;
@@ -52,6 +53,7 @@ export function Topbar({ onMenuToggle }: TopbarProps) {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <ThemeToggle compact className="sm:w-auto sm:justify-start sm:px-2" />
           <Link
             to="/verify"
             className="hidden rounded-lg border border-primary/30 bg-primary/15 px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/25 sm:inline-flex"
