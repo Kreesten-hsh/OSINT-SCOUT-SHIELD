@@ -9,6 +9,15 @@ from app.core.security import get_password_hash, verify_password
 from app.models import BusinessProfile, User
 
 DEFAULT_SME_OFFICIAL_NAME = "Kreesten Technologies SARL"
+DEFAULT_SME_KEYWORDS = (
+    DEFAULT_SME_OFFICIAL_NAME,
+    f"support {DEFAULT_SME_OFFICIAL_NAME}",
+    f"service client {DEFAULT_SME_OFFICIAL_NAME}",
+    "Kreesten",
+    "remboursement urgent",
+    "paiement bloque",
+)
+DEFAULT_SME_LEGIT_NUMBERS = ("0161122334", "0199001122")
 PLACEHOLDER_SME_NAMES = {
     "sme",
     "sme demo",
@@ -52,13 +61,28 @@ def _build_seed_business_profile(user: User) -> BusinessProfile:
     return BusinessProfile(
         user_id=user.id,
         official_name=_seed_business_name(user.email),
-        keywords_json=[],
-        legit_numbers_json=[],
+        keywords_json=list(DEFAULT_SME_KEYWORDS),
+        legit_numbers_json=list(DEFAULT_SME_LEGIT_NUMBERS),
         contact_email=user.email,
         contact_phone=None,
         validation_status=user.status,
         validated_at=validated_at,
     )
+
+
+def _merge_unique_strings(existing: list[str] | None, required: tuple[str, ...]) -> list[str]:
+    merged: list[str] = []
+    seen: set[str] = set()
+    for value in [*(existing or []), *required]:
+        cleaned = str(value or "").strip()
+        if not cleaned:
+            continue
+        key = cleaned.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        merged.append(cleaned)
+    return merged
 
 
 async def ensure_default_auth_users(db: AsyncSession) -> None:
@@ -102,6 +126,14 @@ async def ensure_default_auth_users(db: AsyncSession) -> None:
             desired_name = _seed_business_name(sme_user.email)
             if (existing_profile.official_name or "").strip().lower() in PLACEHOLDER_SME_NAMES:
                 existing_profile.official_name = desired_name
+            existing_profile.keywords_json = _merge_unique_strings(
+                existing_profile.keywords_json,
+                DEFAULT_SME_KEYWORDS,
+            )
+            existing_profile.legit_numbers_json = _merge_unique_strings(
+                existing_profile.legit_numbers_json,
+                DEFAULT_SME_LEGIT_NUMBERS,
+            )
             if not existing_profile.contact_email:
                 existing_profile.contact_email = sme_user.email
             existing_profile.validation_status = sme_user.status

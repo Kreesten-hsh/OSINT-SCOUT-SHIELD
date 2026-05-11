@@ -29,6 +29,17 @@ export default function BeninSignalMap({
   const mapRef = useRef<any>(null);
   const markersLayerRef = useRef<any>(null);
   const [leafletReady, setLeafletReady] = useState<boolean>(Boolean(window.L));
+  const [isLightTheme, setIsLightTheme] = useState<boolean>(() =>
+    document.documentElement.classList.contains('light'),
+  );
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsLightTheme(document.documentElement.classList.contains('light'));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (window.L) {
@@ -99,12 +110,17 @@ export default function BeninSignalMap({
       touchZoom: !compact,
     });
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    L.tileLayer(
+      isLightTheme
+        ? 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+      {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
       subdomains: 'abcd',
       maxZoom: 19,
-    }).addTo(map);
+      },
+    ).addTo(map);
 
     const layer = L.layerGroup().addTo(map);
     mapRef.current = map;
@@ -121,7 +137,7 @@ export default function BeninSignalMap({
         markersLayerRef.current = null;
       }
     };
-  }, [compact, leafletReady]);
+  }, [compact, isLightTheme, leafletReady]);
 
   useEffect(() => {
     if (!leafletReady || !window.L || !markersLayerRef.current || !mapRef.current) {
@@ -136,7 +152,7 @@ export default function BeninSignalMap({
       const color = mapIntensityColor(point.count);
       const marker = L.circleMarker([point.latitude, point.longitude], {
         radius: markerRadius(point.count, compact) + (selected ? 3 : 0),
-        color: selected ? '#f8fafc' : color,
+        color: selected ? (isLightTheme ? '#111827' : '#f8fafc') : color,
         fillColor: color,
         fillOpacity: selected ? 0.82 : 0.5,
         weight: selected ? 3 : 2,

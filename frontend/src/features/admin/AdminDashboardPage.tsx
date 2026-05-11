@@ -276,8 +276,8 @@ export default function AdminDashboardPage() {
             </Link>
           </div>
 
-          <Link to="/live" className="block border-t border-border/70 bg-[#07110a] p-3 transition hover:bg-[#09160d]">
-            <div className="overflow-hidden rounded-[1.35rem] border border-emerald-950/70">
+          <Link to="/live" className="block border-t border-border/70 bg-background/60 p-3 transition hover:bg-secondary/30">
+            <div className="overflow-hidden rounded-[1.35rem] border border-border/70">
               <BeninSignalMap
                 departments={mapOverview?.departments ?? []}
                 selectedDepartment={null}
