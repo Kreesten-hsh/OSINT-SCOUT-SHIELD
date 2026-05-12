@@ -1,0 +1,150 @@
+@startuml
+title BENIN CYBER SHIELD - Diagramme de classes corrige
+hide circle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+
+class Utilisateur {
+  +idUtilisateur : int
+  +email : string
+  +motDePasseHash : string
+  +role : string
+  +statut : string
+  +dateCreation : datetime
+  +dateModification : datetime
+}
+
+class MessageCitoyen {
+  +idMessage : int
+  +uuid : uuid
+  +contenu : text
+  +canal : string
+  +idInstallationMobile : string
+  +typeHistorique : string
+  +numeroSoumisMasque : string
+  +departement : string
+  +sourceDepartement : string
+  +urlSoumise : string
+  +ipHashSoumetteur : string
+  +dateCreation : datetime
+  +dateModification : datetime
+}
+
+class AnalyseMessage {
+  +idAnalyse : int
+  +uuid : uuid
+  +scoreRisque : int
+  +niveauRisque : string
+  +categoriePrincipale : string
+  +reglesDeclenchees : json
+  +categoriesDetectees : json
+  +explication : json
+  +recommandations : json
+  +segmentsSurlignes : json
+  +alerteFon : text
+  +dateCreation : datetime
+}
+
+class NumeroSuspect {
+  +idNumero : int
+  +uuid : uuid
+  +phoneHash : string
+  +phoneCiphertext : text
+  +nombreSignalements : int
+  +premiereDetection : datetime
+  +derniereDetection : datetime
+  +dateCreation : datetime
+  +dateModification : datetime
+}
+
+class SignalementFormel {
+  +idSignalement : int
+  +uuid : uuid
+  +referencePublique : string
+  +statut : string
+  +custodyHash : string
+  +legacyAlertUuid : uuid
+  +dateCreation : datetime
+  +dateModification : datetime
+}
+
+class PieceJointeProbatoire {
+  +idPiece : int
+  +uuid : uuid
+  +type : string
+  +cheminFichier : string
+  +hashFichier : string
+  +apercuTexte : text
+  +metadonnees : json
+  +dateCreation : datetime
+}
+
+class ProfilPME {
+  +idPME : int
+  +uuid : uuid
+  +nomOfficiel : string
+  +motsCles : json
+  +numerosLegitimes : json
+  +emailContact : string
+  +telephoneContact : string
+  +statutValidation : string
+  +dateValidation : datetime
+  +dateCreation : datetime
+  +dateModification : datetime
+}
+
+class IncidentUsurpation {
+  +idIncident : int
+  +uuid : uuid
+  +statut : string
+  +raisonDetection : text
+  +custodyHash : string
+  +dateCreation : datetime
+}
+
+class DossierForensique {
+  +idDossier : int
+  +uuid : uuid
+  +hashGlobal : string
+  +manifest : json
+  +cheminZip : string
+  +cheminPdf : string
+  +cheminJson : string
+  +statut : string
+  +dateCreation : datetime
+  +dateTransmission : datetime
+}
+
+class TransmissionExterne {
+  +idTransmission : int
+  +uuid : uuid
+  +typeDestinataire : string
+  +endpointDestinataire : string
+  +payload : json
+  +statut : string
+  +nombreTentatives : int
+  +referenceAccuse : string
+  +prochaineTentative : datetime
+  +derniereErreur : text
+  +dateCreation : datetime
+  +dateModification : datetime
+  +dateLivraison : datetime
+}
+
+Utilisateur "1" -- "0..1" ProfilPME : possede >
+Utilisateur "1" -- "0..*" SignalementFormel : cree >
+Utilisateur "1" -- "0..*" ProfilPME : valide >
+
+MessageCitoyen "1" -- "1" AnalyseMessage : genere >
+MessageCitoyen "1" -- "0..*" SignalementFormel : peut_devenir >
+AnalyseMessage "1" -- "0..*" SignalementFormel : justifie >
+NumeroSuspect "1" -- "0..*" SignalementFormel : concerne >
+
+SignalementFormel "1" -- "0..*" PieceJointeProbatoire : contient >
+SignalementFormel "1" -- "0..*" IncidentUsurpation : declenche >
+ProfilPME "1" -- "0..*" IncidentUsurpation : recoit >
+
+SignalementFormel "1" -- "0..*" DossierForensique : produit >
+DossierForensique "1" -- "0..*" TransmissionExterne : transmet >
+@enduml
