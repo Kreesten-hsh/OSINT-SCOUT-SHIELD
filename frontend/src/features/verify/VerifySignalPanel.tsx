@@ -110,16 +110,17 @@ export default function VerifySignalPanel() {
   const [incident, setIncident] = useState<IncidentReportData | null>(null);
 
   const buildWhatsAppMessage = (riskLevel: string, targetPhone: string, reportId: string): string => {
-    const emoji = riskLevel === 'FORT' ? '🔴 DANGER' : '🟡 Suspect';
+    const riskLabel = riskLevel === 'FORT' ? 'DANGER' : 'Suspect';
+    const reportSuffix = reportId ? reportId.slice(0, 8) : 'BCS';
     const msg = [
-      '⚠️ Alerte BENIN CYBER SHIELD',
+      'Alerte BENIN CYBER SHIELD',
       '',
-      `${emoji} : Ce numero (${targetPhone}) est signale comme arnaque.`,
+      `${riskLabel} : Ce numero (${targetPhone}) est signale comme arnaque.`,
       '',
       'Ne communiquez JAMAIS votre code OTP ou PIN.',
       '',
-      'Verifiez vous-meme : https://benincybershield.bj/verify',
-      `Rapport n° ${reportId.slice(0, 8)}`,
+      'Verifiez vous-meme : https://osint-scout-shield.vercel.app/verify',
+      `Rapport BCS ${reportSuffix}`,
     ].join('\n');
     return encodeURIComponent(msg);
   };
@@ -415,13 +416,13 @@ export default function VerifySignalPanel() {
               rel="noopener noreferrer"
               className="mt-3 inline-flex items-center gap-2 rounded-lg bg-green-700 px-4 py-2 text-sm text-white transition-colors hover:bg-green-600"
             >
-              📲 Prévenir ma famille sur WhatsApp
+              Prevenir ma famille sur WhatsApp
             </a>
           )}
 
           {result.recurrence_count > 0 && (
             <div className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-300">
-              ⚠ Ce numero a deja ete signale {result.recurrence_count} fois par d'autres utilisateurs.
+              Ce numero a deja ete signale {result.recurrence_count} fois par d'autres utilisateurs.
             </div>
           )}
 
@@ -436,7 +437,7 @@ export default function VerifySignalPanel() {
               <ul className="space-y-1">
                 {result.citizen_advice?.map((advice, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-foreground">
-                    <span className="mt-0.5 flex-shrink-0 text-green-400">✅</span>
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-400" />
                     <span>{advice}</span>
                   </li>
                 ))}

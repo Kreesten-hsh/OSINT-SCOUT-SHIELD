@@ -138,10 +138,22 @@ class ShieldConfigStore(private val context: Context) {
 
         val smsPackages: Set<String> = setOf(
             "com.google.android.apps.messaging",
+            "com.google.android.apps.messaging.home",
             "com.android.messaging",
             "com.android.mms",
+            "com.android.mms.service",
             "com.samsung.android.messaging",
             "com.transsion.message",
+            "com.miui.mms",
+            "com.coloros.mms",
+            "com.oplus.mms",
+            "com.vivo.messaging",
+            "com.huawei.message",
+            "com.hihonor.mms",
+            "com.sonyericsson.conversations",
+            "com.oneplus.mms",
+            "com.motorola.messaging",
+            "com.android.providers.telephony",
         )
 
         val whatsappPackages: Set<String> = setOf(

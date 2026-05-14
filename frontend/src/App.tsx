@@ -3,11 +3,11 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Component, Suspense, lazy, type ErrorInfo, type ReactNode } from 'react';
 import { Loader2 } from 'lucide-react';
 
-import { InstallPWA } from '@/components/InstallPWA';
 import { ThemeController } from '@/components/theme/ThemeController';
 import { Toaster } from '@/components/ui/toaster';
 import { useAuthStore } from '@/store/auth-store';
 
+const LandingPage = lazy(() => import('@/features/landing/LandingPage'));
 const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
 const PmeRegisterPage = lazy(() => import('@/features/auth/PmeRegisterPage'));
 const VerifyPage = lazy(() => import('@/features/verify/VerifyPage'));
@@ -123,17 +123,6 @@ const RequireSME = () => {
   return <BusinessLayout />;
 };
 
-const RootRedirect = () => {
-  const { isAuthenticated, user } = useAuthStore();
-  if (!isAuthenticated) {
-    return <Navigate to="/verify" replace />;
-  }
-  if (user?.role === 'SME') {
-    return <Navigate to="/pme/dashboard" replace />;
-  }
-  return <Navigate to="/admin/dashboard" replace />;
-};
-
 function App() {
   return (
     <ErrorBoundary>
@@ -142,7 +131,7 @@ function App() {
         <BrowserRouter>
           <Suspense fallback={<RouteFallback />}>
             <Routes>
-              <Route path="/" element={<RootRedirect />} />
+              <Route path="/" element={<LandingPage />} />
               <Route path="/verify" element={<VerifyPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/live" element={<LivePage />} />
@@ -193,7 +182,6 @@ function App() {
               </Route>
             </Routes>
           </Suspense>
-          <InstallPWA />
         </BrowserRouter>
         <Toaster />
       </QueryClientProvider>

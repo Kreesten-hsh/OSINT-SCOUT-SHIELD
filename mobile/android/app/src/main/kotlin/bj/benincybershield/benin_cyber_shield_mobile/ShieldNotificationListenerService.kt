@@ -5,6 +5,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
 import android.os.Build
+import android.os.Bundle
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import java.util.concurrent.ConcurrentHashMap
@@ -59,12 +60,10 @@ class ShieldNotificationListenerService : NotificationListenerService() {
             return
         }
 
-        val extras = sbn.notification.extras
+        val notification = sbn.notification
+        val extras = notification.extras
         val sender = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()?.trim().orEmpty()
-        val message = (
-            extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString()
-                ?: extras.getCharSequence(Notification.EXTRA_TEXT)?.toString()
-        )?.trim().orEmpty()
+        val message = extractNotificationMessage(notification).trim()
         if (message.isBlank()) {
             return
         }
@@ -76,6 +75,58 @@ class ShieldNotificationListenerService : NotificationListenerService() {
             sender = safeSender,
             sourceApp = sourceApp,
         )
+    }
+
+    private fun extractNotificationMessage(notification: Notification): String {
+        val extras = notification.extras ?: return notification.tickerText?.toString().orEmpty()
+        val candidates = linkedSetOf<String>()
+
+        addCandidate(candidates, extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString())
+        addCandidate(candidates, extras.getCharSequence(Notification.EXTRA_TEXT)?.toString())
+        addCandidate(candidates, extras.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString())
+        addCandidate(candidates, extras.getCharSequence(Notification.EXTRA_SUMMARY_TEXT)?.toString())
+
+        val textLines = extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
+        if (!textLines.isNullOrEmpty()) {
+            addCandidate(candidates, textLines.joinToString(separator = "\n") { it.toString() })
+        }
+
+        val messages = extractMessagingStyleMessages(extras)
+        if (messages.isNotEmpty()) {
+            addCandidate(candidates, messages.joinToString(separator = "\n"))
+        }
+
+        addCandidate(candidates, notification.tickerText?.toString())
+
+        return candidates
+            .filterNot { it.isNotificationSummary() }
+            .maxByOrNull { it.length }
+            .orEmpty()
+    }
+
+    private fun extractMessagingStyleMessages(extras: Bundle): List<String> {
+        val parcelables = extras.getParcelableArray(Notification.EXTRA_MESSAGES) ?: return emptyList()
+        return parcelables.mapNotNull { parcelable ->
+            val bundle = parcelable as? Bundle ?: return@mapNotNull null
+            bundle.getCharSequence("text")?.toString()?.trim()?.takeIf { it.isNotBlank() }
+        }
+    }
+
+    private fun addCandidate(candidates: MutableSet<String>, value: String?) {
+        val normalizedValue = value
+            ?.replace('\u00a0', ' ')
+            ?.trim()
+            ?.takeIf { it.isNotBlank() }
+            ?: return
+        candidates += normalizedValue
+    }
+
+    private fun String.isNotificationSummary(): Boolean {
+        val normalizedValue = lowercase()
+        return normalizedValue.contains("nouveaux messages") ||
+            normalizedValue.contains("new messages") ||
+            normalizedValue.contains("messages from") ||
+            normalizedValue.contains("conversation")
     }
 
     override fun onDestroy() {
