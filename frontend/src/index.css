@@ -297,6 +297,314 @@
     .hero-panel-dark .hero-action-secondary {
         @apply border-emerald-900/80 bg-black/25 text-slate-200 hover:bg-black/35 hover:text-white;
     }
+
+    .landing-nav {
+        @apply rounded-[1.35rem] border border-white/10 bg-card/80 backdrop-blur-2xl;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.1),
+            inset 0 -1px 0 rgba(255, 255, 255, 0.04),
+            0 22px 48px -32px rgba(2, 8, 23, 0.9);
+    }
+
+    :root.light .landing-nav {
+        @apply border-slate-900/10 bg-[#fbfdff]/90;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.95),
+            inset 0 -1px 0 rgba(15, 23, 42, 0.05),
+            0 24px 46px -36px rgba(15, 23, 42, 0.38);
+    }
+
+    .nav-links {
+        @apply rounded-2xl border border-white/10 bg-white/[0.035] p-1 text-muted-foreground;
+    }
+
+    .nav-links a {
+        @apply rounded-xl px-3 py-2 hover:bg-white/[0.07] hover:text-foreground;
+    }
+
+    :root.light .nav-links {
+        @apply border-slate-900/10 bg-slate-900/[0.035] text-slate-600;
+    }
+
+    :root.light .nav-links a {
+        @apply hover:bg-white hover:text-slate-950;
+    }
+
+    .nav-cta {
+        @apply rounded-2xl border border-sky-300/20 bg-sky-300/10 text-sky-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] hover:-translate-y-0.5 hover:bg-sky-300/15;
+    }
+
+    :root.light .nav-cta {
+        @apply border-sky-700/20 bg-sky-700/10 text-sky-950 hover:bg-sky-700/15;
+    }
+
+    .landing-hero {
+        min-height: 100dvh;
+    }
+
+    .landing-mesh {
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(circle at 16% 18%, rgba(14, 165, 233, 0.18), transparent 31%),
+            radial-gradient(circle at 74% 20%, rgba(16, 185, 129, 0.12), transparent 30%),
+            radial-gradient(circle at 52% 82%, rgba(37, 99, 235, 0.1), transparent 36%);
+        pointer-events: none;
+    }
+
+    :root.light .landing-mesh {
+        background:
+            radial-gradient(circle at 18% 18%, rgba(14, 165, 233, 0.13), transparent 30%),
+            radial-gradient(circle at 72% 22%, rgba(16, 185, 129, 0.1), transparent 28%),
+            radial-gradient(circle at 52% 82%, rgba(37, 99, 235, 0.08), transparent 34%);
+    }
+
+    .particle-field {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+        mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 82%, transparent 100%);
+    }
+
+    .particle-field span {
+        position: absolute;
+        left: var(--particle-x);
+        top: var(--particle-y);
+        height: var(--particle-size);
+        width: var(--particle-size);
+        border-radius: 9999px;
+        background: rgba(125, 211, 252, 0.76);
+        box-shadow: 0 0 22px rgba(125, 211, 252, 0.38);
+        opacity: 0.42;
+        animation: particle-drift var(--particle-speed) linear infinite;
+        animation-delay: var(--particle-delay);
+    }
+
+    .particle-field span:nth-child(3n) {
+        background: rgba(110, 231, 183, 0.78);
+        box-shadow: 0 0 22px rgba(110, 231, 183, 0.34);
+    }
+
+    .particle-field span:nth-child(4n) {
+        background: rgba(191, 219, 254, 0.74);
+        box-shadow: 0 0 18px rgba(191, 219, 254, 0.28);
+    }
+
+    .particle-field span:nth-child(1) { --particle-x: 8%; --particle-y: 72%; --particle-size: 3px; --particle-speed: 18s; --particle-delay: -2s; }
+    .particle-field span:nth-child(2) { --particle-x: 14%; --particle-y: 36%; --particle-size: 2px; --particle-speed: 22s; --particle-delay: -8s; }
+    .particle-field span:nth-child(3) { --particle-x: 19%; --particle-y: 84%; --particle-size: 4px; --particle-speed: 24s; --particle-delay: -12s; }
+    .particle-field span:nth-child(4) { --particle-x: 28%; --particle-y: 52%; --particle-size: 2px; --particle-speed: 20s; --particle-delay: -4s; }
+    .particle-field span:nth-child(5) { --particle-x: 36%; --particle-y: 78%; --particle-size: 3px; --particle-speed: 25s; --particle-delay: -16s; }
+    .particle-field span:nth-child(6) { --particle-x: 44%; --particle-y: 42%; --particle-size: 2px; --particle-speed: 19s; --particle-delay: -6s; }
+    .particle-field span:nth-child(7) { --particle-x: 52%; --particle-y: 88%; --particle-size: 3px; --particle-speed: 23s; --particle-delay: -10s; }
+    .particle-field span:nth-child(8) { --particle-x: 59%; --particle-y: 28%; --particle-size: 2px; --particle-speed: 21s; --particle-delay: -14s; }
+    .particle-field span:nth-child(9) { --particle-x: 64%; --particle-y: 68%; --particle-size: 4px; --particle-speed: 27s; --particle-delay: -18s; }
+    .particle-field span:nth-child(10) { --particle-x: 71%; --particle-y: 45%; --particle-size: 2px; --particle-speed: 18s; --particle-delay: -7s; }
+    .particle-field span:nth-child(11) { --particle-x: 77%; --particle-y: 82%; --particle-size: 3px; --particle-speed: 24s; --particle-delay: -11s; }
+    .particle-field span:nth-child(12) { --particle-x: 84%; --particle-y: 34%; --particle-size: 2px; --particle-speed: 22s; --particle-delay: -15s; }
+    .particle-field span:nth-child(13) { --particle-x: 89%; --particle-y: 74%; --particle-size: 3px; --particle-speed: 26s; --particle-delay: -5s; }
+    .particle-field span:nth-child(14) { --particle-x: 5%; --particle-y: 48%; --particle-size: 2px; --particle-speed: 20s; --particle-delay: -13s; }
+    .particle-field span:nth-child(15) { --particle-x: 32%; --particle-y: 22%; --particle-size: 3px; --particle-speed: 28s; --particle-delay: -19s; }
+    .particle-field span:nth-child(16) { --particle-x: 48%; --particle-y: 62%; --particle-size: 2px; --particle-speed: 17s; --particle-delay: -9s; }
+    .particle-field span:nth-child(17) { --particle-x: 69%; --particle-y: 18%; --particle-size: 3px; --particle-speed: 25s; --particle-delay: -3s; }
+    .particle-field span:nth-child(18) { --particle-x: 94%; --particle-y: 56%; --particle-size: 2px; --particle-speed: 19s; --particle-delay: -17s; }
+
+    .landing-grid-overlay {
+        position: absolute;
+        inset: 0;
+        background-image:
+            linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+        background-size: 54px 54px;
+        mask-image: radial-gradient(circle at 56% 36%, black, transparent 68%);
+        pointer-events: none;
+    }
+
+    .landing-glass {
+        @apply rounded-[1.45rem] border border-white/10 bg-card/60 backdrop-blur-2xl;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.1),
+            inset 0 -1px 0 rgba(255, 255, 255, 0.04),
+            0 28px 70px -42px rgba(2, 8, 23, 0.98);
+    }
+
+    :root.light .landing-glass {
+        @apply border-slate-900/10 bg-[#fbfdff]/80;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.9),
+            inset 0 -1px 0 rgba(15, 23, 42, 0.04),
+            0 28px 64px -46px rgba(15, 23, 42, 0.38);
+    }
+
+    .landing-glass-subtle {
+        @apply rounded-2xl border border-white/10 bg-white/[0.045] backdrop-blur-xl;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    :root.light .landing-glass-subtle {
+        @apply border-slate-900/10 bg-[#fbfdff]/80;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+    }
+
+    .liquid-button {
+        @apply rounded-2xl border border-white/10 bg-white/[0.055] backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] hover:-translate-y-0.5 hover:bg-white/[0.09];
+    }
+
+    :root.light .liquid-button {
+        @apply border-slate-900/10 bg-[#fbfdff]/80 text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] hover:bg-white;
+    }
+
+    .hero-kicker {
+        @apply border border-sky-300/20 bg-sky-300/10 text-sky-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)];
+    }
+
+    :root.light .hero-kicker {
+        @apply border-sky-700/20 bg-sky-700/10 text-sky-950;
+    }
+
+    .hero-console {
+        transform: perspective(1200px) rotateX(6deg) rotateY(-7deg);
+        transform-origin: center;
+        animation: console-float 7s cubic-bezier(0.77, 0, 0.175, 1) infinite alternate;
+    }
+
+    .hero-console-topline {
+        @apply flex items-center justify-between gap-4;
+    }
+
+    .signal-strip {
+        @apply flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3 backdrop-blur-xl;
+        animation: signal-rise 480ms cubic-bezier(0.23, 1, 0.32, 1) both;
+        animation-delay: var(--signal-delay, 0ms);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .defense-orbit-scene {
+        position: absolute;
+        left: 50%;
+        top: 41%;
+        width: min(70vw, 500px);
+        aspect-ratio: 1;
+        transform: translate(-50%, -50%);
+        transform-style: preserve-3d;
+        perspective: 1100px;
+    }
+
+    .defense-orbit {
+        position: absolute;
+        inset: 12%;
+        border: 1px solid rgba(125, 211, 252, 0.22);
+        border-radius: 9999px;
+        box-shadow: inset 0 0 38px rgba(14, 165, 233, 0.07), 0 0 34px rgba(14, 165, 233, 0.08);
+    }
+
+    .defense-orbit-a {
+        transform: rotateX(72deg) rotateZ(18deg);
+        animation: orbit-spin-a 16s linear infinite;
+    }
+
+    .defense-orbit-b {
+        inset: 20%;
+        border-color: rgba(110, 231, 183, 0.24);
+        transform: rotateX(62deg) rotateY(44deg);
+        animation: orbit-spin-b 18s linear infinite reverse;
+    }
+
+    .defense-orbit-c {
+        inset: 29%;
+        border-color: rgba(191, 219, 254, 0.24);
+        transform: rotateX(78deg) rotateY(-34deg);
+        animation: orbit-spin-c 13s linear infinite;
+    }
+
+    .shield-core {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        display: grid;
+        height: 124px;
+        width: 124px;
+        place-items: center;
+        border-radius: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background:
+            linear-gradient(145deg, rgba(14, 165, 233, 0.34), rgba(16, 185, 129, 0.12)),
+            rgba(15, 23, 42, 0.78);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.18),
+            0 30px 70px -36px rgba(14, 165, 233, 0.92);
+        transform: translate(-50%, -50%) rotateX(16deg) rotateY(-18deg);
+        animation: core-float 5.6s cubic-bezier(0.77, 0, 0.175, 1) infinite alternate;
+    }
+
+    .orbit-node {
+        position: absolute;
+        height: 11px;
+        width: 11px;
+        border-radius: 9999px;
+        background: rgb(125 211 252);
+        box-shadow: 0 0 22px rgba(125, 211, 252, 0.9);
+    }
+
+    .orbit-node-a {
+        left: 20%;
+        top: 28%;
+        animation: node-pulse 2.6s cubic-bezier(0.23, 1, 0.32, 1) infinite;
+    }
+
+    .orbit-node-b {
+        right: 23%;
+        top: 18%;
+        background: rgb(110 231 183);
+        box-shadow: 0 0 22px rgba(110, 231, 183, 0.9);
+        animation: node-pulse 2.9s cubic-bezier(0.23, 1, 0.32, 1) infinite 320ms;
+    }
+
+    .orbit-node-c {
+        bottom: 24%;
+        left: 47%;
+        animation: node-pulse 3.1s cubic-bezier(0.23, 1, 0.32, 1) infinite 620ms;
+    }
+
+    .device-stage {
+        min-height: 360px;
+        position: relative;
+        perspective: 1200px;
+    }
+
+    .device-card {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: min(78vw, 270px);
+        min-height: 330px;
+        border-radius: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: linear-gradient(145deg, rgba(15, 23, 42, 0.78), rgba(14, 165, 233, 0.14));
+        padding: 1.25rem;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.12),
+            0 30px 70px -38px rgba(2, 8, 23, 0.98);
+        transform-style: preserve-3d;
+    }
+
+    .device-card-front {
+        transform: translate(-44%, -50%) rotateY(-19deg) rotateX(8deg) translateZ(44px);
+        animation: device-front 6s cubic-bezier(0.77, 0, 0.175, 1) infinite alternate;
+    }
+
+    .device-card-back {
+        transform: translate(-60%, -45%) rotateY(24deg) rotateX(10deg) translateZ(-20px);
+        opacity: 0.58;
+        animation: device-back 7s cubic-bezier(0.77, 0, 0.175, 1) infinite alternate;
+    }
+
+    :root.light #solution,
+    :root.light #pme,
+    :root.light #mobile {
+        color: hsl(var(--foreground));
+    }
 }
 
 @layer utilities {
@@ -331,5 +639,118 @@
         animation: fade-rise-in 320ms cubic-bezier(0.16, 1, 0.3, 1);
         animation-delay: 120ms;
         animation-fill-mode: both;
+    }
+
+    @keyframes signal-rise {
+        from {
+            opacity: 0;
+            transform: translateY(12px) scale(0.98);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    @keyframes particle-drift {
+        0% {
+            transform: translate3d(0, 34px, 0) scale(0.85);
+            opacity: 0;
+        }
+        15% {
+            opacity: 0.42;
+        }
+        85% {
+            opacity: 0.42;
+        }
+        100% {
+            transform: translate3d(22px, -120vh, 0) scale(1.08);
+            opacity: 0;
+        }
+    }
+
+    @keyframes console-float {
+        from {
+            transform: perspective(1200px) rotateX(7deg) rotateY(-8deg) translateY(0);
+        }
+        to {
+            transform: perspective(1200px) rotateX(4deg) rotateY(-4deg) translateY(-12px);
+        }
+    }
+
+    @keyframes orbit-spin-a {
+        to {
+            transform: rotateX(72deg) rotateZ(378deg);
+        }
+    }
+
+    @keyframes orbit-spin-b {
+        to {
+            transform: rotateX(62deg) rotateY(44deg) rotateZ(360deg);
+        }
+    }
+
+    @keyframes orbit-spin-c {
+        to {
+            transform: rotateX(78deg) rotateY(-34deg) rotateZ(360deg);
+        }
+    }
+
+    @keyframes core-float {
+        from {
+            transform: translate(-50%, -50%) rotateX(16deg) rotateY(-18deg) translateZ(0);
+        }
+        to {
+            transform: translate(-50%, -54%) rotateX(10deg) rotateY(-10deg) translateZ(18px);
+        }
+    }
+
+    @keyframes node-pulse {
+        0%,
+        100% {
+            opacity: 0.48;
+            transform: scale(0.86);
+        }
+        50% {
+            opacity: 1;
+            transform: scale(1.28);
+        }
+    }
+
+    @keyframes device-front {
+        from {
+            transform: translate(-44%, -50%) rotateY(-19deg) rotateX(8deg) translateZ(44px);
+        }
+        to {
+            transform: translate(-42%, -53%) rotateY(-13deg) rotateX(5deg) translateZ(58px);
+        }
+    }
+
+    @keyframes device-back {
+        from {
+            transform: translate(-60%, -45%) rotateY(24deg) rotateX(10deg) translateZ(-20px);
+        }
+        to {
+            transform: translate(-63%, -47%) rotateY(18deg) rotateX(8deg) translateZ(-34px);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .hero-console,
+        .defense-orbit-a,
+        .defense-orbit-b,
+        .defense-orbit-c,
+        .shield-core,
+        .orbit-node,
+        .device-card-front,
+        .device-card-back,
+        .signal-strip {
+            animation: none !important;
+        }
+
+        .particle-field span {
+            animation: none !important;
+            opacity: 0.22;
+        }
     }
 }
