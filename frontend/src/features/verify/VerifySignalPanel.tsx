@@ -9,6 +9,7 @@ import {
   Loader2,
   MessageSquareText,
   Phone,
+  Volume2,
   ScanLine,
   ShieldAlert,
   ShieldCheck,
@@ -163,8 +164,8 @@ export default function VerifySignalPanel() {
   const canSubmit = message.trim().length >= 5 && isPhoneValid;
   const messageLength = message.trim().length;
   const hasUrl = url.trim().length > 0;
-  const selectedDepartment = department || 'Detection automatique';
   const attachedFilesLabel = screenshots.length > 0 ? `${screenshots.length} fichier(s) pret(s)` : 'Aucune capture ajoutee';
+  const [isSpeakingFon, setIsSpeakingFon] = useState(false);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -202,6 +203,12 @@ export default function VerifySignalPanel() {
       window.clearInterval(intervalId);
     };
   }, [isVerifying]);
+
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis?.cancel();
+    };
+  }, []);
 
   const buildWhatsAppMessage = (riskLevel: string, targetPhone: string, reportId: string): string => {
     const riskLabel = riskLevel === 'FORT' ? 'DANGER' : 'Suspect';
@@ -311,6 +318,28 @@ export default function VerifySignalPanel() {
     } finally {
       setIsReporting(false);
     }
+  };
+
+  const speakFonAlert = () => {
+    const fonAlert = result?.fon_alert?.trim();
+    if (!fonAlert || !('speechSynthesis' in window)) {
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(fonAlert);
+    utterance.lang = 'fr-BJ';
+    utterance.rate = 0.86;
+    utterance.pitch = 1;
+    utterance.onstart = () => setIsSpeakingFon(true);
+    utterance.onend = () => setIsSpeakingFon(false);
+    utterance.onerror = () => setIsSpeakingFon(false);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const stopFonAlert = () => {
+    window.speechSynthesis?.cancel();
+    setIsSpeakingFon(false);
   };
 
   const reportButtonDisabled = !result || isReporting || isVerifying || !!incident;
@@ -581,7 +610,27 @@ export default function VerifySignalPanel() {
                 </div>
               )}
 
-              {result.fon_alert && <p className="text-sm italic text-amber-700 dark:text-amber-300">{result.fon_alert}</p>}
+              {result.fon_alert && (
+                <div className="rounded-3xl border border-sky-600/20 bg-sky-500/10 p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-xs font-bold uppercase text-sky-700 dark:text-sky-300">Alerte en fon</p>
+                      <p className="mt-2 text-base font-bold leading-7 text-foreground">{result.fon_alert}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Lecture vocale disponible pour les personnes qui comprennent mieux le fon.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={isSpeakingFon ? stopFonAlert : speakFonAlert}
+                      className="inline-flex min-h-[42px] shrink-0 items-center justify-center gap-2 rounded-2xl border border-sky-600/25 bg-sky-500/10 px-4 text-sm font-bold text-sky-700 hover:bg-sky-500/20 dark:text-sky-300"
+                    >
+                      <Volume2 className="h-4 w-4" />
+                      {isSpeakingFon ? 'Arreter' : 'Lire en fon'}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="rounded-3xl border border-border/80 bg-background/60 p-4">
                 <p className="mb-3 text-sm font-bold">Pourquoi ce score ?</p>
@@ -633,9 +682,6 @@ export default function VerifySignalPanel() {
             <p className="mt-3 text-sm text-muted-foreground">
               Ce message sera enregistre avec sa reference publique, ses pieces jointes et les elements utiles a l'analyse.
             </p>
-            <div className="mt-5 rounded-2xl border border-border/70 bg-background/60 px-4 py-3 text-sm text-muted-foreground">
-              Departement : <span className="font-semibold text-foreground">{selectedDepartment}</span>
-            </div>
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"
@@ -667,13 +713,8 @@ export default function VerifySignalPanel() {
             </div>
             <h3 className="font-display text-xl font-bold text-foreground">Signalement enregistre</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Votre signalement est pris en compte. Conservez la reference publique si elle est affichee.
+              Votre signalement est pris en compte et sera traite par les equipes competentes.
             </p>
-            {incident?.public_reference ? (
-              <div className="mt-4 rounded-2xl border border-border/70 bg-background/60 px-4 py-3 text-sm">
-                Reference publique : <span className="font-mono font-bold">{incident.public_reference}</span>
-              </div>
-            ) : null}
             <button
               type="button"
               onClick={() => setShowReportSuccess(false)}

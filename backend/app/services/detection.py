@@ -21,6 +21,7 @@ SIGNAL_WEIGHTS = {
     "suspicious_url": 15,
     "fcfa_amount_in_message": 20,
     "whatsapp_number": 15,
+    "fake_operator_receipt": 70,
 }
 
 CATEGORY_LABELS = {
@@ -29,6 +30,7 @@ CATEGORY_LABELS = {
     "unexpected_gain": "Gain inattendu",
     "operator_impersonation": "Usurpation d'operateur",
     "threat_of_loss": "Menace de perte",
+    "phone_number_in_message": "Numero de telephone dans le message",
     "MM_FRAUD": "Arnaque Mobile Money",
     "CRYPTO_PONZI": "Investissement fictif",
     "FAKE_RECRUITMENT": "Arnaque a l'emploi",
@@ -38,6 +40,7 @@ CATEGORY_LABELS = {
     "FAUX_DON_ONG": "Faux don / ONG",
     "fcfa_amount_in_message": "Montant FCFA suspect",
     "whatsapp_number": "Redirection WhatsApp",
+    "fake_operator_receipt": "Faux recu Mobile Money",
 }
 
 RULE_MAPPING = {
@@ -57,6 +60,7 @@ RULE_MAPPING = {
     "FAUX_DON_ONG": "FAUX_DON_ONG",
     "fcfa_amount_in_message": "fcfa_amount_in_message",
     "whatsapp_number": "whatsapp_number",
+    "fake_operator_receipt": "FAKE_OPERATOR_RECEIPT",
 }
 
 EXPLANATION_MAPPING = {
@@ -67,6 +71,10 @@ EXPLANATION_MAPPING = {
     "threat_of_loss": "Le message menace une perte ou un blocage si vous ne reagissez pas.",
     "phone_number_in_message": "Le message contient un numero de telephone de contact potentiellement frauduleux.",
     "suspicious_url": "Le lien fourni est non officiel ou techniquement suspect.",
+    "fake_operator_receipt": (
+        "Le message imite un recu de depot Mobile Money, mais il semble provenir "
+        "d'un numero personnel et non d'un expediteur officiel."
+    ),
     "MM_FRAUD": "Ce message reprend des formulations classiques d'arnaque Mobile Money observees au Benin.",
     "CRYPTO_PONZI": "Ce message promet des rendements irrealistes lies a un investissement fictif ou pyramidal.",
     "FAKE_RECRUITMENT": (
@@ -120,6 +128,10 @@ RECOMMENDATION_MAPPING = {
         "Ne cliquez jamais sur un lien recu par SMS. "
         "Tapez toujours l'adresse officielle de votre service."
     ),
+    "fake_operator_receipt": (
+        "Ne remettez pas l'article sur la base de ce SMS. "
+        "Verifiez le solde dans l'application officielle ou composez le code USSD de l'operateur."
+    ),
     "FAKE_RECRUITMENT": (
         "Aucun employeur serieux ne demande des frais a l'avance. "
         "Verifiez l'entreprise sur LinkedIn ou en appelant directement."
@@ -156,6 +168,7 @@ RULE_KEYWORDS = {
     "suspicious_url": ["http", "www", ".xyz", ".tk", "cliquez", "lien"],
     "phone_number_in_message": ["appel", "rappel", "contactez", "numero"],
     "MM_FRAUD": ["transfert errone", "code de validation", "mtn money", "moov money", "frais de retrait"],
+    "fake_operator_receipt": ["depot recu", "vous avez recu", "solde", "ref", "id"],
     "CRYPTO_PONZI": ["gains rapides", "investir", "usdt", "kpayo", "liberte financiere"],
     "FAKE_RECRUITMENT": [
         "emploi",
@@ -254,6 +267,7 @@ COLOR_MAP = {
     "phone_number_in_message": "orange",
     "unexpected_gain": "amber",
     "MM_FRAUD": "red",
+    "fake_operator_receipt": "red",
     "CRYPTO_PONZI": "amber",
     "FAKE_RECRUITMENT": "orange",
     "FAKE_LOTTERY": "amber",
@@ -275,6 +289,61 @@ SUSPICIOUS_LINK_PATTERNS = (
 )
 
 PHONE_IN_TEXT_PATTERN = re.compile(r"(?:(?:\+229|00229)\s*)?\d(?:[\s.-]?\d){7,11}")
+PERSONAL_SENDER_PATTERN = re.compile(r"^\+?(?:229)?0?\d{8,10}$")
+RECEIPT_DATE_PATTERN = re.compile(
+    r"\b(?:20\d{2}[-/]\d{2}[-/]\d{2}|\d{2}/\d{2}/20\d{2})"
+    r"(?:\s+\d{2}:\d{2}(?::\d{2})?)?\b"
+)
+RECEIPT_ID_PATTERN = re.compile(r"\b(?:ref(?:erence)?|id)\s*:?\s*[a-z0-9-]{4,}\b", re.IGNORECASE)
+
+OFFICIAL_SENDER_KEYWORDS = (
+    "mtn",
+    "momo",
+    "moov",
+    "moov money",
+    "mtn momo",
+    "mtn money",
+    "mobile money",
+    "orabank",
+    "mfs orabank",
+    "semoa",
+)
+
+RECEIPT_KEYWORDS = (
+    "depot recu",
+    "vous avez recu",
+    "transfert",
+    "solde",
+    "frais",
+    "ref",
+    "id",
+)
+
+OFFICIAL_RECEIPT_BRANDS = (
+    "mtn",
+    "momo",
+    "moov",
+    "orabank",
+    "mfs",
+    "semoa",
+    "mobile money",
+)
+
+CRITICAL_FRAUD_TERMS = (
+    "otp",
+    "code secret",
+    "pin",
+    "mot de passe",
+    "password",
+    "cliquez",
+    "http://",
+    "https://",
+    "wa.me",
+    "bit.ly",
+    "bloque",
+    "suspendu",
+    "urgent",
+)
 
 
 def _normalize_text(value: str) -> str:
@@ -434,17 +503,82 @@ def _match_phone_number_in_message(text: str) -> bool:
     return PHONE_IN_TEXT_PATTERN.search(text) is not None
 
 
-def _match_suspicious_url(normalized_url: str) -> bool:
-    if not normalized_url:
+def _compact_sender(value: str | None) -> str:
+    return re.sub(r"[^a-z0-9]", "", _normalize_text(value or ""))
+
+
+def _is_personal_sender(sender: str | None) -> bool:
+    compact = re.sub(r"[\s().-]", "", sender or "")
+    return PERSONAL_SENDER_PATTERN.match(compact) is not None
+
+
+def _is_official_sender(sender: str | None) -> bool:
+    compact = _compact_sender(sender)
+    if not compact:
         return False
-    if normalized_url.startswith("http://"):
+    if compact.isdigit():
+        return len(compact) <= 6
+    return any(_compact_sender(keyword) in compact for keyword in OFFICIAL_SENDER_KEYWORDS)
+
+
+def _is_receipt_like_message(text: str) -> bool:
+    normalized = _normalize_text(text)
+    hits = sum(1 for keyword in RECEIPT_KEYWORDS if _normalize_text(keyword) in normalized)
+    amount_pattern = r"\b\d{3,}(?:[.\s]?\d{3})?\s*[^\w]{0,3}(?:f|fcfa|cfa)\b"
+    has_amount = bool(re.search(amount_pattern, normalized, re.IGNORECASE))
+    has_reference = RECEIPT_ID_PATTERN.search(normalized) is not None
+    has_date = RECEIPT_DATE_PATTERN.search(normalized) is not None
+    return hits >= 2 and has_amount and (has_reference or has_date or "solde" in normalized)
+
+
+def _mentions_receipt_brand(text: str) -> bool:
+    normalized = _normalize_text(text)
+    return any(_normalize_text(keyword) in normalized for keyword in OFFICIAL_RECEIPT_BRANDS)
+
+
+def _has_critical_fraud_terms(text: str, normalized_url: str) -> bool:
+    normalized = _normalize_text(text)
+    if normalized_url:
         return True
-    return any(pattern in normalized_url for pattern in SUSPICIOUS_LINK_PATTERNS)
+    return any(_normalize_text(term) in normalized for term in CRITICAL_FRAUD_TERMS)
+
+
+def _is_safe_official_receipt(text: str, sender: str | None, normalized_url: str) -> bool:
+    return (
+        _is_official_sender(sender)
+        and _is_receipt_like_message(text)
+        and not _has_critical_fraud_terms(text, normalized_url)
+    )
+
+
+def _match_fake_operator_receipt(text: str, sender: str | None, normalized_url: str) -> bool:
+    if not _is_personal_sender(sender):
+        return False
+    if not _is_receipt_like_message(text):
+        return False
+    if _has_critical_fraud_terms(text, normalized_url):
+        return True
+    normalized = _normalize_text(text)
+    return (
+        _mentions_receipt_brand(text)
+        or "depot recu" in normalized
+        or "vous avez recu" in normalized
+    )
+
+
+def _match_suspicious_url(normalized_url: str, text: str = "") -> bool:
+    normalized_text = _normalize_text(text)
+    if normalized_url.startswith("http://") or "http://" in normalized_text:
+        return True
+    if normalized_url or normalized_text:
+        combined = f"{normalized_url} {normalized_text}"
+        return any(pattern in combined for pattern in SUSPICIOUS_LINK_PATTERNS)
+    return False
 
 
 def _match_fcfa_amount(text: str) -> bool:
     """Detecte un montant en francs CFA dans le message."""
-    pattern = r"\d{1,3}[.\s]?\d{3}\s*(?:F\s*CFA|FCFA|francs?|CFA)"
+    pattern = r"\d{1,5}(?:[.\s]?\d{3})?\s*[^\w]{0,3}(?:F\s*CFA|FCFA|francs?|CFA|F)"
     return bool(re.search(pattern, text, re.IGNORECASE))
 
 
@@ -489,7 +623,12 @@ def _find_spans(text: str, matched_rules: list[str]) -> list[dict]:
         return []
 
 
-def score_signal(message: str, url: str | None = None, phone: str | None = None) -> dict:
+def score_signal(
+    message: str,
+    url: str | None = None,
+    phone: str | None = None,
+    sender: str | None = None,
+) -> dict:
     """
     Rule-based scoring tuned for the L3 phishing/mobile-money context.
     """
@@ -505,9 +644,10 @@ def score_signal(message: str, url: str | None = None, phone: str | None = None)
         "operator_impersonation": lambda: _match_operator_impersonation(text),
         "threat_of_loss": lambda: _match_threat_of_loss(text),
         "phone_number_in_message": lambda: _match_phone_number_in_message(text),
-        "suspicious_url": lambda: _match_suspicious_url(normalized_url),
+        "suspicious_url": lambda: _match_suspicious_url(normalized_url, raw_text),
         "fcfa_amount_in_message": lambda: _match_fcfa_amount(raw_text),
         "whatsapp_number": lambda: _match_whatsapp(raw_text),
+        "fake_operator_receipt": lambda: _match_fake_operator_receipt(raw_text, sender, normalized_url),
     }
 
     score = 0
@@ -552,6 +692,46 @@ def score_signal(message: str, url: str | None = None, phone: str | None = None)
         explanation_text = EXPLANATION_MAPPING.get(category_id)
         if explanation_text and explanation_text not in explanation:
             explanation.append(explanation_text)
+
+    if _is_safe_official_receipt(raw_text, sender, normalized_url):
+        score = min(score, 20)
+        suppress_rules = {
+            "OPERATOR_IMPERSONATION",
+            "PHONE_IN_MESSAGE",
+            "fcfa_amount_in_message",
+            "MM_FRAUD",
+        }
+        suppress_categories = {
+            CATEGORY_LABELS[key]
+            for key in (
+                "operator_impersonation",
+                "phone_number_in_message",
+                "fcfa_amount_in_message",
+                "MM_FRAUD",
+            )
+            if key in CATEGORY_LABELS
+        } | {"MM_FRAUD"}
+        matched_rules = [rule for rule in matched_rules if rule not in suppress_rules]
+        suppressed_signal_rules = {
+            "operator_impersonation",
+            "phone_number_in_message",
+            "fcfa_amount_in_message",
+            "MM_FRAUD",
+        }
+        matched_signal_rules = [
+            rule
+            for rule in matched_signal_rules
+            if RULE_MAPPING.get(rule, rule) not in suppress_rules
+            and rule not in suppressed_signal_rules
+        ]
+        categories_detected = [
+            category
+            for category in categories_detected
+            if category not in suppress_categories
+        ]
+        explanation = [
+            "Le message ressemble a un recu transactionnel emis par un expediteur officiel."
+        ]
 
     score = min(score, 100)
 

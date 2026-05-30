@@ -17,6 +17,8 @@ class VerifySignalRequest(BaseModel):
     phone: str = Field(min_length=8, max_length=32)
     department: str | None = Field(default=None, max_length=32)
     device_install_id: str | None = Field(default=None, max_length=128)
+    source_sender: str | None = Field(default=None, max_length=128)
+    source_app: str | None = Field(default=None, max_length=64)
     # Backward-compatibility field kept for Sprint 1A transition.
     create_incident: bool | None = None
 
@@ -72,6 +74,8 @@ class IncidentReportRequest(BaseModel):
     phone: str = Field(min_length=8, max_length=32)
     department: str | None = Field(default=None, max_length=32)
     device_install_id: str | None = Field(default=None, max_length=128)
+    source_sender: str | None = Field(default=None, max_length=128)
+    source_app: str | None = Field(default=None, max_length=64)
     verification_message_uuid: UUID4 | None = None
     verification_analysis_uuid: UUID4 | None = None
     verification: VerificationSnapshot | None = None

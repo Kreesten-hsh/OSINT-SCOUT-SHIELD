@@ -154,7 +154,7 @@ class ShieldNotificationOrchestrator(context: Context) {
             ),
         )
 
-        if (shouldNotify(config, analysis)) {
+        if (shouldNotify(config, analysis, safeSender, message)) {
             localNotifier.showThreatAlert(
                 sourceApp = sourceApp,
                 sender = maskSender(safeSender),
@@ -177,7 +177,18 @@ class ShieldNotificationOrchestrator(context: Context) {
         }
     }
 
-    private fun shouldNotify(config: ShieldConfig, analysis: ShieldAnalysisResult): Boolean {
+    private fun shouldNotify(
+        config: ShieldConfig,
+        analysis: ShieldAnalysisResult,
+        sender: String,
+        message: String,
+    ): Boolean {
+        if (OfficialOperatorMessageGuard.shouldSuppressOfficialReceiptNotification(sender, message, analysis)) {
+            return false
+        }
+        if (OfficialOperatorMessageGuard.isFakeReceiptFromPersonalSender(sender, message)) {
+            return true
+        }
         if (analysis.riskScore < config.alertThreshold) {
             return false
         }

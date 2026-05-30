@@ -74,7 +74,12 @@ async def verify_citizen_signal(
             detail="phone must be a valid number (8 to 15 digits, optional leading +)",
         )
 
-    result = score_signal(message=request.message, url=request.url, phone=normalized_phone)
+    result = score_signal(
+        message=request.message,
+        url=request.url,
+        phone=normalized_phone,
+        sender=request.source_sender,
+    )
     phone_hash = derive_phone_hash(normalized_phone)
     suspect_number = await db.scalar(select(SuspectNumber).where(SuspectNumber.phone_hash == phone_hash))
     recurrence_count = int(suspect_number.report_count or 0) if suspect_number else 0
@@ -156,7 +161,12 @@ async def create_citizen_report(
     if existing_mobile_message and existing_mobile_message.reports:
         return _build_existing_report_response(existing_mobile_message.reports[0])
 
-    detection = score_signal(message=request.message, url=request.url, phone=normalized_phone)
+    detection = score_signal(
+        message=request.message,
+        url=request.url,
+        phone=normalized_phone,
+        sender=request.source_sender,
+    )
     categories_detected = detection.get("categories_detected", []) or []
     matched_rules = detection.get("matched_rules", []) or []
     risk_score = int(detection["risk_score"])

@@ -65,6 +65,7 @@ class ShieldAnalysisClient {
                 put("department", JSONObject.NULL)
                 put("url", JSONObject.NULL)
                 put("device_install_id", deviceInstallId)
+                put("source_sender", sender)
                 put("source_app", sourceApp)
             }
             OutputStreamWriter(connection.outputStream, Charsets.UTF_8).use { writer ->
