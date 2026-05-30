@@ -451,39 +451,55 @@ export default function VerifySignalPanel() {
       </section>
 
       {isVerifying && (
-        <section className="rounded-3xl border border-primary/20 bg-card/95 p-5 shadow-[0_22px_70px_-58px_rgba(14,165,233,0.6)] backdrop-blur-xl fade-rise-in">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-3">
-              <span className="grid h-12 w-12 place-items-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
-                <ScanLine className="h-5 w-5" />
-              </span>
-              <div>
-                <p className="text-sm font-bold text-foreground" aria-live="polite">
-                  {VERIFY_ROTATION_MESSAGES[loadingMessageIndex]}
-                </p>
-                <p className="text-sm text-muted-foreground">Le moteur BCS consolide les signaux sans ouvrir le lien dans votre navigateur.</p>
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-background/72 px-4 backdrop-blur-md">
+          <section
+            className="w-full max-w-lg overflow-hidden rounded-[1.75rem] border border-primary/20 bg-card shadow-[0_32px_90px_-46px_rgba(14,165,233,0.7)] fade-rise-in"
+            role="status"
+            aria-live="polite"
+          >
+            <div className="relative p-6 sm:p-7">
+              <div className="pointer-events-none absolute -right-16 -top-16 h-36 w-36 rounded-full bg-primary/15 blur-3xl" />
+              <div className="relative flex items-start gap-4">
+                <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-primary/20 bg-primary/10 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+                  <ScanLine className="h-6 w-6 animate-pulse" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold uppercase text-primary">Analyse en cours</p>
+                  <h2 className="mt-1 font-display text-xl font-bold text-foreground sm:text-2xl">
+                    {VERIFY_ROTATION_MESSAGES[loadingMessageIndex]}
+                  </h2>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Le moteur BCS verifie le contenu, le numero et les signaux connus. Ne fermez pas la page.
+                  </p>
+                </div>
+              </div>
+
+              <div className="relative mt-6">
+                <div className="h-2 overflow-hidden rounded-full bg-secondary">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
+                    style={{ width: `${Math.min(92, 28 + loadingMessageIndex * 24)}%` }}
+                  />
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {VERIFY_STEPS.map((step, index) => (
+                    <span
+                      key={step}
+                      className={cn(
+                        'inline-flex min-h-9 items-center justify-center rounded-xl border px-2 text-center text-xs font-bold',
+                        index <= loadingMessageIndex + 1
+                          ? 'border-primary/25 bg-primary/10 text-primary'
+                          : 'border-border bg-background/70 text-muted-foreground',
+                      )}
+                    >
+                      {step}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {VERIFY_STEPS.map((step, index) => (
-                <span
-                  key={step}
-                  className={cn(
-                    'rounded-full border px-3 py-1.5 text-xs font-semibold',
-                    index <= loadingMessageIndex + 1
-                      ? 'border-primary/25 bg-primary/10 text-primary'
-                      : 'border-border bg-background/60 text-muted-foreground',
-                  )}
-                >
-                  {step}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="mt-5 h-2 overflow-hidden rounded-full bg-secondary">
-            <div className="h-full w-2/3 animate-pulse rounded-full bg-primary" />
-          </div>
-        </section>
+          </section>
+        </div>
       )}
 
       {error && (
