@@ -1,12 +1,26 @@
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { AlertTriangle, CheckCircle2, Loader2, ScanLine, ShieldCheck, UploadCloud } from 'lucide-react';
+import {
+  ArrowRight,
+  CheckCircle2,
+  ClipboardCheck,
+  FileImage,
+  Link2,
+  Loader2,
+  MessageSquareText,
+  Phone,
+  ScanLine,
+  ShieldAlert,
+  ShieldCheck,
+  UploadCloud,
+} from 'lucide-react';
 
 import { apiClient } from '@/api/client';
 import type { APIResponse } from '@/api/types';
 import HighlightedMessage from '@/features/verify/HighlightedMessage';
 import { BENIN_DEPARTMENTS } from '@/lib/benin';
 import { normalizeRiskLevel } from '@/lib/presentation';
+import { cn } from '@/lib/utils';
 
 type SignalChannel = 'MOBILE_APP' | 'WEB_PORTAL';
 type RiskLevel = 'FAIBLE' | 'MOYEN' | 'FORT';
@@ -43,8 +57,42 @@ interface IncidentReportData {
 }
 
 const VERIFY_ROTATION_MESSAGES = ['Lecture du message', 'Verification du numero', 'Croisement avec les signaux BCS'];
+const VERIFY_STEPS = ['Message', 'Numero', 'Regles', 'Conseils'];
 const BENIN_PHONE_PATTERN = /^0\d{9}$/;
 const BENIN_PHONE_ERROR = 'Numero invalide - entrez 10 chiffres (ex: 0169647090)';
+
+const RISK_PRESENTATION: Record<
+  RiskLevel,
+  {
+    label: string;
+    textClass: string;
+    badgeClass: string;
+    panelClass: string;
+    scoreColor: string;
+  }
+> = {
+  FAIBLE: {
+    label: 'Risque faible',
+    textClass: 'text-emerald-700 dark:text-emerald-300',
+    badgeClass: 'border-emerald-600/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+    panelClass: 'border-emerald-600/20 bg-emerald-500/10',
+    scoreColor: '#10b981',
+  },
+  MOYEN: {
+    label: 'Risque moyen',
+    textClass: 'text-amber-700 dark:text-amber-300',
+    badgeClass: 'border-amber-600/25 bg-amber-500/10 text-amber-700 dark:text-amber-300',
+    panelClass: 'border-amber-600/20 bg-amber-500/10',
+    scoreColor: '#f59e0b',
+  },
+  FORT: {
+    label: 'Risque fort',
+    textClass: 'text-red-700 dark:text-red-300',
+    badgeClass: 'border-red-600/25 bg-red-500/10 text-red-700 dark:text-red-300',
+    panelClass: 'border-red-600/20 bg-red-500/10',
+    scoreColor: '#ef4444',
+  },
+};
 
 function getVerifyErrorMessage(err: unknown): string {
   if (!axios.isAxiosError(err)) {
@@ -58,7 +106,7 @@ function getVerifyErrorMessage(err: unknown): string {
   }
 
   if (!err.response) {
-    return 'API de verification inaccessible. Verifiez que le backend repond sur http://localhost:8000.';
+    return 'API de verification inaccessible. Verifiez que le backend repond.';
   }
 
   if (err.response.status >= 500) {
@@ -109,26 +157,14 @@ export default function VerifySignalPanel() {
   const [result, setResult] = useState<VerifySignalData | null>(null);
   const [incident, setIncident] = useState<IncidentReportData | null>(null);
 
-  const buildWhatsAppMessage = (riskLevel: string, targetPhone: string, reportId: string): string => {
-    const riskLabel = riskLevel === 'FORT' ? 'DANGER' : 'Suspect';
-    const reportSuffix = reportId ? reportId.slice(0, 8) : 'BCS';
-    const msg = [
-      'Alerte BENIN CYBER SHIELD',
-      '',
-      `${riskLabel} : Ce numero (${targetPhone}) est signale comme arnaque.`,
-      '',
-      'Ne communiquez JAMAIS votre code OTP ou PIN.',
-      '',
-      'Verifiez vous-meme : https://osint-scout-shield.vercel.app/verify',
-      `Rapport BCS ${reportSuffix}`,
-    ].join('\n');
-    return encodeURIComponent(msg);
-  };
-
   const normalizedPhone = useMemo(() => phone.trim(), [phone]);
   const isPhoneValid = isValidBeninPhone(normalizedPhone);
   const phoneError = phoneTouched && !isPhoneValid ? BENIN_PHONE_ERROR : null;
   const canSubmit = message.trim().length >= 5 && isPhoneValid;
+  const messageLength = message.trim().length;
+  const hasUrl = url.trim().length > 0;
+  const selectedDepartment = department || 'Detection automatique';
+  const attachedFilesLabel = screenshots.length > 0 ? `${screenshots.length} fichier(s) pret(s)` : 'Aucune capture ajoutee';
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -166,6 +202,22 @@ export default function VerifySignalPanel() {
       window.clearInterval(intervalId);
     };
   }, [isVerifying]);
+
+  const buildWhatsAppMessage = (riskLevel: string, targetPhone: string, reportId: string): string => {
+    const riskLabel = riskLevel === 'FORT' ? 'DANGER' : 'Suspect';
+    const reportSuffix = reportId ? reportId.slice(0, 8) : 'BCS';
+    const msg = [
+      'Alerte BENIN CYBER SHIELD',
+      '',
+      `${riskLabel} : Ce numero (${targetPhone}) est signale comme arnaque.`,
+      '',
+      'Ne communiquez JAMAIS votre code OTP ou PIN.',
+      '',
+      'Verifiez vous-meme : https://osint-scout-shield.vercel.app/verify',
+      `Rapport BCS ${reportSuffix}`,
+    ].join('\n');
+    return encodeURIComponent(msg);
+  };
 
   const onFilesChanged = (event: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = Array.from(event.target.files || []);
@@ -251,7 +303,7 @@ export default function VerifySignalPanel() {
       setShowReportSuccess(true);
     } catch (err: unknown) {
       if (!axios.isAxiosError(err) || !err.response) {
-        setError('API de signalement inaccessible. Verifiez que le backend repond sur http://localhost:8000.');
+        setError('API de signalement inaccessible. Verifiez que le backend repond.');
       } else {
         const responseData = err.response.data as { message?: string; detail?: string; error?: string } | undefined;
         setError(responseData?.message || responseData?.detail || responseData?.error || 'Erreur de signalement');
@@ -261,63 +313,97 @@ export default function VerifySignalPanel() {
     }
   };
 
-  const levelColor = result?.risk_level === 'FORT' ? 'text-red-400' : result?.risk_level === 'MOYEN' ? 'text-amber-300' : 'text-emerald-300';
   const reportButtonDisabled = !result || isReporting || isVerifying || !!incident;
+  const risk = result ? RISK_PRESENTATION[result.risk_level] : null;
+  const adviceItems = result?.citizen_advice?.length ? result.citizen_advice : result?.recommendations ?? [];
+  const shouldShowWhatsApp = result?.risk_level === 'FORT' || result?.risk_level === 'MOYEN';
 
   return (
     <>
-      <section className="panel soft-grid relative overflow-hidden p-6 md:p-8 fade-rise-in">
-        <div className="pointer-events-none absolute -right-24 -top-20 h-56 w-56 rounded-full bg-primary/20 blur-3xl" />
-        <div className="relative z-10 mb-6">
-          <h1 className="mt-3 font-display text-2xl font-bold tracking-tight md:text-3xl">
-            Verification et signalement anti-arnaque
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">Analysez un message suspect puis signalez-le si necessaire.</p>
-        </div>
+      <section className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
+        <div className="rounded-3xl border border-border/70 bg-card/90 p-5 shadow-[0_22px_70px_-56px_rgba(15,23,42,0.72)] backdrop-blur-xl sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase text-muted-foreground">Etape 1</p>
+              <h2 className="mt-1 font-display text-2xl font-bold leading-tight">Message a analyser</h2>
+            </div>
+            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-border/70 bg-background/70 px-3 py-1.5 text-xs font-semibold text-muted-foreground">
+              <MessageSquareText className="h-3.5 w-3.5 text-primary" />
+              {messageLength} caractere(s)
+            </div>
+          </div>
 
-        <div className="grid grid-cols-1 gap-4">
-          <label className="block text-sm">
-            <span className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">Message suspect</span>
+          <label className="mt-5 block">
+            <span className="sr-only">Message suspect</span>
             <textarea
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              className="min-h-32 w-full rounded-xl border border-input bg-background/70 px-3 py-2 text-sm outline-none transition focus:ring-2 focus:ring-ring"
-              placeholder="Collez ici le contenu recu"
+              onChange={(event) => setMessage(event.target.value)}
+              className="min-h-[220px] w-full resize-y rounded-2xl border border-input bg-background/70 px-4 py-4 text-base leading-7 text-foreground outline-none placeholder:text-muted-foreground/70 focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
+              placeholder="Collez ici le SMS, le message WhatsApp ou le texte suspect recu."
             />
           </label>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <label className="block text-sm">
-              <span className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">URL (optionnel)</span>
-              <input
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                className="h-11 w-full rounded-xl border border-input bg-background/70 px-3 text-sm outline-none transition focus:ring-2 focus:ring-ring"
-                placeholder="https://..."
-              />
-            </label>
-            <label className="block text-sm">
-              <span className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">
-                Numero suspect (obligatoire)
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border border-border/70 bg-background/60 p-3">
+              <p className="text-xs font-semibold uppercase text-muted-foreground">Canal</p>
+              <p className="mt-1 text-sm font-semibold">{channel === 'MOBILE_APP' ? 'Application mobile' : 'Portail web'}</p>
+            </div>
+            <div className="rounded-2xl border border-border/70 bg-background/60 p-3">
+              <p className="text-xs font-semibold uppercase text-muted-foreground">Lien</p>
+              <p className="mt-1 text-sm font-semibold">{hasUrl ? 'Analyse OSINT active' : 'Optionnel'}</p>
+            </div>
+            <div className="rounded-2xl border border-border/70 bg-background/60 p-3">
+              <p className="text-xs font-semibold uppercase text-muted-foreground">Preuves</p>
+              <p className="mt-1 text-sm font-semibold">{attachedFilesLabel}</p>
+            </div>
+          </div>
+        </div>
+
+        <aside className="rounded-3xl border border-border/70 bg-card/90 p-5 shadow-[0_22px_70px_-56px_rgba(15,23,42,0.72)] backdrop-blur-xl sm:p-6">
+          <p className="text-xs font-bold uppercase text-muted-foreground">Etape 2</p>
+          <h2 className="mt-1 font-display text-2xl font-bold leading-tight">Contexte du signal</h2>
+
+          <div className="mt-5 space-y-4">
+            <label className="block">
+              <span className="mb-2 flex items-center gap-2 text-sm font-semibold">
+                <Phone className="h-4 w-4 text-primary" />
+                Numero suspect
               </span>
               <input
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(event) => setPhone(event.target.value)}
                 onBlur={() => setPhoneTouched(true)}
-                className={`h-11 w-full rounded-xl border bg-background/70 px-3 text-sm outline-none transition focus:ring-2 focus:ring-ring ${
-                  phoneError ? 'border-destructive/70 focus:ring-destructive/40' : 'border-input'
-                }`}
+                className={cn(
+                  'h-12 w-full rounded-2xl border bg-background/70 px-4 text-sm outline-none focus:ring-4',
+                  phoneError
+                    ? 'border-destructive/70 focus:ring-destructive/10'
+                    : 'border-input focus:border-primary/40 focus:ring-primary/10',
+                )}
                 placeholder="Ex: 0169647090"
                 required
               />
-              {phoneError && <span className="mt-1 block text-xs text-destructive">{phoneError}</span>}
+              {phoneError && <span className="mt-2 block text-xs font-semibold text-destructive">{phoneError}</span>}
             </label>
-            <label className="block text-sm">
-              <span className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">Departement (optionnel)</span>
+
+            <label className="block">
+              <span className="mb-2 flex items-center gap-2 text-sm font-semibold">
+                <Link2 className="h-4 w-4 text-primary" />
+                URL suspecte
+              </span>
+              <input
+                value={url}
+                onChange={(event) => setUrl(event.target.value)}
+                className="h-12 w-full rounded-2xl border border-input bg-background/70 px-4 text-sm outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
+                placeholder="https://..."
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold">Departement</span>
               <select
                 value={department}
-                onChange={(e) => setDepartment(e.target.value)}
-                className="h-11 w-full rounded-xl border border-input bg-background/70 px-3 text-sm outline-none transition focus:ring-2 focus:ring-ring"
+                onChange={(event) => setDepartment(event.target.value)}
+                className="h-12 w-full rounded-2xl border border-input bg-background/70 px-4 text-sm outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
               >
                 <option value="">Detection automatique</option>
                 {BENIN_DEPARTMENTS.map((item) => (
@@ -327,163 +413,219 @@ export default function VerifySignalPanel() {
                 ))}
               </select>
             </label>
-          </div>
 
-          <div>
-            <label className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">
-              Captures ecran (optionnel)
-            </label>
-            <label className="inline-flex min-h-[44px] w-full cursor-pointer items-center gap-2 rounded-xl border border-dashed border-input bg-secondary/20 px-3 py-2 text-sm text-muted-foreground transition hover:bg-secondary/35">
-              <UploadCloud className="h-4 w-4" />
-              Ajouter une ou plusieurs images
-              <input type="file" accept="image/*" multiple className="hidden" onChange={onFilesChanged} />
-            </label>
-            {screenshots.length > 0 && (
-              <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-                {screenshots.map((file, index) => (
-                  <div key={`${file.name}-${index}`} className="truncate">
-                    {file.name}
-                  </div>
-                ))}
-              </div>
-            )}
+            <div>
+              <p className="mb-2 flex items-center gap-2 text-sm font-semibold">
+                <FileImage className="h-4 w-4 text-primary" />
+                Captures ecran
+              </p>
+              <label className="flex min-h-[56px] cursor-pointer items-center justify-between gap-3 rounded-2xl border border-dashed border-input bg-background/50 px-4 py-3 text-sm text-muted-foreground hover:bg-secondary/40">
+                <span className="inline-flex items-center gap-2">
+                  <UploadCloud className="h-4 w-4" />
+                  Ajouter des images
+                </span>
+                <span className="text-xs font-semibold">{screenshots.length}</span>
+                <input type="file" accept="image/*" multiple className="hidden" onChange={onFilesChanged} />
+              </label>
+              {screenshots.length > 0 && (
+                <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+                  {screenshots.map((file, index) => (
+                    <div key={`${file.name}-${index}`} className="truncate rounded-lg bg-secondary/30 px-2 py-1">
+                      {file.name}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <button
             onClick={submitVerify}
             disabled={isVerifying || isReporting || !canSubmit}
-            className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
+            className="mt-5 inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-[0_16px_42px_-30px_rgba(14,165,233,0.8)] hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-            Verifier
+            {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanLine className="h-4 w-4" />}
+            Verifier le message
           </button>
-        </div>
-
-        {isVerifying && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/80 px-4 backdrop-blur-md">
-            <div className="w-full max-w-sm rounded-2xl border border-border bg-card/95 p-5 text-left shadow-xl">
-              <div className="flex items-center gap-3">
-                <span className="grid h-11 w-11 place-items-center rounded-2xl bg-primary/10 text-primary">
-                  <ScanLine className="h-5 w-5" />
-                </span>
-                <div>
-                  <p className="text-sm font-semibold text-foreground" aria-live="polite">
-                    {VERIFY_ROTATION_MESSAGES[loadingMessageIndex]}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Analyse securisee en cours</p>
-                </div>
-              </div>
-              <div className="mt-4 h-2 overflow-hidden rounded-full bg-secondary">
-                <div className="h-full w-2/3 animate-pulse rounded-full bg-primary" />
-              </div>
-              <div className="mt-4 grid grid-cols-3 gap-2 text-[11px] font-semibold text-muted-foreground">
-                <span className="inline-flex items-center gap-1">
-                  <ShieldCheck className="h-3.5 w-3.5 text-primary" /> Score
-                </span>
-                <span>Regles</span>
-                <span>Conseils</span>
-              </div>
-            </div>
-          </div>
-        )}
+        </aside>
       </section>
 
-      {error && <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div>}
-
-      {result && (
-        <section className="panel space-y-4 p-6 fade-rise-in-1">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="section-title text-lg">Resultat d'analyse</h2>
-            <span className={`text-sm font-semibold ${levelColor}`}>
-              {result.risk_level} - Score {result.risk_score}/100
-            </span>
+      {isVerifying && (
+        <section className="rounded-3xl border border-primary/20 bg-card/95 p-5 shadow-[0_22px_70px_-58px_rgba(14,165,233,0.6)] backdrop-blur-xl fade-rise-in">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-3">
+              <span className="grid h-12 w-12 place-items-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
+                <ScanLine className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="text-sm font-bold text-foreground" aria-live="polite">
+                  {VERIFY_ROTATION_MESSAGES[loadingMessageIndex]}
+                </p>
+                <p className="text-sm text-muted-foreground">Le moteur BCS consolide les signaux sans ouvrir le lien dans votre navigateur.</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {VERIFY_STEPS.map((step, index) => (
+                <span
+                  key={step}
+                  className={cn(
+                    'rounded-full border px-3 py-1.5 text-xs font-semibold',
+                    index <= loadingMessageIndex + 1
+                      ? 'border-primary/25 bg-primary/10 text-primary'
+                      : 'border-border bg-background/60 text-muted-foreground',
+                  )}
+                >
+                  {step}
+                </span>
+              ))}
+            </div>
           </div>
-
-          {result.resolved_department && (
-            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
-              Departement retenu: <span className="font-semibold">{result.resolved_department}</span>
-            </div>
-          )}
-
-          {(result.risk_level === 'FORT' || result.risk_level === 'MOYEN') && (
-            <a
-              href={`https://wa.me/?text=${buildWhatsAppMessage(
-                result.risk_level,
-                normalizedPhone,
-                incident?.alert_uuid ?? '',
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3 inline-flex items-center gap-2 rounded-lg bg-green-700 px-4 py-2 text-sm text-white transition-colors hover:bg-green-600"
-            >
-              Prevenir ma famille sur WhatsApp
-            </a>
-          )}
-
-          {result.recurrence_count > 0 && (
-            <div className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-300">
-              Ce numero a deja ete signale {result.recurrence_count} fois par d'autres utilisateurs.
-            </div>
-          )}
-
-          <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-            <p className="mb-3 text-xs font-bold uppercase tracking-wide text-foreground">Message analyse</p>
-            <HighlightedMessage text={message.trim()} spans={result.highlighted_spans ?? []} />
+          <div className="mt-5 h-2 overflow-hidden rounded-full bg-secondary">
+            <div className="h-full w-2/3 animate-pulse rounded-full bg-primary" />
           </div>
+        </section>
+      )}
 
-          {(result.citizen_advice?.length ?? 0) > 0 && (
-            <div className="mt-4 rounded-lg border border-border/70 bg-secondary/25 p-3">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Que faire maintenant</p>
-              <ul className="space-y-1">
-                {result.citizen_advice?.map((advice, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-foreground">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-400" />
-                    <span>{advice}</span>
-                  </li>
-                ))}
-              </ul>
+      {error && (
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive">
+          {error}
+        </div>
+      )}
+
+      {result && risk && (
+        <section className="rounded-3xl border border-border/70 bg-card/90 p-5 shadow-[0_24px_80px_-58px_rgba(15,23,42,0.72)] backdrop-blur-xl fade-rise-in-1 sm:p-6">
+          <div className="grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
+            <div className={cn('rounded-3xl border p-5', risk.panelClass)}>
+              <div
+                className="mx-auto grid h-36 w-36 place-items-center rounded-full p-2"
+                style={{
+                  background: `conic-gradient(${risk.scoreColor} ${Math.max(0, Math.min(result.risk_score, 100)) * 3.6}deg, hsl(var(--secondary)) 0deg)`,
+                }}
+              >
+                <div className="grid h-full w-full place-items-center rounded-full bg-card text-center">
+                  <div>
+                    <p className="font-display text-4xl font-bold">{result.risk_score}</p>
+                    <p className="text-xs font-bold uppercase text-muted-foreground">sur 100</p>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-5 text-center">
+                <span className={cn('inline-flex rounded-full border px-3 py-1.5 text-xs font-bold uppercase', risk.badgeClass)}>
+                  {risk.label}
+                </span>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  {result.should_report ? 'Un signalement formel est recommande.' : 'Restez prudent avant toute action.'}
+                </p>
+              </div>
             </div>
-          )}
 
-          {result.fon_alert && (
-            <p className="mt-2 text-xs italic text-amber-400">
-              {result.fon_alert}
-            </p>
-          )}
+            <div className="min-w-0 space-y-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase text-muted-foreground">Resultat</p>
+                  <h2 className="mt-1 font-display text-2xl font-bold leading-tight">Analyse du message</h2>
+                </div>
+                {result.resolved_department && (
+                  <span className="inline-flex w-fit rounded-full border border-emerald-600/25 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                    {result.resolved_department}
+                  </span>
+                )}
+              </div>
 
-          <ul className="space-y-1 rounded-xl border border-border/70 bg-secondary/20 p-4 text-sm text-muted-foreground">
-            {result.explanation.map((line, idx) => (
-              <li key={idx} className="flex items-start gap-2">
-                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-primary/80" />
-                <span>{line}</span>
-              </li>
-            ))}
-          </ul>
+              {result.recurrence_count > 0 && (
+                <div className="rounded-2xl border border-amber-600/25 bg-amber-500/10 px-4 py-3 text-sm font-semibold text-amber-800 dark:text-amber-300">
+                  Ce numero a deja ete signale {result.recurrence_count} fois.
+                </div>
+              )}
 
-          <button
-            onClick={() => setShowReportConfirmation(true)}
-            disabled={reportButtonDisabled}
-            className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/12 px-4 py-2 text-sm font-semibold text-amber-300 transition hover:bg-amber-500/20 disabled:opacity-50"
-          >
-            {isReporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <AlertTriangle className="h-4 w-4" />}
-            {incident ? 'Signalement deja envoye' : 'Signaler cet incident'}
-          </button>
+              <div className="rounded-3xl border border-border/80 bg-background/74 p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="text-xs font-bold uppercase text-muted-foreground">Message analyse</p>
+                  <span className={cn('rounded-full px-2.5 py-1 text-xs font-semibold', risk.textClass)}>{result.risk_level}</span>
+                </div>
+                <div className="rounded-2xl border border-border/70 bg-card px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                  <HighlightedMessage text={message.trim()} spans={result.highlighted_spans ?? []} />
+                </div>
+              </div>
+
+              {adviceItems.length > 0 && (
+                <div className="rounded-3xl border border-border/80 bg-background/60 p-4">
+                  <p className="mb-3 flex items-center gap-2 text-sm font-bold">
+                    <ClipboardCheck className="h-4 w-4 text-primary" />
+                    Actions recommandees
+                  </p>
+                  <ul className="grid gap-2">
+                    {adviceItems.map((advice, index) => (
+                      <li key={`${advice}-${index}`} className="flex items-start gap-2 text-sm text-foreground">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+                        <span>{advice}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {result.fon_alert && <p className="text-sm italic text-amber-700 dark:text-amber-300">{result.fon_alert}</p>}
+
+              <div className="rounded-3xl border border-border/80 bg-background/60 p-4">
+                <p className="mb-3 text-sm font-bold">Pourquoi ce score ?</p>
+                <ul className="space-y-2">
+                  {result.explanation.map((line, index) => (
+                    <li key={`${line}-${index}`} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                      <span>{line}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <button
+                  onClick={() => setShowReportConfirmation(true)}
+                  disabled={reportButtonDisabled}
+                  className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-2xl border border-amber-600/30 bg-amber-500/10 px-4 py-2.5 text-sm font-bold text-amber-800 hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:text-amber-300"
+                >
+                  {isReporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldAlert className="h-4 w-4" />}
+                  {incident ? 'Signalement envoye' : 'Signaler cet incident'}
+                </button>
+
+                {shouldShowWhatsApp && (
+                  <a
+                    href={`https://wa.me/?text=${buildWhatsAppMessage(
+                      result.risk_level,
+                      normalizedPhone,
+                      incident?.alert_uuid ?? '',
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-2xl border border-emerald-600/25 bg-emerald-500/10 px-4 py-2.5 text-sm font-bold text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300"
+                  >
+                    <ShieldCheck className="h-4 w-4" />
+                    Prevenir mes proches
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
         </section>
       )}
 
       {showReportConfirmation && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/75 px-4">
-          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
-            <h3 className="font-display text-xl font-semibold">Confirmer le signalement</h3>
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/75 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-2xl">
+            <h3 className="font-display text-xl font-bold">Confirmer le signalement</h3>
             <p className="mt-3 text-sm text-muted-foreground">
-              Vous etes sur le point de signaler ce message comme suspect. Votre signalement sera transmis aux autorites competentes.
+              Ce message sera enregistre avec sa reference publique, ses pieces jointes et les elements utiles a l'analyse.
             </p>
+            <div className="mt-5 rounded-2xl border border-border/70 bg-background/60 px-4 py-3 text-sm text-muted-foreground">
+              Departement : <span className="font-semibold text-foreground">{selectedDepartment}</span>
+            </div>
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setShowReportConfirmation(false)}
                 disabled={isReporting}
-                className="rounded-lg border border-input px-3 py-2 text-sm text-muted-foreground hover:bg-secondary/40 hover:text-foreground disabled:opacity-50"
+                className="rounded-xl border border-input px-3 py-2 text-sm font-semibold text-muted-foreground hover:bg-secondary/40 hover:text-foreground disabled:opacity-50"
               >
                 Annuler
               </button>
@@ -491,10 +633,10 @@ export default function VerifySignalPanel() {
                 type="button"
                 onClick={submitReport}
                 disabled={isReporting}
-                className="inline-flex items-center gap-2 rounded-lg border border-primary/40 bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-primary px-3 py-2 text-sm font-bold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
                 {isReporting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                Confirmer le signalement
+                Confirmer
               </button>
             </div>
           </div>
@@ -502,24 +644,24 @@ export default function VerifySignalPanel() {
       )}
 
       {showReportSuccess && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 px-4">
-          <div className="w-full max-w-md rounded-2xl border border-emerald-500/25 bg-card p-6 text-center shadow-2xl">
-            <div className="mx-auto mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-emerald-600/25 bg-card p-6 text-center shadow-2xl">
+            <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl border border-emerald-600/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
               <CheckCircle2 className="h-6 w-6" />
             </div>
-            <h3 className="font-display text-xl font-semibold text-foreground">Signalement enregistre</h3>
+            <h3 className="font-display text-xl font-bold text-foreground">Signalement enregistre</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Merci. Votre signalement a bien ete pris en compte et sera traite par nos equipes.
+              Votre signalement est pris en compte. Conservez la reference publique si elle est affichee.
             </p>
             {incident?.public_reference ? (
-              <div className="mt-4 rounded-xl border border-border/70 bg-secondary/20 px-4 py-3 text-sm">
-                Reference publique: <span className="font-mono font-semibold">{incident.public_reference}</span>
+              <div className="mt-4 rounded-2xl border border-border/70 bg-background/60 px-4 py-3 text-sm">
+                Reference publique : <span className="font-mono font-bold">{incident.public_reference}</span>
               </div>
             ) : null}
             <button
               type="button"
               onClick={() => setShowReportSuccess(false)}
-              className="mt-5 rounded-lg border border-input px-4 py-2 text-sm font-medium text-muted-foreground transition hover:bg-secondary/40 hover:text-foreground"
+              className="mt-5 rounded-xl border border-input px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-secondary/40 hover:text-foreground"
             >
               Fermer
             </button>
