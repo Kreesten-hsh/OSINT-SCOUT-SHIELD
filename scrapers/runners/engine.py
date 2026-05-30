@@ -78,6 +78,8 @@ class OsintScout:
             print(f"[>] Processing target: {url}", flush=True)
             await page.goto(url, wait_until="networkidle", timeout=self.navigation_timeout_ms)
             raw_text = await page.inner_text("body")
+            source_html = await page.content()
+            source_hash = await self.hash_content(source_html.encode("utf-8", errors="ignore"))
 
             timestamp = self._utc_now_iso()
             screenshot_bytes = await page.screenshot(full_page=True)
@@ -94,6 +96,8 @@ class OsintScout:
                 "metadata": {
                     "title": await page.title(),
                     "status": "CAPTURED",
+                    "source_html_sha256": source_hash,
+                    "source_html_preview": source_html[:2000],
                 },
             }
         except Exception as exc:

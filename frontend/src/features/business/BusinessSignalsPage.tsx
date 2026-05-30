@@ -15,6 +15,7 @@ export default function BusinessSignalsPage() {
       const response = await apiClient.get<APIResponse<PmeSignalementListData>>('/pme/signalements?skip=0&limit=50');
       return response.data.data;
     },
+    refetchInterval: 5000,
   });
 
   const items = data?.items ?? [];

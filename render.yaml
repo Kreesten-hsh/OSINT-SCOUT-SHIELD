@@ -33,8 +33,23 @@ services:
       - key: EXTERNAL_OPERATORS_RECEIVER_URL
         sync: false
       - key: ENABLE_FORENSIC_CAPTURE
-        value: "false"
+        value: "true"
       - key: ENABLE_RESULT_CONSUMER
         value: "true"
       - key: ENABLE_EXTERNAL_TRANSMISSION_CONSUMER
         value: "true"
+
+  - type: worker
+    name: bcs-scraper
+    runtime: docker
+    plan: free
+    dockerfilePath: ./scrapers/Dockerfile
+    dockerContext: ./scrapers
+    autoDeploy: true
+    envVars:
+      - key: REDIS_URL
+        sync: false
+      - key: SCRAPE_TIMEOUT_SECONDS
+        value: "45"
+      - key: WORKER_RECONNECT_DELAY_SECONDS
+        value: "2"

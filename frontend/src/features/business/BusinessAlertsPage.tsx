@@ -15,6 +15,7 @@ export default function BusinessAlertsPage() {
       const response = await apiClient.get<APIResponse<PmeIncidentListData>>('/pme/incidents?skip=0&limit=50');
       return response.data.data;
     },
+    refetchInterval: 5000,
   });
 
   const items = data?.items ?? [];

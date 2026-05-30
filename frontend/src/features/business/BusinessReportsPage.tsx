@@ -17,6 +17,7 @@ export default function BusinessReportsPage() {
       const response = await apiClient.get<APIResponse<PmeBundleListData>>('/pme/dossiers?skip=0&limit=50');
       return response.data.data;
     },
+    refetchInterval: 5000,
   });
 
   const items = data?.items ?? [];

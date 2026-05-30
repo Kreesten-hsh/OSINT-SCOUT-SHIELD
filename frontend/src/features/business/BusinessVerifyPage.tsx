@@ -24,6 +24,7 @@ export default function BusinessVerifyPage() {
       const response = await apiClient.get<APIResponse<PmeDashboardData>>('/pme/dashboard');
       return response.data.data;
     },
+    refetchInterval: 5000,
   });
 
   const readiness = useMemo(() => {
