@@ -96,4 +96,16 @@ class NativeShieldBridge {
     final bool? granted = await _channel.invokeMethod<bool>('requestPostNotificationsPermission');
     return granted == true;
   }
+
+  Future<bool> speakFonAlert(String text) async {
+    final bool? started = await _channel.invokeMethod<bool>(
+      'speakFonAlert',
+      <String, Object?>{'text': text},
+    );
+    return started == true;
+  }
+
+  Future<void> stopFonAlert() {
+    return _channel.invokeMethod<void>('stopFonAlert');
+  }
 }

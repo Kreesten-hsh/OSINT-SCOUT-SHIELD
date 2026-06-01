@@ -43,6 +43,7 @@ class VerifySignalData(BaseModel):
     recommendations: list[str] = Field(default_factory=list)
     citizen_advice: list[str] = Field(default_factory=list)
     fon_alert: str | None = None
+    fon_alert_speech: str | None = None
     resolved_department: str | None = None
     department_source: DepartmentSource = "UNKNOWN"
     verification_message_uuid: UUID4 | None = None

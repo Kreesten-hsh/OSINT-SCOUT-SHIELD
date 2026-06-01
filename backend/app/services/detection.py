@@ -154,10 +154,71 @@ RECOMMENDATION_MAPPING = {
     ),
 }
 
-FON_ALERTS = {
-    "HIGH": "⚠️ Wɛ - Nyanya wɛ ɖo ali bo na xo wɛ!",
-    "MEDIUM": "⚠️ Ðo wantɔ ɖagbe - Kpɔ nu enɛ jɛ nukɔn",
+FON_ALERT_BASE = {
+    "FORT": (
+        "Wɛ, nù sia do vivɛ. Mà klike o, mà na PIN, OTP alo kɔ́dɛ ɖe ame aɖe o.",
+        "We, nou sia do vive. Ma klike o. Ma na PIN, OTP alo code de ame ade o.",
+    ),
+    "MOYEN": (
+        "Kpɔ nù sia gbe. Mà yì nukɔn o. Ɖo kan sɔgbe na ɔfisieli gbɔ.",
+        "Kpo nou sia gbe. Ma yi nukon o. Do kan sogbe na officiel gbo.",
+    ),
 }
+
+FON_ALERT_BY_RULE = {
+    "fake_operator_receipt": (
+        "Mà na nù alo mɔ̌nɛ o. Kpɔ solde to appli alo kɔ́dɛ USSD ɔfisieli me.",
+        "Ma na nou alo money o. Kpo solde to appli alo code USSD officiel me.",
+    ),
+    "otp_request": (
+        "Mà na PIN, OTP alo kɔ́dɛ ɖe ame aɖe o. Kɔ́dɛ lɛ nyi asì gɔna tɔn.",
+        "Ma na PIN, OTP alo code de ame ade o. Code le nyi assi gona ton.",
+    ),
+    "suspicious_url": (
+        "Mà klike link sia o. Kpɔ adreesi ɔfisieli gbɔn bɔ yì nukɔn.",
+        "Ma klike link sia o. Kpo adresse officiel gbon bo yi nukon.",
+    ),
+    "unexpected_gain": (
+        "Ame aɖe lɛ wɛ be a nyi akwɛ alo cadeau. Mà yì nukɔn o, kpɔ nù gbɔn.",
+        "Ame ade le we be a nyi akwe alo cadeau. Ma yi nukon o, kpo nou gbon.",
+    ),
+    "urgency": (
+        "Nù sia do vivɛ bo na wɛ nukunmɛ. Nɔ́ kpɔ e gbɔn; mà yì nukɔn o.",
+        "Nou sia do vive bo na we noukonme. No kpo e gbon. Ma yi nukon o.",
+    ),
+    "threat_of_loss": (
+        "A lɛ wɛ be nù aɖe na bu. Mà sɛ́ avivɔ o; kpɔ nù gbɔn.",
+        "A le we be nou ade na bou. Ma se avivo o. Kpo nou gbon.",
+    ),
+    "operator_impersonation": (
+        "Mɛ sia lɛ e ɖokpo operateur ɔfisieli. Kpɔ nù to MTN, Moov alo banque ɔfisieli me.",
+        "Me sia le e dokpo operateur officiel. Kpo nou to MTN, Moov alo banque officiel me.",
+    ),
+    "MM_FRAUD": (
+        "Mà da mɔ̌nɛ o, mà na PIN o. Kpɔ transaction to appli ɔfisieli me.",
+        "Ma da money o, ma na PIN o. Kpo transaction to appli officiel me.",
+    ),
+}
+
+
+def _build_fon_alert(risk_level: str, matched_signal_rules: list[str]) -> tuple[str | None, str | None]:
+    if risk_level not in FON_ALERT_BASE:
+        return None, None
+
+    for rule in (
+        "fake_operator_receipt",
+        "otp_request",
+        "suspicious_url",
+        "unexpected_gain",
+        "urgency",
+        "threat_of_loss",
+        "operator_impersonation",
+        "MM_FRAUD",
+    ):
+        if rule in matched_signal_rules:
+            return FON_ALERT_BY_RULE[rule]
+
+    return FON_ALERT_BASE[risk_level]
 
 RULE_KEYWORDS = {
     "otp_request": ["otp", "code", "secret", "pin", "mot de passe"],
@@ -746,6 +807,7 @@ def score_signal(
         for rule in matched_signal_rules
         if rule in RECOMMENDATION_MAPPING
     ]
+    fon_alert, fon_alert_speech = _build_fon_alert(risk_level, matched_signal_rules)
 
     return {
         "risk_score": score,
@@ -757,5 +819,6 @@ def score_signal(
         "highlighted_spans": _find_spans(raw_text, matched_signal_rules),
         "recommendations": recommendations,
         "citizen_advice": recommendations[:3],
-        "fon_alert": FON_ALERTS.get("HIGH" if risk_level == "FORT" else "MEDIUM" if risk_level == "MOYEN" else risk_level),
+        "fon_alert": fon_alert,
+        "fon_alert_speech": fon_alert_speech,
     }

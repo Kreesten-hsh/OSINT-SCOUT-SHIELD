@@ -7,12 +7,14 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
+import android.speech.tts.TextToSpeech
 import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import kotlin.concurrent.thread
+import java.util.Locale
 
 class MainActivity : FlutterActivity() {
     private lateinit var configStore: ShieldConfigStore
@@ -20,6 +22,8 @@ class MainActivity : FlutterActivity() {
     private lateinit var orchestrator: ShieldNotificationOrchestrator
     private var pendingNotificationPermissionResult: MethodChannel.Result? = null
     private var pendingOpenSurface: String? = null
+    private var fonSpeechEngine: TextToSpeech? = null
+    private var fonSpeechReady = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -103,6 +107,13 @@ class MainActivity : FlutterActivity() {
 
             "requestPostNotificationsPermission" -> requestPostNotificationsPermission(result)
 
+            "speakFonAlert" -> speakFonAlert(call, result)
+
+            "stopFonAlert" -> {
+                fonSpeechEngine?.stop()
+                result.success(true)
+            }
+
             else -> result.notImplemented()
         }
     }
@@ -141,6 +152,42 @@ class MainActivity : FlutterActivity() {
         requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), POST_NOTIFICATION_REQUEST_CODE)
     }
 
+    private fun speakFonAlert(call: MethodCall, result: MethodChannel.Result) {
+        val text = call.argument<String>("text")?.trim().orEmpty()
+        if (text.isBlank()) {
+            result.success(false)
+            return
+        }
+
+        val currentEngine = fonSpeechEngine
+        if (currentEngine != null && fonSpeechReady) {
+            currentEngine.speakFonText(text)
+            result.success(true)
+            return
+        }
+
+        fonSpeechEngine = TextToSpeech(this) { status ->
+            runOnUiThread {
+                val engine = fonSpeechEngine
+                if (status != TextToSpeech.SUCCESS || engine == null) {
+                    fonSpeechReady = false
+                    result.success(false)
+                    return@runOnUiThread
+                }
+                fonSpeechReady = true
+                engine.setLanguage(Locale.FRENCH)
+                engine.setSpeechRate(0.74f)
+                engine.setPitch(0.92f)
+                engine.speakFonText(text)
+                result.success(true)
+            }
+        }
+    }
+
+    private fun TextToSpeech.speakFonText(text: String) {
+        speak(text, TextToSpeech.QUEUE_FLUSH, null, FON_SPEECH_UTTERANCE_ID)
+    }
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -156,8 +203,17 @@ class MainActivity : FlutterActivity() {
         pendingNotificationPermissionResult = null
     }
 
+    override fun onDestroy() {
+        fonSpeechEngine?.stop()
+        fonSpeechEngine?.shutdown()
+        fonSpeechEngine = null
+        fonSpeechReady = false
+        super.onDestroy()
+    }
+
     companion object {
         private const val CHANNEL_NAME = "bcs/native_shield"
         private const val POST_NOTIFICATION_REQUEST_CODE = 1107
+        private const val FON_SPEECH_UTTERANCE_ID = "bcs-fon-alert"
     }
 }

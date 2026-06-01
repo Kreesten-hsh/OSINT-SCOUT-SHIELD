@@ -47,6 +47,7 @@ class VerifyResult {
     required this.resolvedDepartment,
     required this.departmentSource,
     this.fonAlert,
+    this.fonAlertSpeech,
     this.verificationMessageUuid,
     this.verificationAnalysisUuid,
   });
@@ -62,6 +63,7 @@ class VerifyResult {
   final List<String> recommendations;
   final List<String> citizenAdvice;
   final String? fonAlert;
+  final String? fonAlertSpeech;
   final String? resolvedDepartment;
   final String departmentSource;
   final String? verificationMessageUuid;
@@ -93,6 +95,7 @@ class VerifyResult {
           .map((dynamic item) => item.toString())
           .toList(growable: false),
       fonAlert: json['fon_alert']?.toString(),
+      fonAlertSpeech: json['fon_alert_speech']?.toString(),
       resolvedDepartment: json['resolved_department']?.toString(),
       departmentSource: json['department_source']?.toString() ?? 'UNKNOWN',
       verificationMessageUuid: json['verification_message_uuid']?.toString(),

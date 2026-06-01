@@ -132,6 +132,7 @@ async def verify_citizen_signal(
         recommendations=result.get("recommendations", []),
         citizen_advice=result.get("citizen_advice", []),
         fon_alert=result.get("fon_alert"),
+        fon_alert_speech=result.get("fon_alert_speech"),
         resolved_department=resolved_department,
         department_source=department_source,
         verification_message_uuid=verification_message_uuid,

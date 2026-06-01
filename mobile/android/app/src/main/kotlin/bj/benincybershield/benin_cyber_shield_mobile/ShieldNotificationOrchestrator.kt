@@ -150,6 +150,7 @@ class ShieldNotificationOrchestrator(context: Context) {
                     )
                 },
                 fonAlert = analysis.fonAlert,
+                fonAlertSpeech = analysis.fonAlertSpeech,
                 status = sourceApp,
             ),
         )

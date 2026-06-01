@@ -19,6 +19,7 @@ data class ShieldHistoryRecord(
     val recommendations: List<String> = emptyList(),
     val highlightedSpans: List<ShieldHistoryHighlightedSpan> = emptyList(),
     val fonAlert: String? = null,
+    val fonAlertSpeech: String? = null,
     val publicReference: String? = null,
     val status: String? = null,
 ) {
@@ -38,6 +39,7 @@ data class ShieldHistoryRecord(
             put("recommendations", JSONArray(recommendations))
             put("highlighted_spans", JSONArray(highlightedSpans.map(ShieldHistoryHighlightedSpan::toJsonObject)))
             put("fon_alert", fonAlert)
+            put("fon_alert_speech", fonAlertSpeech)
             put("public_reference", publicReference)
             put("status", status)
         }

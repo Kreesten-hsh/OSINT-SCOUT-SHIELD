@@ -60,6 +60,7 @@ class HistoryEntry {
     this.recommendations = const <String>[],
     this.highlightedSpans = const <HistoryHighlightedSpan>[],
     this.fonAlert,
+    this.fonAlertSpeech,
     this.publicReference,
     this.status,
   });
@@ -78,6 +79,7 @@ class HistoryEntry {
   final List<String> recommendations;
   final List<HistoryHighlightedSpan> highlightedSpans;
   final String? fonAlert;
+  final String? fonAlertSpeech;
   final String? publicReference;
   final String? status;
 
@@ -123,6 +125,7 @@ class HistoryEntry {
           .map(HistoryHighlightedSpan.fromJson)
           .toList(growable: false),
       fonAlert: json['fon_alert']?.toString(),
+      fonAlertSpeech: json['fon_alert_speech']?.toString(),
       publicReference: json['public_reference']?.toString(),
       status: json['status']?.toString(),
     );
@@ -146,6 +149,7 @@ class HistoryEntry {
           .map((HistoryHighlightedSpan span) => span.toJson())
           .toList(growable: false),
       'fon_alert': fonAlert,
+      'fon_alert_speech': fonAlertSpeech,
       'public_reference': publicReference,
       'status': status,
     };

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,8 +11,15 @@ import '../../data/models/verify_result.dart';
 import '../shared/app_panel.dart';
 import '../shared/brand_bar.dart';
 
-class ResultPage extends ConsumerWidget {
+class ResultPage extends ConsumerStatefulWidget {
   const ResultPage({super.key});
+
+  @override
+  ConsumerState<ResultPage> createState() => _ResultPageState();
+}
+
+class _ResultPageState extends ConsumerState<ResultPage> {
+  bool _isSpeakingFon = false;
 
   Color _riskColor(BeninShieldColors colors, String riskLevel) {
     return switch (riskLevel) {
@@ -42,8 +51,53 @@ class ResultPage extends ConsumerWidget {
     await Share.share(text);
   }
 
+  Duration _estimateFonSpeechDuration(String text) {
+    final int words = text.split(RegExp(r'\s+')).where((String value) => value.trim().isNotEmpty).length;
+    final int milliseconds = (words * 620).clamp(2200, 12000).toInt();
+    return Duration(milliseconds: milliseconds);
+  }
+
+  Future<void> _speakFonAlert(VerifyResult result) async {
+    final String text = (result.fonAlertSpeech ?? result.fonAlert ?? '').trim();
+    if (text.isEmpty) {
+      return;
+    }
+
+    setState(() => _isSpeakingFon = true);
+    final bool started = await ref.read(nativeShieldBridgeProvider).speakFonAlert(text);
+    if (!mounted) {
+      return;
+    }
+    if (!started) {
+      setState(() => _isSpeakingFon = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lecture vocale indisponible sur cet appareil.')),
+      );
+      return;
+    }
+
+    Future<void>.delayed(_estimateFonSpeechDuration(text), () {
+      if (mounted) {
+        setState(() => _isSpeakingFon = false);
+      }
+    });
+  }
+
+  Future<void> _stopFonAlert() async {
+    await ref.read(nativeShieldBridgeProvider).stopFonAlert();
+    if (mounted) {
+      setState(() => _isSpeakingFon = false);
+    }
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void dispose() {
+    unawaited(ref.read(nativeShieldBridgeProvider).stopFonAlert());
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final VerifyState state = ref.watch(verifyControllerProvider);
     final VerifyResult? result = state.result;
     final VerifyDraft? draft = state.draft;
@@ -285,7 +339,27 @@ class ResultPage extends ConsumerWidget {
                           const SizedBox(height: 14),
                           Text('ALERTE FON', style: Theme.of(context).textTheme.labelMedium),
                           const SizedBox(height: 8),
-                          Text(result.fonAlert!, style: Theme.of(context).textTheme.bodyLarge),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: colors.success.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: colors.success.withValues(alpha: 0.22)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Text(result.fonAlert!, style: Theme.of(context).textTheme.bodyLarge),
+                                const SizedBox(height: 12),
+                                OutlinedButton.icon(
+                                  onPressed: _isSpeakingFon ? _stopFonAlert : () => _speakFonAlert(result),
+                                  icon: Icon(_isSpeakingFon ? Icons.stop_rounded : Icons.volume_up_rounded),
+                                  label: Text(_isSpeakingFon ? 'ARRETER' : 'ECOUTER EN FON'),
+                                ),
+                              ],
+                            ),
+                          ),
                         ],
                       ],
                     ),

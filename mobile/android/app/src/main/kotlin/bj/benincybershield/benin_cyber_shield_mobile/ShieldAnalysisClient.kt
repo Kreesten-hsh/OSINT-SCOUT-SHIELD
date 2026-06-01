@@ -17,6 +17,7 @@ data class ShieldAnalysisResult(
     val recommendations: List<String>,
     val highlightedSpans: List<ShieldHighlightedSpan>,
     val fonAlert: String?,
+    val fonAlertSpeech: String?,
 )
 
 data class ShieldHighlightedSpan(
@@ -97,6 +98,7 @@ class ShieldAnalysisClient {
                     recommendations = jsonArrayToStrings(data.optJSONArray("recommendations")),
                     highlightedSpans = jsonArrayToHighlightedSpans(data.optJSONArray("highlighted_spans")),
                     fonAlert = data.optString("fon_alert").ifBlank { null },
+                    fonAlertSpeech = data.optString("fon_alert_speech").ifBlank { null },
                 ),
             )
         } catch (_: Exception) {

@@ -44,6 +44,7 @@ interface VerifySignalData {
   recommendations?: string[];
   citizen_advice?: string[];
   fon_alert?: string | null;
+  fon_alert_speech?: string | null;
   resolved_department?: string | null;
   department_source?: 'USER_SELECTED' | 'PHONE_DERIVED' | 'UNKNOWN';
 }
@@ -127,6 +128,21 @@ function isValidBeninPhone(phone: string): boolean {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function getPreferredFonVoice(): SpeechSynthesisVoice | undefined {
+  const voices = window.speechSynthesis.getVoices();
+  return (
+    voices.find((voice) => voice.lang.toLowerCase().startsWith('fr')) ??
+    voices.find((voice) => voice.name.toLowerCase().includes('french'))
+  );
+}
+
+function normalizeFonSpeechText(value: string): string {
+  return value
+    .replace(/[;:]/g, '. ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function detectCitizenChannel(): SignalChannel {
@@ -321,16 +337,22 @@ export default function VerifySignalPanel() {
   };
 
   const speakFonAlert = () => {
-    const fonAlert = result?.fon_alert?.trim();
-    if (!fonAlert || !('speechSynthesis' in window)) {
+    const fonSpeech = (result?.fon_alert_speech ?? result?.fon_alert)?.trim();
+    if (!fonSpeech || !('speechSynthesis' in window)) {
       return;
     }
 
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(fonAlert);
-    utterance.lang = 'fr-BJ';
-    utterance.rate = 0.86;
-    utterance.pitch = 1;
+    const utterance = new SpeechSynthesisUtterance(normalizeFonSpeechText(fonSpeech));
+    const voice = getPreferredFonVoice();
+    if (voice) {
+      utterance.voice = voice;
+      utterance.lang = voice.lang;
+    } else {
+      utterance.lang = 'fr-FR';
+    }
+    utterance.rate = 0.72;
+    utterance.pitch = 0.92;
     utterance.onstart = () => setIsSpeakingFon(true);
     utterance.onend = () => setIsSpeakingFon(false);
     utterance.onerror = () => setIsSpeakingFon(false);
@@ -611,19 +633,19 @@ export default function VerifySignalPanel() {
               )}
 
               {result.fon_alert && (
-                <div className="rounded-3xl border border-sky-600/20 bg-sky-500/10 p-4">
+                <div className="rounded-3xl border border-emerald-600/20 bg-emerald-500/10 p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <p className="text-xs font-bold uppercase text-sky-700 dark:text-sky-300">Alerte en fon</p>
+                      <p className="text-xs font-bold uppercase text-emerald-700 dark:text-emerald-300">Alerte en fon</p>
                       <p className="mt-2 text-base font-bold leading-7 text-foreground">{result.fon_alert}</p>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        Lecture vocale disponible pour les personnes qui comprennent mieux le fon.
+                        Lecture mot par mot avec une version phonetique optimisee pour la voix du navigateur.
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={isSpeakingFon ? stopFonAlert : speakFonAlert}
-                      className="inline-flex min-h-[42px] shrink-0 items-center justify-center gap-2 rounded-2xl border border-sky-600/25 bg-sky-500/10 px-4 text-sm font-bold text-sky-700 hover:bg-sky-500/20 dark:text-sky-300"
+                      className="inline-flex min-h-[42px] shrink-0 items-center justify-center gap-2 rounded-2xl border border-emerald-600/25 bg-emerald-500/10 px-4 text-sm font-bold text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300"
                     >
                       <Volume2 className="h-4 w-4" />
                       {isSpeakingFon ? 'Arreter' : 'Lire en fon'}
