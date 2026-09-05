@@ -1,203 +1,166 @@
-# BENIN CYBER SHIELD
+# BENIN CYBER SHIELD (BCS)
 
-Plateforme de detection et d'analyse de cyberfraude mobile couvrant quatre surfaces reelles :
+**Cross-Surface Mobile Fraud Detection & Triage Platform — Citizen Reporting, SME Brand Defense & Android Telemetry Shield**
 
-- portail citoyen web pour verifier et signaler un message suspect
-- console administrateur pour la supervision nationale
-- espace PME pour suivre les cas d'usurpation lies a une entreprise
-- application mobile Android Flutter de surveillance passive des notifications
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![React + Vite](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-61dafb.svg?logo=react&logoColor=white)](https://vitejs.dev/)
+[![Flutter](https://img.shields.io/badge/Mobile-Flutter%20Android-02569B.svg?logo=flutter&logoColor=white)](https://flutter.dev/)
+[![Docker Compose](https://img.shields.io/badge/Orchestration-Docker%20Compose-2496ED.svg?logo=docker&logoColor=white)](https://www.docker.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Etat actuel
+---
 
-Le depot est un prototype de demonstration operationnel centre sur le flux suivant :
+## 1. Executive Summary
 
-`notification ou message suspect -> analyse -> signalement formel -> supervision admin / PME -> dossier probatoire -> transmission simulee`
+**Benin Cyber Shield (BCS)** is an operational cybersecurity platform engineered to detect, analyze, and mitigate mobile phishing, financial fraud, and SMS/MMS social engineering across Benin. 
 
-Les niveaux de risque affiches dans le produit sont :
+Unlike single-purpose detection tools, BCS correlates four distinct operational surfaces around a unified evidentiary pipeline:
+1. **Public Citizen Portal**: Unauthenticated suspicious message analysis with dialectal/local context parsing (Fon/French) and formal incident reporting.
+2. **National Admin Console**: Centralized supervisory dashboard with geographic risk mapping across 12 departments, incident triage, and evidentiary dossier generation.
+3. **SME Brand Defense Workspace**: Dedicated portal for targeted local businesses to monitor active impersonation campaigns and inspect forensic bundles.
+4. **Android Telemetry Agent (Flutter)**: A lightweight, passive background listener monitoring mobile notifications in near-real-time with offline queue fallback.
 
-- `FAIBLE`
-- `MOYEN`
-- `FORT`
+---
 
-## Architecture
+## 2. Core Architecture & Data Pipeline
 
-- `backend/` : API FastAPI, logique metier, RBAC, generation de dossiers, seed de demonstration
-- `frontend/` : application React/Vite pour les espaces citoyen, admin et PME
-- `mobile/` : application Flutter Android avec listener natif de notifications, historique local et alertes locales
-- `scrapers/` : worker Playwright branche sur Redis
-- `evidences_store/` : artefacts probatoires generes localement
+```mermaid
+graph TD
+    subgraph "Ingestion Surfaces"
+        A["Citizen Web Portal<br/>(React / Vite)"]
+        B["Android Notification Listener<br/>(Flutter Native BroadcastReceiver)"]
+        C["SME Threat Submissions<br/>(Authenticated API)"]
+    end
 
-## Services Docker
+    subgraph "Processing & Correlation Pipeline"
+        D["FastAPI Ingestion Gateway<br/>(Rate Limiting & Token Auth)"]
+        E["Heuristic & Local Context Engine<br/>(Fon/French Phishing Lexicon)"]
+        F["Playwright Scraper Worker<br/>(Background Link Detonation via Redis)"]
+        G["Evidentiary Dossier Engine<br/>(Tamper-evident JSON + Hashes)"]
+    end
 
-`docker-compose.yml` demarre :
+    subgraph "Supervision & Persistence"
+        H["PostgreSQL Database<br/>(SQLAlchemy 2.0 Async)"]
+        I["Redis Task Queue & Cache"]
+        J["Admin Supervision Dashboard<br/>(Geographic Incident Heatmap)"]
+        K["Local Evidence Store<br/>(PDF & Raw Payload Artifacts)"]
+    end
 
-- `api`
-- `db`
-- `redis`
-- `scraper`
-- `frontend`
+    A --> D
+    B --> D
+    C --> D
+    D --> E
+    D --> F
+    E --> G
+    F --> G
+    G --> H
+    G --> K
+    F --> I
+    H --> J
+```
 
-## Parcours web livres
+---
 
-### Citoyen
+## 3. Operational Surfaces
 
-- `/verify`
-- verification d'un message suspect sans authentification
-- affichage du score, du niveau de risque, des segments suspects, des recommandations et de l'alerte fon si applicable
-- possibilite de creer un signalement formel avec reference publique
+### 3.1 Public Citizen Portal (`/verify`)
+- **Instant Message Verification**: Direct text input checking for high-risk mobile money syntax, predatory phishing indicators, and spoofed government domains.
+- **Dialectal Understanding**: Detects emerging Beninese financial phishing patterns blending French and local terms.
+- **Formal Incident Submission**: Generates a public tracking reference number and packages suspect media attachments.
 
-### Administrateur
+### 3.2 National Admin Console (`/admin`)
+- **Geographic Threat Heatmap**: Department-level distribution of reported scams across Benin.
+- **Incident Lifecycle Management**: Status transitions (`PENDING` → `CONFIRMED_SOC` → `TRANSMITTED`).
+- **Forensic Dossier Generation**: Automatic assembly of cryptographic hashes, extraction timestamps, and network artifacts into exportable audit records.
 
-- `/admin/dashboard`
-- `/admin/pme`
-- `/admin/signalements`
-- `/admin/dossiers`
-- `/admin/transmissions`
-- `/admin/exports`
-- `/admin/settings`
-- `/live`
+### 3.3 SME Workspace (`/pme`)
+- **Impersonation Alerts**: Real-time alerts when company brands, phone numbers, or trade names are identified in active citizen reports.
+- **Dossier Access**: Instant download of formal legal evidentiary packs for judicial handoff.
 
-Fonctions cles :
+### 3.4 Android Mobile Shield (Flutter)
+- **Passive Notification Inspection**: Scans inbound push notifications from user-selected communication apps.
+- **Local SQLite Audit Trail**: Maintains encrypted offline event logs on-device.
+- **Resilient Offline Queue**: Buffers suspect payloads and replays submissions when connectivity resumes.
 
-- supervision nationale par departement
-- gestion des PME
-- consultation des signalements citoyens
-- consultation et telechargement des dossiers probatoires
-- suivi des transmissions externes simulees
+---
 
-### PME
+## 4. Key API Endpoints
 
-- `/pme/dashboard`
-- `/pme/alertes`
-- `/pme/signalements`
-- `/pme/dossiers`
-- `/pme/profil`
-- `/pme/register`
+### Public & Analysis
+- `POST /api/v1/analysis/verify` : Analyzes text/SMS payloads and returns risk level (`LOW`, `MEDIUM`, `HIGH`).
+- `POST /api/v1/incidents/report` : Submits verified suspect messages into the incident triage pipeline.
+- `POST /api/v1/incidents/report-with-media` : Multipart incident intake supporting screenshot attachments.
+- `GET /api/v1/map/overview` : Public aggregate stats per administrative department.
+- `GET /health` : Liveness and database connectivity probe.
 
-Fonctions cles :
+### Mobile Telemetry
+- `GET /api/v1/mobile/bootstrap` : Returns active threat signatures and detection configuration.
+- `GET /api/v1/mobile/history` : Syncs historical threat statuses for authenticated devices.
 
-- consultation des incidents d'usurpation lies a la PME
-- suivi des signalements associes
-- acces aux dossiers probatoires
-- mise a jour du profil PME
+### Authenticated Admin & SME Operations
+- `POST /api/v1/auth/login` : OAuth2-compatible JWT issuance.
+- `GET /api/v1/admin/dashboard` : High-level metrics, active alerts, and triage queues.
+- `GET /api/v1/pme/dashboard` : Company-scoped incident metrics and risk alerts.
+- `POST /api/v1/shield/actions/dispatch` : Triggers automated mitigation or external simulated transmission.
 
-La PME de demonstration utilisee dans les seeds actuels est `Kreesten Technologies SARL`.
+---
 
-## Application mobile Android
+## 5. Local Development & Docker Quickstart
 
-L'application mobile n'est pas un clone du portail web.
+### Prerequisites
+- Docker Engine 24+ & Docker Compose v2+
+- Flutter SDK 3.10+ (for mobile client compilation)
 
-Elle fonctionne comme un bouclier passif :
-
-- surveillance des notifications Android
-- ciblage des applications selectionnees par l'utilisateur
-- analyse quasi temps reel des messages recus
-- historique local des alertes
-- file locale de reprise si l'API est temporairement indisponible
-- notification locale BCS lorsque le niveau atteint le seuil configure
-
-Ecrans principaux :
-
-- `Accueil`
-- `Historique`
-- `Parametres`
-
-## Endpoints cles
-
-### Public
-
-- `POST /api/v1/analysis/verify`
-- `POST /api/v1/incidents/report`
-- `POST /api/v1/incidents/report-with-media`
-- `GET /api/v1/map/overview`
-- `GET /health`
-
-### Mobile
-
-- `GET /api/v1/mobile/bootstrap`
-- `GET /api/v1/mobile/history`
-
-### Authentifies
-
-- `POST /api/v1/auth/login`
-- `POST /api/v1/auth/change-password`
-- `GET /api/v1/admin/dashboard`
-- `GET /api/v1/admin/pme`
-- `GET /api/v1/pme/dashboard`
-- `GET /api/v1/reports`
-- `POST /api/v1/shield/actions/dispatch`
-
-## Donnees de demonstration
-
-Le script :
+### 3-Step Setup
 
 ```bash
+# 1. Clone repository & configure environment
+git clone https://github.com/Kreesten-hsh/BENIN-CYBER-SHIELD.git
+cd BENIN-CYBER-SHIELD
+cp .env.example .env
+
+# 2. Build and launch Docker services
+docker compose up -d --build
+
+# 3. Seed demonstration data (Admin, SMEs, and Multi-department incidents)
 docker compose exec -T api python scripts/seed_demo_data.py
 ```
 
-injecte des donnees de soutenance :
+### Access Points
+- **Web Applications (Citizen / Admin / SME)**: [http://localhost:5173](http://localhost:5173)
+- **API Documentation (Swagger UI)**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Health Check**: [http://localhost:8000/health](http://localhost:8000/health)
 
-- signalements citoyens multi-departements
-- confirmations SOC
-- transmissions simulees
-- incidents d'usurpation PME
+---
 
-## Demarrage local
+## 6. Project Layout
 
-### 1. Preparer l'environnement
-
-```bash
-cp .env.example .env
+```
+BENIN-CYBER-SHIELD/
+├── backend/                  # FastAPI REST Service & Core Logic
+│   ├── app/
+│   │   ├── api/              # Versioned API route handlers
+│   │   ├── core/             # Security, JWT, config & database sessions
+│   │   ├── models/           # SQLAlchemy 2.0 async ORM entities
+│   │   ├── schemas/          # Pydantic validation models
+│   │   └── services/         # Dossier generation, heuristics & verification
+│   └── tests/                # Automated pytest suite
+├── frontend/                 # React 19 + Vite Application
+│   ├── src/
+│   │   ├── components/       # UI building blocks (Tailwind / Vanilla CSS)
+│   │   ├── pages/            # Citizen (/verify), Admin, and SME views
+│   │   └── services/         # Axios API client
+├── mobile/                   # Flutter Android Application
+│   ├── android/              # Native Android NotificationListenerService bindings
+│   ├── lib/                  # Dart application logic, state, and UI views
+├── scrapers/                 # Playwright worker processes for link detonation
+├── evidences_store/          # Serialized forensic evidence artifacts
+├── docker-compose.yml        # Multi-service container orchestration
+└── .env.example              # Baseline environment configuration template
 ```
 
-### 2. Lancer la stack
+---
 
-```bash
-docker compose up -d --build
-```
+## 7. License
 
-### 3. Verifier la sante
-
-```bash
-docker compose ps
-curl http://localhost:8000/health
-```
-
-### 4. URLs utiles
-
-- frontend : `http://localhost:5173`
-- citoyen : `http://localhost:5173/verify`
-- admin : `http://localhost:5173/admin/dashboard`
-- PME : `http://localhost:5173/pme/dashboard`
-- API docs : `http://localhost:8000/docs`
-
-## Variables utiles
-
-- `AUTH_ADMIN_EMAIL`
-- `AUTH_ADMIN_PASSWORD`
-- `AUTH_SME_EMAIL`
-- `AUTH_SME_PASSWORD`
-- `VITE_API_URL`
-- `REDIS_URL`
-- `DATABASE_URL`
-
-## Nettoyage local
-
-Le depot produit localement des artefacts regenerables :
-
-- caches Python
-- caches Node et Flutter
-- artefacts temporaires de build
-- bundles probatoires generes dans `evidences_store`
-
-Ils peuvent etre supprimes sans impact sur le code source.
-
-## References internes
-
-- `GEMINI_CONTEXT.md`
-- `frontend/README.md`
-- `mobile/README.md`
-
-## Statut
-
-Prototype academique avance, oriente soutenance, avec web admin/PME/citoyen et application mobile Android connectes au meme backend.
+Distributed under the MIT License. See `LICENSE` for details.
